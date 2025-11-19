@@ -1,6 +1,6 @@
 <template>
   <article>
-    首页
+    注册
   </article>
 </template>
 

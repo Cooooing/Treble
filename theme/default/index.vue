@@ -12,7 +12,11 @@
 <template>
   <article class="layout bg-base-300" :class="prefixCls">
     <Header :class="`${prefixCls}-header`"></Header>
-    <Content :class="`${prefixCls}-content`"></Content>
+    <Content :class="`${prefixCls}-content`">
+      <template #default>
+        <slot />
+      </template>
+    </Content>
     <Footer :class="`${prefixCls}-footer`"></Footer>
   </article>
 </template>

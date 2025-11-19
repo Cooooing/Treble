@@ -1,6 +1,6 @@
 <template>
   <article>
-    首页
+    登录
   </article>
 </template>
 

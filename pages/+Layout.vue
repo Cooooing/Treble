@@ -1,7 +1,9 @@
 <!-- https://vike.dev/Layout -->
 
 <template>
-  <component v-if="Layout" :is="Layout" />
+  <component v-if="Layout" :is="Layout">
+    <slot />
+  </component>
 </template>
 
 <script lang="ts" setup>
