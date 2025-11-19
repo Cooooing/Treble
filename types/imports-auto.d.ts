@@ -6,15 +6,7 @@
 // biome-ignore lint: disable
 export {}
 declare global {
-  const $alert: typeof import('@/libraries/vui').$alert
-  const $confirm: typeof import('@/libraries/vui').$confirm
-  const $loading: typeof import('@/libraries/vui').$loading
-  const $log: typeof import('@/utils/log').$log
-  const $message: typeof import('@/libraries/vui').$message
-  const $notify: typeof import('@/libraries/vui').$notify
-  const $prompt: typeof import('@/libraries/vui').$prompt
   const EffectScope: typeof import('vue').EffectScope
-  const Storage: typeof import('@/utils/cache').Storage
   const computed: typeof import('vue').computed
   const createApp: typeof import('vue').createApp
   const customRef: typeof import('vue').customRef
@@ -24,12 +16,8 @@ declare global {
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getCurrentWatcher: typeof import('vue').getCurrentWatcher
-  const getEnv: typeof import('@/configs/env').getEnv
-  const getEnvMode: typeof import('@/configs/env').getEnvMode
   const h: typeof import('vue').h
   const inject: typeof import('vue').inject
-  const isDevMode: typeof import('@/configs/env').isDevMode
-  const isProdMode: typeof import('@/configs/env').isProdMode
   const isProxy: typeof import('vue').isProxy
   const isReactive: typeof import('vue').isReactive
   const isReadonly: typeof import('vue').isReadonly
@@ -39,8 +27,6 @@ declare global {
   const nextTick: typeof import('vue').nextTick
   const onActivated: typeof import('vue').onActivated
   const onBeforeMount: typeof import('vue').onBeforeMount
-  const onBeforeRouteLeave: typeof import('vue-router').onBeforeRouteLeave
-  const onBeforeRouteUpdate: typeof import('vue-router').onBeforeRouteUpdate
   const onBeforeUnmount: typeof import('vue').onBeforeUnmount
   const onBeforeUpdate: typeof import('vue').onBeforeUpdate
   const onDeactivated: typeof import('vue').onDeactivated
@@ -53,7 +39,6 @@ declare global {
   const onUnmounted: typeof import('vue').onUnmounted
   const onUpdated: typeof import('vue').onUpdated
   const onWatcherCleanup: typeof import('vue').onWatcherCleanup
-  const propTypes: typeof import('@/libraries/propTypes').propTypes
   const provide: typeof import('vue').provide
   const reactive: typeof import('vue').reactive
   const readonly: typeof import('vue').readonly
@@ -71,19 +56,10 @@ declare global {
   const useAttrs: typeof import('vue').useAttrs
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
-  const useDesign: typeof import('@/hooks/web/useDesign').useDesign
-  const useEventListener: typeof import('@/hooks/event/useEventListener').useEventListener
-  const useI18n: typeof import('@/locales/useI18n').useI18n
   const useId: typeof import('vue').useId
-  const useLink: typeof import('vue-router').useLink
   const useModel: typeof import('vue').useModel
-  const useRoute: typeof import('vue-router').useRoute
-  const useRouter: typeof import('vue-router').useRouter
   const useSlots: typeof import('vue').useSlots
   const useTemplateRef: typeof import('vue').useTemplateRef
-  const useUserStoreWithOut: typeof import('@/store/modules/user').useUserStoreWithOut
-  const useXDialog: typeof import('@/components/XDialog').useXDialog
-  const useXRouter: typeof import('@/hooks/web/useRouter').useXRouter
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
   const watchPostEffect: typeof import('vue').watchPostEffect

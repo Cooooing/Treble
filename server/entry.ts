@@ -1,18 +1,22 @@
-import { tsRestHandler } from "./ts-rest-handler";
-import { apply, serve } from "@photonjs/h3";
-import { createApp } from "h3";
+import ThemeHandlers from "./handlers/theme";
+import { apply, serve } from "@photonjs/fastify";
+import fastify, { type FastifyInstance } from "fastify";
+import rawBody from "fastify-raw-body";
 
-const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 2324;
 
-export default startServer();
+export default await startServer();
 
-function startServer() {
-  const app = createApp();
+async function startServer(): Promise<FastifyInstance> {
+  const app = fastify({
+    // Ensures proper HMR support
+    forceCloseConnections: true,
+  });
 
-  apply(app, [
-    // ts-rest route. See https://ts-rest.com
-    tsRestHandler,
-  ]);
+  // /!\ Mandatory if you need to access the request body in any Universal Middleware or Handler
+  await app.register(rawBody);
+
+  await apply(app, ThemeHandlers);
 
   return serve(app, {
     port,

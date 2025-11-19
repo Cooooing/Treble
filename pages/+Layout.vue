@@ -1,13 +1,21 @@
 <!-- https://vike.dev/Layout -->
 
 <template>
-  <article class="layout">
-    <Header />
-  </article>
+  <component v-if="Layout" :is="Layout" />
 </template>
 
 <script lang="ts" setup>
-  import Header from '@/theme/default/Header/index.vue';
+  import type { Data } from "./+data";
+  import { useData } from "vike-vue/useData";
+
+  const { theme } = useData<Data>();
+  const Layout = ref<any>();
+  
+  async function loadTheme() {
+    Layout.value = await import(`@/theme/${theme}/index.vue`).then(m => m.default);
+  }
+
+  loadTheme()
 </script>
 
 

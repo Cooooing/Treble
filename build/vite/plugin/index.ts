@@ -6,6 +6,7 @@ import vueJsx from '@vitejs/plugin-vue-jsx';
 import legacy from '@vitejs/plugin-legacy';
 import viteCompression from 'vite-plugin-compression';
 import { autoImports } from './autoImports';
+import { configSvgIconsPlugin } from './svgSprite';
 
 export function createVitePlugins(viteEnv: ViteEnv, isBuild: boolean) {
   const { VITE_LEGACY, VITE_COMPRESS } = viteEnv;
@@ -17,6 +18,8 @@ export function createVitePlugins(viteEnv: ViteEnv, isBuild: boolean) {
     vueJsx(),
     autoImports(),
   ];
+
+  vitePlugins.push(configSvgIconsPlugin(isBuild));
 
   // @vitejs/plugin-legacy
   VITE_LEGACY &&

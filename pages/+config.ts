@@ -7,8 +7,8 @@ import vikeVue from "vike-vue/config";
 
 export default {
   // https://vike.dev/head-tags
-  title: "My Vike App",
-  description: "Demo showcasing Vike",
+  title: process.env.VITE_GLOB_APP_TITLE || "Treble",
+  description: "Fishpi",
 
   extends: [vikeVue, vikePhoton],
 

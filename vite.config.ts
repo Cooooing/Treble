@@ -29,12 +29,21 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
       open: false,
       cors: true,
       hmr: true,
-      // Load proxy configuration from .env
-      proxy: createProxy(VITE_PROXY),
+      allowedHosts: true,
     },
     esbuild: {
       drop: VITE_DROP_CONSOLE ? ['console', 'debugger'] : [],
     },
+
+    css: {
+      preprocessorOptions: {
+        less: {
+          additionalData: '@import "./assets/styles/variables.module.less";',
+          javascriptEnabled: true,
+        },
+      },
+    },
+
     plugins: createVitePlugins(viteEnv, isBuild),
     optimizeDeps: {
       include,
