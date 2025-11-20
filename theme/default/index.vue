@@ -14,7 +14,7 @@
     <Header :class="`${prefixCls}-header`"></Header>
     <Content :class="`${prefixCls}-content`">
       <template #default>
-        <slot />
+        <slot></slot>
       </template>
     </Content>
     <Footer :class="`${prefixCls}-footer`"></Footer>

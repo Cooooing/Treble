@@ -6,6 +6,8 @@
 // biome-ignore lint: disable
 export {}
 declare global {
+  const $msg: typeof import('@/utils/message').$msg
+  const $toast: typeof import('@/utils/message').$toast
   const EffectScope: typeof import('vue').EffectScope
   const computed: typeof import('vue').computed
   const createApp: typeof import('vue').createApp

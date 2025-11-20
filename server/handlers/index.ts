@@ -1,6 +1,6 @@
 import fs from "fs";
 
-export function json(data: any, msg = '', code = 0) {
+export function json(data: any, msg = '', code = 200) {
   return JSON.stringify({
     code,
     msg,

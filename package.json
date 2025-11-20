@@ -2,18 +2,18 @@
   "scripts": {
     "dev": "vike dev",
     "build": "vike build",
-    "build:staging": "vike build --mode staging",
     "preview": "vike preview",
     "prod": "vike build && node ./dist/server/index.mjs"
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
-    "@photonjs/fastify": "^0.1.6",
+    "@photonjs/express": "^0.1.6",
     "@universal-middleware/core": "^0.4.13",
     "@vueuse/core": "^14.0.0",
-    "fastify": "^5.6.2",
-    "fastify-raw-body": "^5.0.0",
+    "async-validator": "^4.2.5",
+    "express": "^5.1.0",
     "h3": "~1.15.4",
+    "http-proxy-middleware": "^3.0.5",
     "lodash-es": "^4.17.21",
     "vike": "^0.4.246",
     "vike-photon": "^0.1.16",
@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.17",
+    "@types/express": "^5.0.5",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^24.10.1",
     "@vitejs/plugin-legacy": "^7.2.1",

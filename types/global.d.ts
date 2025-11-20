@@ -24,15 +24,11 @@ declare global {
   type IntervalHandle = ReturnType<typeof setInterval>;
 
   interface ViteEnv {
-    VITE_PORT: number;
     VITE_USE_MOCK: boolean;
-    VITE_GLOB_PUBLIC_PATH: string;
-    VITE_PROXY: [string, string][];
     VITE_GLOB_APP_TITLE: string;
     VITE_DROP_CONSOLE: boolean;
     VITE_LEGACY: boolean;
     VITE_COMPRESS: boolean;
-    VITE_USE_IMAGEMIN: boolean;
   }
 
   function parseInt(s: string | number, radix?: number): number;

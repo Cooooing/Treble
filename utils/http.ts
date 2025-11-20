@@ -11,6 +11,8 @@ export interface HttpOptions {
   transformResponse?: boolean;
   data?: any;
   params?: Record<string, string | number | boolean>;
+  errorRef?: { value: string };
+  errorModal?: 'modal' | 'message' | 'none';
 }
 
 class DefHttp {
@@ -46,8 +48,16 @@ class DefHttp {
     const contentType = res.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
       const { code, msg, data } = await res.json();
-      if (code !== 0) {
-        throw new Error(`Error ${code}: ${msg}`);
+      if (code !== 200) {
+        if (options.errorRef) {
+          options.errorRef.value = msg;
+        }
+        if (options.errorModal === 'modal') {
+          console.error('Modal Error:', msg);
+        } else if (options.errorModal === 'message') {
+          Message.error(msg);
+        }
+        throw new Error(msg);
       }
       if (options.transformResponse) return data;
       return { code, msg, data };
