@@ -1,6 +1,6 @@
 <template>
   <div id="page-container">
-    <div id="page-content" class="p-5 pb-12">
+    <div id="page-content">
       <slot></slot>
     </div>
   </div>

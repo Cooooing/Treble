@@ -15,11 +15,28 @@
     'coffee', //
     'winter', 
   ]);
+  const isDark = [
+    'dark',
+    'halloween',
+    'forest',
+    'dracula',
+    'night',
+    'coffee',
+  ]
   const currentTheme = ref(localStorage.getItem('theme') || 'fishpi');
   function setTheme(t:string) {
     currentTheme.value = t;
+    if (isDark.includes(t)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     localStorage.setItem('theme', t);
   }
+
+  onMounted(() => {
+    setTheme(currentTheme.value);
+  });
 </script>
 
 <template>

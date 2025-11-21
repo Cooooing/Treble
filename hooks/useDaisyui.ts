@@ -3,23 +3,21 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 export function useDaisyui() {
   const isSystemDark = ref(false)
   const isDaisyDark = ref(false)
-  const userChosenTheme = ref<string | null>(null) // null = 没有显式选择
-
-  // 读取 localStorage（daisyUI / 你的实现可能用不同的 key，例如 'theme'）
-  function readUserChoice() {
-    try {
-      userChosenTheme.value = localStorage.getItem('theme') // adjust key if you use other key
-    } catch (e) {
-      userChosenTheme.value = null
-    }
-  }
+  const userChosenTheme = ref<string | null>(localStorage.getItem('theme')) // null = 没有显式选择
+  const darkThemes = [
+    'dark',
+    'halloween',
+    'forest',
+    'dracula',
+    'night',
+    'coffee',
+  ];
 
   function updateDaisyState() {
     const el = document.documentElement
-    const dataTheme = el?.getAttribute('data-theme')
     const hasDarkClass = el?.classList?.contains('dark')
     // 这里把 data-theme==='dark' 或有 .dark 视为深色主题，根据你的实际 theme 名称调整
-    isDaisyDark.value = (dataTheme === 'dark') || !!hasDarkClass
+    isDaisyDark.value = hasDarkClass
   }
 
   let mql: MediaQueryList | null = null
@@ -30,15 +28,11 @@ export function useDaisyui() {
   }
 
   onMounted(() => {
-    readUserChoice()
-    updateDaisyState()
-
     if (typeof window !== 'undefined' && window.matchMedia) {
       mql = window.matchMedia('(prefers-color-scheme: dark)')
       isSystemDark.value = mql.matches
       // 兼容 addEventListener / addListener
-      if (mql.addEventListener) mql.addEventListener('change', onPrefersChange)
-      else if (mql.addListener) mql.addListener(onPrefersChange)
+      mql.addEventListener('change', onPrefersChange)
     }
     // 如果你的应用在运行时通过 JS 切换 data-theme，建议在切换处也调用 readUserChoice/updateDaisyState
   })
@@ -48,6 +42,9 @@ export function useDaisyui() {
     mql.removeEventListener('change', onPrefersChange)
   })
 
+  updateDaisyState()
+
+
   // 计算：当前是否“由 prefers-color-scheme 驱动且显示为深色”
   const isUsingPrefersDark = computed(() => {
     // 如果用户有显式选择（localStorage 有值），我们认为不是被 prefers 驱动
@@ -56,7 +53,14 @@ export function useDaisyui() {
     return isSystemDark.value && isDaisyDark.value
   })
 
+  const isDarkTheme = computed(() => {
+    return userChosenTheme.value
+      ? darkThemes.includes(userChosenTheme.value)
+      : false
+  })
+
   return {
+    isDarkTheme,
     isSystemDark,
     isDaisyDark,
     userChosenTheme,
