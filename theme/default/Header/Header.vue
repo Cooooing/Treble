@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import Menus from './Menus.vue';
-import Toolbar from './Toolbar.vue';
+  import Toolbar from './Toolbar.vue';
 </script>
 <template>
   <header>

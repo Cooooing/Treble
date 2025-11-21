@@ -16,4 +16,6 @@ export default {
   photon: {
     server: "../server/entry.ts",
   },
+
+  passToClient: ["user"],
 } as Config;

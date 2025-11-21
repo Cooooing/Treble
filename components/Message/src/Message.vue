@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
   import { isVNode } from 'vue';
-  import { useDesign } from '@/hooks/useDesign';
   import type { MessageInternalOptions, MessageType } from './types';
 
   const props = withDefaults(defineProps<MessageInternalOptions>(), {

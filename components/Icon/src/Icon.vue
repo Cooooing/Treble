@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { computed, unref, ref, RenderFunction } from 'vue';
-  import { useDesign } from '@/hooks/useDesign';
   import { isString, isObject, isFunction, isNumber } from '@/utils';
   import { Icon as IconifyIcon } from '@iconify/vue';
 

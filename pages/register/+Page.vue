@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { navigate } from 'vike/client/router';
   import { VFormInstance, VFormItem } from '~/VForm';
-  import { useDesign } from '@/hooks/useDesign';
   import { Rules } from 'async-validator';
   import { checkEmailExist, checkUsernameExist, IRegister, registerByEmail, verifyRegisterByEmail } from '@/apis/auth';
 
@@ -52,6 +51,9 @@
     password: [
       { required: true, message: '请输入密码' },
       { min: 6, max: 30, message: '密码长度在6到30个字符之间' },
+    ],
+    code: [
+      { required: true, message: '请输入验证码' },
     ],
   };
 
@@ -105,7 +107,7 @@
             </div>
             <label class="label">邮箱验证码</label>
             <input type="text" class="input" placeholder="请输入发送到您邮箱的验证码" v-model="verify.code" />
-            <VFormItem prop="code" :rules="[{ required: true, message: '请输入验证码' }]" />
+            <VFormItem prop="code" :rules="rules.code" />
           </template>
           <template v-else>
             <label class="label">用户名</label>
@@ -131,18 +133,7 @@
         </VForm>
       </section>
     </section>
-    <div class="intro flex-1 flex flex-col justify-center space-y-4 md:pl-12 mt-8 md:mt-0">
-      <h1>🐟 鱼油，欢迎来到摸鱼派！</h1>
-      <p>
-        如果你也是奋斗在一线、热爱工作的苦逼青年，期待与众多鱼油聚集起来，那就加入友好的摸鱼派社区吧！ ❤️
-      </p>
-      <p>
-        在这里有为你准备的聊天室、鱼游、充满生活感的帖子，只要来到摸鱼派，你就是我们的家庭成员～这里以「友善」为第一守则，你可以完全放开自己，和鱼油们畅所欲言，邂逅各行各业的搬砖人，参与摸鱼派有趣的活动 :)
-      </p>
-      <p>
-        日常、闲聊、生活、吐槽、提问、技术、读书、游戏、兴趣 ...... 都可以在摸鱼派中讨论。
-      </p>
-    </div>
+    <PublicBoard />
   </article>
 </template>
 

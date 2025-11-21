@@ -145,3 +145,5 @@ cdk.out
 
 imports-auto.d.ts
 components-auto.d.ts
+
+sessions/

@@ -2,7 +2,7 @@
 
 <template>
   <component v-if="Layout" :is="Layout">
-    <slot />
+    <slot></slot>
   </component>
 </template>
 

@@ -5,6 +5,7 @@ const handlers = [
   enhance(
     async (_request, context, _runtime) => {
       const theme = context.theme || "default";
+      console.log(_request.session?.token);
       return new Response(json({ theme }), {
         status: 200,
         headers: {

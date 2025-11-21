@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { name } from './index';
-  import { useDesign } from '@/hooks/useDesign';
   import Header from './Header/Header.vue';
   import Footer from './Footer/Footer.vue';
   import Content from './Content/Content.vue';

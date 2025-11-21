@@ -1,14 +1,38 @@
 <script setup lang="ts">
   import ThemeSwitch from './ThemeSwitch.vue';
+  import { usePageContext } from 'vike-vue/usePageContext'
+  import { logout } from '@/apis/auth';
+  import { reload } from 'vike/client/router';
+
+  const page = usePageContext();
+  function onLogout() {
+    logout().then(() => {
+      reload();
+    });
+  }
 </script>
 <template>
   <section class="px-2 space-x-2 inline-flex items-center">
-    <ThemeSwitch />
-    <a href="/login" class="text-inherit">
-      登录
-    </a>
-    <a href="/register" class="text-inherit">
-      注册
-    </a>
+    <template v-if="!page.user">
+      <ThemeSwitch />
+      <a href="/login" class="text-inherit">
+        登录
+      </a>
+      <a href="/register" class="text-inherit">
+        注册
+      </a>
+    </template>
+    <template v-else>
+      <ThemeSwitch />
+      <button class="btn btn-active btn-primary btn-sm">+ 发帖</button>
+      <div class="dropdown dropdown-end">
+        <Avatar :url="page.user.avatarUrl || page.user.nickname?.slice(0, 1)" :size="32" class="cursor-pointer" tabindex="0" />
+        <ul tabindex="-1" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+          <li><a class="text-inherit">个人主页</a></li>
+          <li><a class="text-inherit">设置</a></li>
+          <li><a class="text-inherit" @click="onLogout">登出</a></li>
+        </ul>
+      </div>
+    </template>
   </section>
 </template>

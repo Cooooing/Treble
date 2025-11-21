@@ -1,3 +1,4 @@
+import type { IUser } from '@/apis/auth';
 import type {
   VNodeChild,
   ComponentPublicInstance,
@@ -58,3 +59,17 @@ declare module 'vue' {
     | { new (): ComponentPublicInstance<Props> }
     | FunctionalComponent<Props>;
 }
+
+
+declare global {
+  namespace Vike {
+    interface GlobalContext {
+      // Type of globalContext.user
+      token?: string | null;
+    }
+
+    interface PageContext {
+      user?: IUser;
+    }
+  }
+} 

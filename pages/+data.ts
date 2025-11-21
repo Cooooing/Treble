@@ -5,6 +5,6 @@ import type { PageContextServer } from "vike/types";
 
 export type Data = Awaited<ReturnType<typeof data>>;
 
-export function data(_pageContext: PageContextServer) {
-  return getTheme();
+export async function data(_pageContext: PageContextServer) {
+  return await getTheme();
 }
