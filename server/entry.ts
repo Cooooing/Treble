@@ -2,24 +2,26 @@ import ThemeHandlers from "./handlers/theme";
 import { apply, serve } from "@photonjs/express";
 import express from "express";
 import session from "express-session";
-import SessionStore from "session-file-store";
 import expressProxy from 'express-http-proxy'
 import dotenv from 'dotenv'
-import { getGlobalContext, getGlobalContextSync } from "vike/server";
+import { RedisStore } from "connect-redis"
+import redisClient from "./utils/redis";
 
 export default await startServer();
 
 async function startServer() {
   dotenv.config()
   const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 2324;
-  const FileStore = SessionStore(session);
   const app = express();
 
   app.use(
     session({
       name: 'TREBLE_SESSION_ID',
       secret: process.env.SESSION_SECRET || 'treble_secret_key',
-      store: new FileStore(),
+      store: new RedisStore({
+        client: redisClient,
+        prefix: 'treble_session:',        // session key 前缀（默认为 "sess:"）
+      }),
       saveUninitialized: false,
       resave: false,
       cookie: { 

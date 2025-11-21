@@ -8,17 +8,17 @@
   "dependencies": {
     "@photonjs/express": "^0.1.6",
     "@universal-middleware/core": "^0.4.13",
+    "connect-redis": "^8.1.0",
     "express": "^5.1.0",
     "express-http-proxy": "^2.1.2",
     "express-session": "^1.18.2",
-    "session-file-store": "^1.5.0",
+    "redis": "^5.10.0",
     "vike": "^0.4.246",
     "vike-photon": "^0.1.16",
     "vike-vue": "^0.9.6",
     "vue": "^3.5.24"
   },
   "devDependencies": {
-    "@vueuse/core": "^14.0.0",
     "@iconify/vue": "^5.0.0",
     "@tailwindcss/vite": "^4.1.17",
     "@types/express": "^5.0.5",
@@ -30,6 +30,7 @@
     "@vitejs/plugin-legacy": "^7.2.1",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vitejs/plugin-vue-jsx": "^5.1.1",
+    "@vueuse/core": "^14.0.0",
     "async-validator": "^4.2.5",
     "daisyui": "^5.5.0",
     "dotenv": "^17.2.3",
