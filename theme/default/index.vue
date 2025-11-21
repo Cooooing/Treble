@@ -14,9 +14,9 @@
     <Content :class="`${prefixCls}-content`">
       <template #default>
         <slot></slot>
+        <Footer :class="`${prefixCls}-footer`"></Footer>
       </template>
     </Content>
-    <Footer :class="`${prefixCls}-footer`"></Footer>
   </article>
 </template>
 

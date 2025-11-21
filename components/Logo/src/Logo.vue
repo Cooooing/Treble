@@ -15,6 +15,6 @@
       :loop="false"
       renderer="svg"
     />
-    <span>{{ title }}</span>
+    <span class="hidden md:inline">{{ title }}</span>
   </a>
 </template>
