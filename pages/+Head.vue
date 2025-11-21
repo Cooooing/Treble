@@ -6,6 +6,6 @@
 
 <script setup lang="ts">
 import "@/assets/styles/tailwind.css";
-import "@/assets/styles/fix.less";
+import "@/assets/styles/main.less";
 import logoUrl from "@/assets/images/logo.svg";
 </script>

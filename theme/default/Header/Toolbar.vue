@@ -1,5 +1,4 @@
 <script setup lang="ts">
-  import ThemeSwitch from './ThemeSwitch.vue';
   import { usePageContext } from 'vike-vue/usePageContext'
   import { logout } from '@/apis/auth';
   import { reload } from 'vike/client/router';
@@ -24,7 +23,7 @@
     </template>
     <template v-else>
       <ThemeSwitch />
-      <button class="btn btn-active btn-primary btn-sm">+ 发帖</button>
+      <a role="button" href="/article/pre" class="btn btn-active btn-primary btn-sm">+ 发帖</a>
       <div class="dropdown dropdown-end">
         <Avatar :url="page.user.avatarUrl || page.user.nickname?.slice(0, 1)" :size="32" class="cursor-pointer" tabindex="0" />
         <ul tabindex="-1" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">

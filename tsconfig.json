@@ -15,13 +15,15 @@
       "./types"
     ],
     "types": [
-      "vite/client"
+      "vite/client",
+      "vite-plugin-svg-icons-ssr/client"
     ],
     "paths": {
       "~/*": ["./components/*"],
       "@/*": ["./*"],
       "#/*": ["./types/*"]
     },
+    "jsx": "preserve",
     "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true
