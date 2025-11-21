@@ -34,7 +34,7 @@ import { getGlobalContext } from 'vike/server';
 </script>
 
 <template>
-    <article class="flex md:flex-row flex-col p-8 max-w-[1300px]" :class="prefixCls">
+    <article class="flex md:flex-row flex-col p-8 max-w-[1300px] m-auto md:pt-30" :class="prefixCls">
     <section class="flex-1">
       <section class="flex items-center justify-center">
         <VForm
@@ -55,7 +55,7 @@ import { getGlobalContext } from 'vike/server';
           <VFormItem prop="account" :rules="rules.account" />
           <label class="input">
             <Icon icon="mdi:lock" />
-            <input type="password" class="input" placeholder="密码" v-model="account.password" @change="formRef?.validate('password')" />
+            <input type="password"class="grow" placeholder="密码" v-model="account.password" @change="formRef?.validate('password')" />
           </label>
           <VFormItem prop="password" :rules="rules.password" />
           <button class="btn btn-neutral mt-4" @click="submit">

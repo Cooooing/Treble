@@ -1,6 +1,7 @@
 import type { Config } from "vike/types";
 import vikePhoton from "vike-photon/config";
 import vikeVue from "vike-vue/config";
+import vikeVuePinia from 'vike-vue-pinia/config'
 
 // Default config (can be overridden by pages)
 // https://vike.dev/config
@@ -10,7 +11,7 @@ export default {
   title: process.env.VITE_GLOB_APP_TITLE || "Treble",
   description: "Fishpi",
 
-  extends: [vikeVue, vikePhoton],
+  extends: [vikeVue, vikePhoton, vikeVuePinia],
 
   // https://vike.dev/vike-photon
   photon: {

@@ -1,6 +1,6 @@
 <template>
   <div class="intro flex-1 flex flex-col justify-center space-y-4 md:pl-12 mt-8 md:mt-0">
-    <h1>🐟 鱼油，欢迎来到摸鱼派！</h1>
+    <h1 class="text-2xl md:text-3xl">🐟 鱼油，欢迎来到摸鱼派！</h1>
     <p>
       如果你也是奋斗在一线、热爱工作的苦逼青年，期待与众多鱼油聚集起来，那就加入友好的摸鱼派社区吧！ ❤️
     </p>
