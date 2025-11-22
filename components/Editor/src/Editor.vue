@@ -11,6 +11,10 @@
       height: '70vh',
       width: '100vw',
       theme: daisyuiTheme.isDarkTheme ? 'dark' : 'classic',
+      outline: {
+        enable: true,
+        position: 'left',
+      },
     });
   });
 
@@ -19,6 +23,19 @@
       vditor.value.setTheme(newVal ? 'dark' : 'classic');
     }
   }, { immediate: true });
+
+  defineExpose({
+    vditor,
+    getValue() {
+      return vditor.value?.getValue() || '';
+    },
+    setValue(value: string) {
+      vditor.value?.setValue(value);
+    },
+    focus() {
+      vditor.value?.focus();
+    },
+  });
 </script>
 <template>
  <div id="vditor">

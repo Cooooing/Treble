@@ -15,10 +15,10 @@ import { isNumber } from '@/utils';
 </script>
 <template>
   <div class="avatar" :class="{ 'avatar-placeholder': !url.startsWith('http') }">
-    <div v-if="url.startsWith('http')" class="rounded-full" :style="{ width: avatarSize }">
+    <div v-if="url.startsWith('http') || url.startsWith('/api/')" class="rounded-full" :style="{ width: avatarSize }">
       <img :src="url" />
     </div>
-    <div class="bg-neutral text-neutral-content rounded-full" :style="{ width: avatarSize, height: avatarSize }">
+    <div v-else class="bg-neutral text-neutral-content rounded-full" :style="{ width: avatarSize, height: avatarSize }">
       <span>{{ url }}</span>
     </div>
   </div>

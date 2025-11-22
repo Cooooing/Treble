@@ -7,14 +7,3 @@ export function json(data: any, msg = '', code = 200) {
     data,
   });
 }
-
-const handles: any[] = [];
-const files = fs.readdirSync(`./server/handlers`);
-for (const file of files) {
-  if (file.startsWith("index.") || (!file.endsWith(".ts") && !file.endsWith(".js"))) continue;
-  const handleModule = await import(/* @vite-ignore */`./${file}`).then(mod => mod);
-  console.log(file, handleModule);
-  handles.push(...handleModule.default||[]);
-}
-
-export default handles;

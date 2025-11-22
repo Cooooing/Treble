@@ -1,4 +1,5 @@
-import Editor from "./src/Editor.vue";
+import { clientOnly } from 'vike-vue/clientOnly';
 
-export { Editor };
-export default Editor;
+const EditorClientOnly = clientOnly(() => import("./src/Editor.vue"));
+export { EditorClientOnly as Editor };
+export default EditorClientOnly;

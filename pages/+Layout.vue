@@ -2,23 +2,19 @@
 
 <template>
   <div v-html="svg" style="display:none"></div>
-  <component v-if="Layout" :is="Layout">
+  <component :is="ThemeComponents[theme || 'default']">
     <slot></slot>
   </component>
 </template>
 
 <script lang="ts" setup>
-  import { usePageContext } from 'vike-vue/usePageContext';
+  import { components as ThemeComponents } from '@/theme/';
   import svg from 'virtual:svg-icons-ssr-html'
+  import { useData } from "vike-vue/useData";
+  import { Data } from './+data';
 
-  const page = usePageContext();
-  const Layout = ref<any>();
-  
-  async function loadTheme() {
-    Layout.value = await import(`@/theme/${page.user?.theme || 'default'}/index.vue`).then(m => m.default);
-  }
+  const { theme } = useData<Data>();
 
-  loadTheme()
 </script>
 
 

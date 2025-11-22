@@ -1,10 +1,9 @@
 <script setup lang="ts">
-  import { name } from './index';
   import Header from './Header/Header.vue';
   import Footer from './Footer/Footer.vue';
   import Content from './Content/Content.vue';
 
-  defineOptions({ name: name + '-layout' });
+  defineOptions({ name: 'default-layout' });
   const { prefixCls } = useDesign('layout');
 </script>
 

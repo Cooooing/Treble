@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { ILogin, loginByAccount } from '@/apis/auth';
-import { navigate } from 'vike/client/router';
-import { getGlobalContext } from 'vike/server';
+  import { navigate } from 'vike/client/router';
   import { VFormInstance, VFormItem } from '~/VForm';
 
   const prefixCls = useDesign('login');

@@ -256,10 +256,13 @@ export function loginByAccount(data: ILogin, errorRef?: { value: string }) {
 }
 
 /**
- * 用户登出
+ * 账号登出
+ * POST /v1/authentication/logout
+ * 接口ID：380201919
+ * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-380201919
  */
 export function logout() {
   return defHttp.post<void>({
-    url: '/api/logout',
+    url: '/v1/authentication/logout',
   });
 }

@@ -1,6 +1,6 @@
-import { getGlobalContext } from 'vike'
+import { getGlobalContextSync } from 'vike'
 
-const globalContext = await getGlobalContext();
+const globalContext = getGlobalContextSync();
 
 export interface HttpOptions {
   baseURL?: string;

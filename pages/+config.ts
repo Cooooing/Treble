@@ -18,5 +18,7 @@ export default {
     server: "../server/entry.ts",
   },
 
+  ssr: true,
+
   passToClient: ["user"],
 } as Config;

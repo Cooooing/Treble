@@ -1,4 +1,3 @@
-import ThemeHandlers from "./handlers/theme";
 import { apply, serve } from "@photonjs/express";
 import express from "express";
 import session from "express-session";
@@ -41,6 +40,15 @@ async function startServer() {
       app.use(prefix, expressProxy(origin, {
         proxyReqPathResolver: req => req.originalUrl.replace(new RegExp(`^${prefix}`), pathname), // 按需映射路径
         userResDecorator: async (proxyRes, proxyBody, req, res) => {
+          if (req.url?.endsWith('/authentication/logout')) {
+            // 清除 session 中的 token 和 user 信息
+            if (req.session) {
+              req.session.token = undefined;
+              req.session.user = undefined;
+              req.session.save();
+            }
+            return proxyBody;
+          }
           if (!req.url?.endsWith('/authentication/login/account')) {
             return proxyBody;
           }
@@ -72,9 +80,12 @@ async function startServer() {
     }
   }
 
-  await apply(app, ThemeHandlers);
+  await apply(app, []);
 
   return serve(app, {
     port,
+    onReady: () => {
+      console.log(`Server is running at http://localhost:${port}`);
+    },
   });
 }
