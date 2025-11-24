@@ -4,6 +4,7 @@
   import { usePageContext } from "vike-vue/usePageContext";
   import { addArticle, IArticlePost, ITag } from "@/apis/article";
 import { RuleItem, VFormInstance } from "~/VForm";
+import { navigate } from "vike/client/router";
 
   const pageContext = usePageContext();
   const isRaward = ref(false);
@@ -77,9 +78,9 @@ import { RuleItem, VFormInstance } from "~/VForm";
   });
   async function submit(status = 0) {
     data.value.status = status;
-    formRef.value?.validate();
+    if(!(await formRef.value?.validate())) return;
     const { articleId } = await addArticle(data.value, error);
-    window.location.href = `/article/${articleId}`;
+    navigate(`/article/${articleId}`);
   }
 </script>
 <template>
@@ -175,7 +176,7 @@ import { RuleItem, VFormInstance } from "~/VForm";
           <input type="checkbox" class="checkbox checkbox-sm" v-model="data.commentable" />
           <span>是否允许评论</span>
         </label>
-        <button class="btn btn-outline btn-error btn-sm">保存草稿</button>
+        <button class="btn btn-outline btn-error btn-sm" @click="submit(3)">保存草稿</button>
         <button class="btn btn-primary btn-sm" @click="submit()">发布</button>
       </section>
     </section>

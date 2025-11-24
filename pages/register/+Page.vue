@@ -75,9 +75,9 @@
     }
     loading.value = true;
     error.value = '';
-    const { codeToken } = await registerByEmail(account.value, error)
+    const { code_token } = await registerByEmail(account.value, error)
       .finally(() => loading.value = false);
-    verify.value.codeToken = codeToken;
+    verify.value.codeToken = code_token;
   }
 
   const verify = ref({

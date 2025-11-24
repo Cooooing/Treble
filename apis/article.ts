@@ -235,53 +235,67 @@ export interface IPostscript {
 
 /**
  * 新增文章
- * POST /v1/article/add
+ * POST /content/v1/article/add
  * 接口ID：365115453
  * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-365115453
  */
-export function addArticle(data: IArticlePost, errorRef?: Ref<string>) {
+export function addArticle(article: IArticlePost, errorRef?: Ref<string>) {
   return defHttp.post<{ articleId: number }>({
-    url: '/v1/article/add',
-    data,
+    url: '/content/v1/article/add',
+    data: { article },
+    errorRef
+  });
+}
+
+/**
+ * 更新草稿
+ * POST /content/v1/article/updateDraft
+ * 接口ID：380930501
+ * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-380930501
+ */
+export function updateArticleDraft(article: IArticlePost, errorRef?: Ref<string>) {
+  return defHttp.post({
+    url: '/content/v1/article/updateDraft',
+    data: { article },
     errorRef
   });
 }
 
 /**
  * 发布文章（从草稿发布）
- * POST /v1/article/publish
+ * POST /content/v1/article/publish
  * 接口ID：367779217
  * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-367779217
  */
 export function publishArticle(articleId: number) {
   return defHttp.post({
-    url: '/v1/article/publish',
+    url: '/content/v1/article/publish',
     data: { articleId },
   });
 }
 
 /**
  * 添加附言
- * POST /v1/article/addPostscript
+ * POST /content/v1/article/addPostscript
  * 接口ID：365115454
  * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-365115454
  */
 export function addArticlePostscript(articleId: number, content: string) {
   return defHttp.post({
-    url: '/v1/article/addPostscript',
+    url: '/content/v1/article/addPostscript',
     data: { articleId, content },
   });
 }
 
 /**
  * 查询单篇文章
- * POST /v1/article/getOne
+ * POST /content/v1/article/getOne
  * 接口ID：370061632
  * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-370061632
  */
 export function getArticle(articleId: number | string) {
   return defHttp.post<IArticle>({
-    url: '/v1/article/getOne',
+    url: '/content/v1/article/getOne',
     data: { articleId },
   });
 }
