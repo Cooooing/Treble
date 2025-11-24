@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { usePageContext } from 'vike-vue/usePageContext'
 
 export const useDaisyUI = defineStore('daisyUI', {
   state: () => ({
@@ -47,6 +48,7 @@ export const useDaisyUI = defineStore('daisyUI', {
       } else {
         document.documentElement.classList.remove('dark')
       }
+      document.querySelector<HTMLInputElement>('.theme-controller')!.value = theme;
     },
   },
 })

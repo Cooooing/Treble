@@ -2,6 +2,11 @@
 
 <template>
   <link rel="icon" :href="logoUrl" />
+  <component is="script">
+    document.documentElement.insertAdjacentHTML(`beforeend`, `<input type="checkbox" checked="true" class="theme-controller hidden" value="${
+      localStorage.getItem(`theme`) || `fishpi`
+    }" />`)
+  </component>
 </template>
 
 <script setup lang="ts">

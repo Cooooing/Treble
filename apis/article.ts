@@ -2,17 +2,55 @@ import { defHttp } from "@/utils/http";
 import { IUser } from "./auth";
 
 /**
+ * common.api.content.v1.TagSave
+ */
+export interface ITag {
+    /**
+     * 标签描述
+     */
+    description: string;
+    /**
+     * 领域ID
+     */
+    domainId: string;
+    /**
+     * 主键
+     */
+    id: string;
+    /**
+     * 标签名称
+     */
+    name: string;
+    /**
+     * 状态：0-正常，1-禁用
+     */
+    status: number;
+}
+
+/**
  * 新增文章参数
  */
 export interface IArticlePost {
+  /**
+   * 是否匿名
+   */
+  anonymous: boolean;
   /**
    * 悬赏积分
    */
   bountyPoints: number;
   /**
+   * 是否允许评论
+   */
+  commentable: boolean;
+  /**
    * 内容
    */
   content: string;
+  /**
+   * 是否在列表展示
+   */
+  listable: boolean;
   /**
    * 打赏内容
    */
@@ -22,9 +60,17 @@ export interface IArticlePost {
    */
   rewardPoints: number;
   /**
+   * 创作声明
+   */
+  statement: string;
+  /**
    * 状态 0-正常 1-隐藏 2-锁定 3-草稿 4-删除
    */
   status: number;
+  /**
+   * 标签id
+   */
+  tags: Partial<ITag>[];
   /**
    * 标题
    */
@@ -193,10 +239,11 @@ export interface IPostscript {
  * 接口ID：365115453
  * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-365115453
  */
-export function addArticle(data: IArticlePost) {
+export function addArticle(data: IArticlePost, errorRef?: Ref<string>) {
   return defHttp.post<{ articleId: number }>({
     url: '/v1/article/add',
     data,
+    errorRef
   });
 }
 
@@ -223,5 +270,18 @@ export function addArticlePostscript(articleId: number, content: string) {
   return defHttp.post({
     url: '/v1/article/addPostscript',
     data: { articleId, content },
+  });
+}
+
+/**
+ * 查询单篇文章
+ * POST /v1/article/getOne
+ * 接口ID：370061632
+ * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-370061632
+ */
+export function getArticle(articleId: number | string) {
+  return defHttp.post<IArticle>({
+    url: '/v1/article/getOne',
+    data: { articleId },
   });
 }

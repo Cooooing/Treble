@@ -16,6 +16,7 @@ export function autoImports(_env?: ViteEnv, _isBuild?: boolean) {
         {
           '@/utils/message': ['$toast'],
           '@/hooks/useDesign': ['useDesign'],
+          'vike-vue/usePageContext': ['usePageContext'],
         },
       ],
       dts: 'types/imports-auto.d.ts',

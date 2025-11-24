@@ -70,6 +70,7 @@ declare global {
 
     interface PageContext {
       user?: IUser;
+      daisyui?: string;
     }
   }
 } 

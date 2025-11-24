@@ -1,7 +1,7 @@
 <!-- https://vike.dev/Layout -->
 
 <template>
-  <div v-html="svg" style="display:none"></div>
+  <div class="symbol-pool" v-html="svg"></div>
   <component :is="ThemeComponents[theme || 'default']">
     <slot></slot>
   </component>
@@ -14,7 +14,6 @@
   import { Data } from './+data';
 
   const { theme } = useData<Data>();
-
 </script>
 
 

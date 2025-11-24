@@ -1,17 +1,19 @@
 <script setup lang="ts">
-  import { VFormContext, FormItemContext, VFormContextKey } from '../index';
+  import { isString } from '@/utils';
+import { VFormContext, FormItemContext, VFormContextKey, validator, FormValidate } from '../index';
 
   const props = withDefaults(
     defineProps<{
       is: string;
       model?: any;
+      rules?: Recordable<any>;
     }>(),
     {
       is: "form",
     },
   );
   const emit = defineEmits<{
-    (e: 'validateFailed', payload: { prop: string }): void;
+    (e: 'validateFailed', payload: FormValidate): void;
   }>();
 
   const context = reactive<VFormContext>({
@@ -27,20 +29,39 @@
   const fields = reactive<Recordable<FormItemContext>>({});
   const fieldsProps = reactive<Recordable<number>>({});
 
-  async function validate(key?: string): Promise<boolean> {
+  async function validate(key?: string | string[]): Promise<boolean> {
     if (!props.model) return true;
-    if (key) {
-      if (fields[key]) {
-        if (!(await fields[key].validate(props.model[key]).catch(() => false))) {
-          emit('validateFailed', { prop: key });
+    const keys = isString(key) ? [key] : key;
+    if (Object.keys(fields).length == 0) {
+      const rules = !keys ? props.rules : Object.entries(props.rules || {}).reduce((acc, [k, v]) => {
+        if (keys.includes(k)) acc[k] = v;
+        return acc;
+      }, {} as Recordable<any>);
+      return validator(rules || {}, props.model)
+        .then(() => true)
+        .catch((errors: FormValidate[]) => {
+          emit('validateFailed', errors[0]);
           return false;
+        });
+    }
+    if (keys) {
+      for (const key of keys) {
+        if (fields[key]) {
+          if (!(await fields[key].validate(props.model[key]).catch((errors) => {
+            emit('validateFailed', errors[0]);
+            return false
+          }))) {
+            return false;
+          }
         }
       }
       return true;
     }
     for (const key in fields) {
-      if (!(await fields[key].validate(props.model[key]).catch(() => false))) {
-        emit('validateFailed', { prop: key });
+      if (!(await fields[key].validate(props.model[key]).catch((errors) => {
+        emit('validateFailed', errors[0]);
+        return false
+      }))) {
         return false;
       }
     }
