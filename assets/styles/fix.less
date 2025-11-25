@@ -7,6 +7,7 @@ h1 {
 }
 
 .vditor-reset, .dark .vditor-reset {
+  color: inherit;
   h1, h2, h3, h4, h5, h6 {
     font-weight: bold;
     margin-top: 1.5em;
@@ -38,6 +39,7 @@ h1 {
   p {
     line-height: 1.8;
     margin-bottom: 1em;
+    word-break: break-all;
   }
   code:not(.hljs):not(.highlight-chroma) {
     padding: 1px 5px;
@@ -45,6 +47,18 @@ h1 {
   }
   blockquote {
     padding-left: 5px;
+  }
+  .highlight-line {
+    padding-left: 20px;
+  }
+
+  .vditor-copy + code:not(.hljs):not(.highlight-chroma) {
+    padding: 10px;
+    padding-left: 20px;
+    background-color: var(--color-neutral);
+    &::before {
+      margin-left: -20px;
+    }
   }
 }
 

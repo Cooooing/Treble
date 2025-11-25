@@ -28,7 +28,7 @@
       <ThemeSwitchClientOnly />
       <a role="button" href="/article/pre" class="btn btn-active btn-primary btn-sm">+ 发帖</a>
       <div class="dropdown dropdown-end">
-        <Avatar :url="`https://treble.sxisa.com/api/user/v1/user/avatar/${page.user.name}`" :size="32" class="cursor-pointer" tabindex="0" />
+        <Avatar :url="page.user.avatarUrl || `/api/user/v1/user/avatar/${page.user.name}`" :size="32" class="cursor-pointer" tabindex="0" />
         <ul tabindex="-1" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
           <li><a class="text-inherit">个人主页</a></li>
           <li><a class="text-inherit">设置</a></li>

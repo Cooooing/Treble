@@ -31,7 +31,7 @@ import { after } from 'node:test';
         transform: (html: string) => {
           return html
             .replace(/<table/g, `<div 
-            class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 max-h-96">
+            class="overflow-x-auto rounded-box border border-base-content bg-base-100 max-h-96">
             <table class="table table-zebra table-pin-rows table-pin-cols"`)
             .replace(/<\/table>/g, '</table></div>');
         }

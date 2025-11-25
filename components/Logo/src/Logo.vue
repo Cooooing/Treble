@@ -3,6 +3,10 @@
   import { Vue3Lottie } from 'vue3-lottie'
   import { logoData } from '../animation'
 
+  defineProps<{
+    iconOnly?: boolean;
+  }>()
+
   const logoRef = ref<InstanceType<typeof Vue3Lottie>>();
   const title = import.meta.env.VITE_GLOB_APP_TITLE;
   const reload = ref(false);
@@ -27,6 +31,6 @@
         renderer="svg"
       />
     </span>
-    <span class="hidden md:inline">{{ title }}</span>
+    <span v-if="!iconOnly" class="hidden md:inline">{{ title }}</span>
   </a>
 </template>
