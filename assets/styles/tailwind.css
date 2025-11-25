@@ -54,3 +54,19 @@
     @apply text-blue-600 hover:text-pink-400 visited:text-blue-900;
   }
 }
+
+@layer utilities {
+  .highlight-chroma, .hljs {
+    /* 把一组 utility 应用到这个别名上 */
+    @apply mockup-code w-full block my-2 border border-solid border-base-300;
+    .highlight-line {
+      @apply pr-10;
+    }
+  }
+
+  .vditor-reset{
+    h2, blockquote {
+      @apply !border-base-content/50;
+    }
+  }
+}

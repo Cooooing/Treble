@@ -5,3 +5,124 @@ h1 {
 .symbol-pool {
   display: none;
 }
+
+.vditor-reset, .dark .vditor-reset {
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: bold;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    position: relative;
+  }
+  h1 {
+    font-size: 2em;
+  }
+
+  h2 {
+    font-size: 1.5em;
+  }
+  h3 {
+    font-size: 1.17em;
+  }
+
+  h4 {
+    font-size: 1em;
+  }
+
+  h5 {
+    font-size: 0.83em;
+  }
+
+  h6 {
+    font-size: 0.75em;
+  }
+  p {
+    line-height: 1.8;
+    margin-bottom: 1em;
+  }
+  code:not(.hljs):not(.highlight-chroma) {
+    padding: 1px 5px;
+    border-radius: 5px;
+  }
+  blockquote {
+    padding-left: 5px;
+  }
+}
+
+.vditor-copy {
+  position: relative;
+  z-index: 1;
+  textarea {
+    position: absolute;
+    left: -100000px;
+    height: 10px;
+  }
+  span {
+    cursor: pointer;
+    position: absolute;
+    right: 15px;
+    top: 0.5em;
+    svg {
+      color: #586069;
+      height: 14px;
+      width: 14px !important;
+      display: block;
+      fill: currentColor;
+    }
+  }
+}
+.vditor-linenumber {
+  &.hljs, &.highlight-chroma {
+    padding-left: 3em;
+    &::before {
+      margin-left: -3em;
+    }
+  }
+  .vditor-linenumber__rows {
+    position: absolute;
+    pointer-events: none;
+    top: 3em;
+    left: 0;
+    width: 3em;
+    user-select: none;
+    counter-reset: linenumber;
+  }
+  .vditor-linenumber__rows > span {
+    pointer-events: none;
+    display: block;
+  }
+  .vditor-linenumber__rows > span::before {
+    counter-increment: linenumber;
+    content: counter(linenumber);
+    color: rgba(158, 150, 150, 0.38);
+    display: block;
+    padding-right: 1em;
+    text-align: right;
+  }
+}
+.vditor-anchor--left {
+  left: -25px;
+}
+.vditor-anchor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  display: inline-flex;
+  align-items: center;
+  svg {
+    visibility: hidden;
+    color: var(--color-primary);
+    fill: currentColor;
+    vertical-align: middle;
+  }
+  &:hover {
+    svg {
+      visibility: visible;
+    }
+  }
+}
+.vditor-reset svg {
+  height: auto;
+  width: auto;
+  stroke-width: initial;
+}

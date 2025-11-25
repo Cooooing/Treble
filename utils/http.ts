@@ -1,6 +1,5 @@
-import { getGlobalContextSync } from 'vike'
+import { getGlobalContext } from 'vike'
 
-const globalContext = getGlobalContextSync();
 
 export interface HttpOptions {
   baseURL?: string;
@@ -97,7 +96,7 @@ class DefHttp {
     };
   }
 
-  private request(options: HttpOptions) {
+  private async request(options: HttpOptions) {
     options = Object.assign({ 
       transformResponse: true, 
       method: 'GET',
@@ -105,11 +104,12 @@ class DefHttp {
     }, options);
     const { url, options: requestOptions } = this.transformRequestOptions(options);
     let baseUrl = '';
+    const globalContext = await getGlobalContext();
     if (!globalContext.isClientSide && !url.startsWith('http')) {
       baseUrl = `http://localhost:${process.env.PORT || 2324}`;
     }
     console.log('HTTP Request URL:', baseUrl + url);
-    return fetch(baseUrl + url, requestOptions).then((res) => this.transformResponse(options, res));
+    return await fetch(baseUrl + url, requestOptions).then((res) => this.transformResponse(options, res));
   }
 }
 

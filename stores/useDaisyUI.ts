@@ -35,6 +35,23 @@ export const useDaisyUI = defineStore('daisyUI', {
         'coffee',
       ]
     },
+    hlTheme(): string {
+      return {
+        'fishpi': 'github',
+        'dark': 'github-dark', //
+        'emerald': 'atom-one-light', 
+        'cyberpunk': 'paraiso-dark',
+        'valentine': 'arduino-light',
+        'halloween': 'arta',//
+        'forest': 'monokai', //
+        'dracula': 'an-old-hope', //
+        'business': 'monokai', //
+        'lemonade': 'paraiso-light', 
+        'night': 'ir-black', //
+        'coffee': 'androidstudio', //
+        'winter': 'ascetic', 
+      }[this.theme] || (this.isDarkTheme ? 'github-dark' : 'github')
+    },
     isDarkTheme(): boolean {
       return this.darkThemes.includes(this.theme)
     }

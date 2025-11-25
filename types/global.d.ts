@@ -70,7 +70,13 @@ declare global {
 
     interface PageContext {
       user?: IUser;
+      token?: string;
       daisyui?: string;
     }
   }
 } 
+
+declare interface IDateLite {
+  seconds: number;
+  nanos: number;
+}

@@ -92,27 +92,31 @@ export interface IArticle {
   /**
    * 是否匿名
    */
-  anonymous?: boolean;
+  anonymous: boolean;
   /**
    * 作者信息
    */
-  authorUser?: IUser;
+  authorUser: IUser;
   /**
    * 悬赏积分
    */
-  bountyPoints?: number;
+  bountyPoints: number;
   /**
    * 收藏数
    */
-  collectCount?: number;
+  collectCount: number;
   /**
    * 是否允许评论
    */
-  commentable?: boolean;
+  commentable: boolean;
   /**
    * 正文内容
    */
-  content?: string;
+  content: string;
+  /**
+   * 正文 HTML 内容
+   */
+  content_render: string;
   /**
    * 创建时间
    */
@@ -120,67 +124,67 @@ export interface IArticle {
   /**
    * 创建人
    */
-  createdBy?: string;
+  createdBy: string;
   /**
    * 是否有附言
    */
-  hasPostscript?: boolean;
+  hasPostscript: boolean;
   /**
    * 唯一ID
    */
-  id?: string;
+  id: string;
   /**
    * 点赞数
    */
-  likeCount?: number;
+  likeCount: number;
   /**
    * 抽奖参与人数
    */
-  lotteryParticipantCount?: number;
+  lotteryParticipantCount: number;
   /**
    * 抽奖获奖人数
    */
-  lotteryWinnerCount?: number;
+  lotteryWinnerCount: number;
   /**
    * 附言
    */
-  postscripts?: IPostscript[];
+  postscripts: IPostscript[];
   /**
    * 最后回复时间
    */
-  repliedAt?: Date;
+  repliedAt: Date;
   /**
    * 回复数
    */
-  replyCount?: number;
+  replyCount: number;
   /**
    * 最后回复用户
    */
-  replyUser?: IUser;
+  replyUser: IUser;
   /**
    * 打赏区内容（可为空）
    */
-  rewardContent?: string;
+  rewardContent: string;
   /**
    * 打赏积分
    */
-  rewardPoints?: number;
+  rewardPoints: number;
   /**
    * 状态: 0-正常 1-隐藏 2-锁定 3-草稿 4-删除
    */
-  status?: number;
+  status: number;
   /**
    * 感谢数
    */
-  thankCount?: number;
+  thankCount: number;
   /**
    * 标题
    */
-  title?: string;
+  title: string;
   /**
    * 类型: 0-普通 1-问答 2-投票 3-抽奖
    */
-  type?: number;
+  type: number;
   /**
    * 更新时间
    */
@@ -188,15 +192,15 @@ export interface IArticle {
   /**
    * 更新人
    */
-  updatedBy?: string;
+  updatedBy: string;
   /**
    * 总投票数
    */
-  voteTotal?: number;
+  voteTotal: number;
   /**
    * 关注数
    */
-  watchCount?: number;
+  watchCount: number;
 }
 
 /**
@@ -294,7 +298,7 @@ export function addArticlePostscript(articleId: number, content: string) {
  * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-370061632
  */
 export function getArticle(articleId: number | string) {
-  return defHttp.post<IArticle>({
+  return defHttp.post<{article: IArticle}>({
     url: '/content/v1/article/getOne',
     data: { articleId },
   });
