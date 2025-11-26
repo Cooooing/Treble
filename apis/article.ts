@@ -1,5 +1,5 @@
 import { defHttp } from "@/utils/http";
-import { IUser } from "./auth";
+import { IUser } from "./user";
 
 /**
  * common.api.content.v1.TagSave
@@ -31,6 +31,7 @@ export interface ITag {
  * 新增文章参数
  */
 export interface IArticlePost {
+  id?: string;
   /**
    * 是否匿名
    */
@@ -38,7 +39,7 @@ export interface IArticlePost {
   /**
    * 悬赏积分
    */
-  bountyPoints: number;
+  bounty_points: number;
   /**
    * 是否允许评论
    */
@@ -54,11 +55,11 @@ export interface IArticlePost {
   /**
    * 打赏内容
    */
-  rewardContent: string;
+  reward_content: string;
   /**
    * 打赏积分
    */
-  rewardPoints: number;
+  reward_points: number;
   /**
    * 创作声明
    */
@@ -66,7 +67,7 @@ export interface IArticlePost {
   /**
    * 状态 0-正常 1-隐藏 2-锁定 3-草稿 4-删除
    */
-  status: number;
+  status?: number;
   /**
    * 标签id
    */
@@ -86,9 +87,9 @@ export interface IArticlePost {
  */
 export interface IArticle {
   /**
-   * 采纳评论ID（可为空）
+   * 采纳评论Id（可为空）
    */
-  acceptedAnswerId?: string;
+  accepted_answer_id?: string;
   /**
    * 是否匿名
    */
@@ -96,15 +97,15 @@ export interface IArticle {
   /**
    * 作者信息
    */
-  authorUser: IUser;
+  author_user: IUser;
   /**
    * 悬赏积分
    */
-  bountyPoints: number;
+  bounty_points: number;
   /**
    * 收藏数
    */
-  collectCount: number;
+  collect_count: number;
   /**
    * 是否允许评论
    */
@@ -114,69 +115,81 @@ export interface IArticle {
    */
   content: string;
   /**
-   * 正文 HTML 内容
+   * 正文内容渲染
    */
   content_render: string;
   /**
    * 创建时间
    */
-  createdAt?: Date;
+  created_at: IDateLite;
   /**
    * 创建人
    */
-  createdBy: string;
+  created_by: string;
   /**
    * 是否有附言
    */
-  hasPostscript: boolean;
+  has_postscript: boolean;
   /**
-   * 唯一ID
+   * 唯一Id
    */
   id: string;
   /**
+   * 最后回复时间
+   */
+  last_reply_at: IDateLite;
+  /**
+   * 最后回复用户
+   */
+  last_reply_user?: IUser;
+  /**
    * 点赞数
    */
-  likeCount: number;
+  like_count: number;
+  /**
+   * 是否在列表展示
+   */
+  listable: boolean;
   /**
    * 抽奖参与人数
    */
-  lotteryParticipantCount: number;
+  lottery_participant_count: number;
   /**
    * 抽奖获奖人数
    */
-  lotteryWinnerCount: number;
+  lottery_winner_count: number;
   /**
    * 附言
    */
   postscripts: IPostscript[];
   /**
-   * 最后回复时间
-   */
-  repliedAt: Date;
-  /**
    * 回复数
    */
-  replyCount: number;
-  /**
-   * 最后回复用户
-   */
-  replyUser: IUser;
+  reply_count: number;
   /**
    * 打赏区内容（可为空）
    */
-  rewardContent: string;
+  reward_content: string;
   /**
    * 打赏积分
    */
-  rewardPoints: number;
+  reward_points: number;
+  /**
+   * 创作声明
+   */
+  statement: string;
   /**
    * 状态: 0-正常 1-隐藏 2-锁定 3-草稿 4-删除
    */
   status: number;
   /**
+   * 标签
+   */
+  tags: ITag[];
+  /**
    * 感谢数
    */
-  thankCount: number;
+  thank_count: number;
   /**
    * 标题
    */
@@ -188,19 +201,19 @@ export interface IArticle {
   /**
    * 更新时间
    */
-  updatedAt?: Date;
+  updated_at?: IDateLite;
   /**
    * 更新人
    */
-  updatedBy: string;
+  updated_by?: string;
   /**
    * 总投票数
    */
-  voteTotal: number;
+  vote_total: number;
   /**
    * 关注数
    */
-  watchCount: number;
+  watch_count: number;
 }
 
 /**
@@ -218,7 +231,7 @@ export interface IPostscript {
   /**
    * 创建时间
    */
-  createdAt?: Date;
+  createdAt?: IDateLite;
   /**
    * 创建人
    */
@@ -230,7 +243,7 @@ export interface IPostscript {
   /**
    * 更新时间
    */
-  updatedAt?: Date;
+  updatedAt?: IDateLite;
   /**
    * 更新人
    */
@@ -303,3 +316,18 @@ export function getArticle(articleId: number | string) {
     data: { articleId },
   });
 }
+
+/**
+ * 发布文章（从草稿发布）
+ * POST /v1/article/publish
+ * 接口ID：367779217
+ * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-367779217
+ */
+export function publishArticleDraft(article_id: string, errorRef?: Ref<string>) {
+  return defHttp.post({
+    url: '/v1/article/publish',
+    data: { article_id },
+    errorRef
+  });
+}
+

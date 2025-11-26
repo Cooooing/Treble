@@ -52,6 +52,10 @@ declare global {
       [elem: string]: any;
     }
   }
+  declare interface IDateLite {
+    seconds: number;
+    nanos: number;
+  }
 }
 
 declare module 'vue' {
@@ -75,8 +79,3 @@ declare global {
     }
   }
 } 
-
-declare interface IDateLite {
-  seconds: number;
-  nanos: number;
-}

@@ -1,6 +1,56 @@
 import { defHttp } from "@/utils/http";
 import * as qiniu from 'qiniu-js'; 
 
+export interface IBasicPageParams<T> {
+  /**
+   * 分页参数
+   */
+  page: {
+    /**
+     * 页码
+     */
+    page?: number;
+    /**
+     * 页大小
+     */
+    size?: number;
+  };
+  /**
+   * 查询参数
+   */
+  query: T;
+}
+
+export interface IBasicPageResult<T> {
+    /**
+     * 分页
+     */
+    page: {
+      /**
+       * 页码
+       */
+      page?: number;
+      /**
+       * 页大小
+       */
+      size?: number;
+      /**
+       * 总数
+       */
+      total?: number;
+    };
+    /**
+     * 用户列表
+     */
+    rows: T[];
+}
+
+export interface IUploadFile { 
+  filename: string; 
+  url: string; 
+  hash: string 
+}
+
 /**
  * 获取上传文件凭证
  * POST /v1/oss/uploadToken
@@ -15,13 +65,37 @@ export function getUploadToken() {
   });
 }
 
-export async function uploadFileToOss(files: File[], token: string, vars?: Recordable<string>) {
+export function uploadFileToOss(
+  files: File[], 
+  token: string, 
+  { 
+    vars,
+    onProgress,
+  }: { 
+    vars?: Recordable<string>,
+    onProgress?: (percent: number, filename: string) => any,
+  }
+) {
   const config = {
     useCdnDomain: true,
     region: qiniu.region.z2,
   };
 
-  const uploadPromises = files.map(file => {
+  const results: IUploadFile[] = [];
+  const uploadPromises: Promise<IUploadFile>[] = [];
+  let cancelUpload: (() => void) | null = null;
+  const ret = {
+    cancel: () => { cancelUpload?.(); },
+    results: () => Promise.all<IUploadFile>(uploadPromises)
+    .then(() => ({ err: undefined }))
+    .catch((err: Error) => ({
+      err,
+    }))
+    .then((ret) => ({ err: ret.err, files: results })),
+  }
+
+  // 依次上传
+  for (let file of files) {
     const putExtra = {
       fname: file.name,
       customVars: vars || {},
@@ -37,22 +111,25 @@ export async function uploadFileToOss(files: File[], token: string, vars?: Recor
       });
     }
 
-    const key = `${Date.now()}_${file.name}`;
-    const observable = qiniu.upload(file, key, token, putExtra, config);
-    return new Promise<{ filename: string; url: string; hash: string }>((resolve, reject) => {
+    const observable = qiniu.upload(file, null, token, putExtra, config);
+    uploadPromises.push(new Promise<IUploadFile>((resolve, reject) => {
       const subscription = observable.subscribe({
-        next() {},
+        next({ total }) {
+          // 获取上传进度
+          onProgress?.(total.percent, file.name);
+        },
         error(err) {
           reject(err);
         },
         complete(res) {
           debugger;
-          resolve({ url: res.key, hash: res.hash, filename: file.name });
+          results.push({ url: res.key, hash: res.hash, filename: file.name });
           subscription.unsubscribe();
         },
       });
-    });
-  });
+      cancelUpload = () => subscription.unsubscribe();
+    }));
+  }
 
-  return Promise.all(uploadPromises);
+  return ret;
 }
