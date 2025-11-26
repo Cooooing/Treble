@@ -107,6 +107,7 @@ import { navigate } from "vike/client/router";
           },
         }"
         v-model="data.content"
+        name="article"
       >
         <template #fallback>
           <div class="h-[70vh] flex items-center justify-center">

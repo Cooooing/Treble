@@ -39,6 +39,7 @@
     "lodash-es": "^4.17.21",
     "pinia": "^3.0.4",
     "prettier": "^3.6.2",
+    "qiniu-js": "^3.4.3",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "unplugin-auto-import": "^20.2.0",
