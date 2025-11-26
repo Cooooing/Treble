@@ -16,11 +16,11 @@
     </span>
     <span class="space-x-1 inline-flex items-center cursor-pointer hover:text-primary">
       <Icon icon="streamline-plump:like-1" />
-      <span>{{ article.likeCount || 0 }}</span>
+      <span>{{ article.like_count || 0 }}</span>
     </span>
     <span class="space-x-1 inline-flex items-center cursor-pointer hover:text-primary">
       <Icon icon="tabler:star" />
-      <span>{{ article.collectCount || 0 }}</span>
+      <span>{{ article.collect_count || 0 }}</span>
     </span>
   </section>
 </template>

@@ -12,8 +12,12 @@
   import svg from 'virtual:svg-icons-ssr-html'
   import { useData } from "vike-vue/useData";
   import { Data } from './+data';
+  import { LayoutContextKey } from '@/pages/index';
 
   const { theme } = useData<Data>();
+  const pageContext = usePageContext();
+  provide(LayoutContextKey, { pageContext });
+  
 </script>
 
 

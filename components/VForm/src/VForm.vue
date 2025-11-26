@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { isString } from '@/utils';
-import { VFormContext, FormItemContext, VFormContextKey, validator, FormValidate } from '../index';
+import { IFormContext, IFormItemContext, VFormContextKey, validator, FormValidate } from '../index';
 
   const props = withDefaults(
     defineProps<{
@@ -16,8 +16,8 @@ import { VFormContext, FormItemContext, VFormContextKey, validator, FormValidate
     (e: 'validateFailed', payload: FormValidate): void;
   }>();
 
-  const context = reactive<VFormContext>({
-    addField(prop: string, field: FormItemContext) {
+  const context = reactive<IFormContext>({
+    addField(prop: string, field: IFormItemContext) {
       if (!fields[prop]) fields[prop] = field;
       fieldsProps[prop] = (fieldsProps[prop] || 0) + 1;
     },
@@ -26,7 +26,7 @@ import { VFormContext, FormItemContext, VFormContextKey, validator, FormValidate
     },
   });
   provide(VFormContextKey, context);
-  const fields = reactive<Recordable<FormItemContext>>({});
+  const fields = reactive<Recordable<IFormItemContext>>({});
   const fieldsProps = reactive<Recordable<number>>({});
 
   async function validate(key?: string | string[]): Promise<boolean> {

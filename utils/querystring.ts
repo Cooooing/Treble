@@ -1,4 +1,3 @@
-import { usePageContext } from "vike-vue/usePageContext";
 import { getType } from "./is";
 
 /**

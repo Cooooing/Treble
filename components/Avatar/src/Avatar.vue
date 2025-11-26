@@ -4,6 +4,7 @@ import { isNumber } from '@/utils';
   const props = defineProps<{
     url: string;
     size: number | string;
+    square?: boolean;
   }>();
 
   const avatarSize = computed(() => {
@@ -15,10 +16,10 @@ import { isNumber } from '@/utils';
 </script>
 <template>
   <div class="avatar" :class="{ 'avatar-placeholder': !url.startsWith('http') }">
-    <div v-if="url.startsWith('http') || url.startsWith('/api/')" class="rounded-full" :style="{ width: avatarSize }">
+    <div v-if="url.startsWith('http') || url.startsWith('/api/')" :class="props.square ? '' : 'rounded-full'" :style="{ width: avatarSize }">
       <img :src="url" />
     </div>
-    <div v-else class="bg-neutral text-neutral-content rounded-full" :style="{ width: avatarSize, height: avatarSize }">
+    <div v-else class="bg-neutral text-neutral-content" :class="props.square ? '' : 'rounded-full'" :style="{ width: avatarSize, height: avatarSize }">
       <span>{{ url }}</span>
     </div>
   </div>

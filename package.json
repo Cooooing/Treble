@@ -33,6 +33,7 @@
     "@vueuse/core": "^14.0.0",
     "async-validator": "^4.2.5",
     "daisyui": "^5.5.0",
+    "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "fast-glob": "^3.3.3",
     "less": "^4.4.2",

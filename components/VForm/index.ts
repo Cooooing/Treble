@@ -15,12 +15,12 @@ export declare interface FormValidate {
   field?: string;
 }
 
-export interface VFormContext {
-  addField: (prop: string, field: FormItemContext) => void;
-  removeField: (prop: string, field: FormItemContext) => void;
+export interface IFormContext {
+  addField: (prop: string, field: IFormItemContext) => void;
+  removeField: (prop: string, field: IFormItemContext) => void;
 }
 
-export interface FormItemContext {
+export interface IFormItemContext {
   validate: (
     value: any,
     callback?: (isVaild?: boolean, err?: FormValidate[]) => void,
@@ -51,5 +51,5 @@ export function validator(rules: Recordable<RuleItem[]>, data?: any, callback?: 
 
 export { RuleItem };
 
-export const VFormContextKey: InjectionKey<VFormContext> = Symbol('VFormContextKey');
-export const VFormItemContextKey: InjectionKey<FormItemContext> = Symbol('VFormItemContextKey');
+export const VFormContextKey: InjectionKey<IFormContext> = Symbol('VFormContextKey');
+export const VFormItemContextKey: InjectionKey<IFormItemContext> = Symbol('VFormItemContextKey');

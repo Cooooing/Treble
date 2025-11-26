@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import AsyncValidator, { ValidateError, ValidateFieldsError, Values } from 'async-validator';
-  import { FormItemContext, VFormItemContextKey, VFormContextKey, FormValidate, RuleItem, validator } from '../index';
+  import { IFormItemContext, VFormItemContextKey, VFormContextKey, FormValidate, RuleItem, validator } from '../index';
   import { isUnDef } from '@/utils';
 
   const props = withDefaults(defineProps<{
@@ -29,7 +29,7 @@
     });
   }
 
-  const context = reactive<FormItemContext>({
+  const context = reactive<IFormItemContext>({
     rules: props.rules ? (Array.isArray(props.rules) ? props.rules : [props.rules]) : [],
     validate,
   });
