@@ -33,7 +33,7 @@
 </script>
 
 <template>
-    <article class="flex md:flex-row flex-col p-8 max-w-[1300px] m-auto md:pt-30" :class="prefixCls">
+    <article class="flex md:flex-row flex-col p-8 wrapper md:pt-30" :class="prefixCls">
     <section class="flex-1">
       <section class="flex items-center justify-center">
         <VForm

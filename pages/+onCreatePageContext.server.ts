@@ -7,4 +7,5 @@ export async function onCreatePageContext(pageContext: PageContextServer) {
     pageContext.user = req.session.user;
     pageContext.token = req.session.token;
   }
+  pageContext.title = process.env.VITE_GLOB_APP_TITLE;
 }

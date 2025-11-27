@@ -86,6 +86,8 @@
       publishArticleDraft(data.value.id, error);
     }
     const { articleId } = await (data.value.id ? updateArticleDraft : addArticle)(data.value, error);
+    contentRef.value?.clearCache();
+    rawardRef.value?.clearCache();
     if (status == 0) navigate(`/article/${articleId}`);
     else navigate(`/article/post/${articleId}`);
   }
@@ -134,13 +136,15 @@
         </button>
       </section>
       <section v-else>
-        <Editor ref="rawardRef" height="30vh" v-model="data.reward_content">
-          <template #fallback>
-            <div class="h-[30vh] flex items-center justify-center">
-              <span class="loading loading-infinity loading-xl"></span>
-            </div>
-          </template>
-        </Editor>
+        <ClientOnly>
+          <Editor ref="rawardRef" height="30vh" v-model="data.reward_content">
+            <template #fallback>
+              <div class="h-[30vh] flex items-center justify-center">
+                <span class="loading loading-infinity loading-xl"></span>
+              </div>
+            </template>
+          </Editor>
+        </ClientOnly>
         <label class="input validator join-item input-sm input-ghost w-full border-b border-base-100">
           <input type="number" placeholder="打赏积分" required v-model="data.reward_points" />
         </label>
@@ -156,7 +160,7 @@
         <span>{{error}}</span>
       </div>
     </section>
-    <section class="py-2 flex justify-between max-w-[1300px] m-auto w-full md:flex-row flex-col" v-if="articleType">
+    <section class="py-2 flex justify-between wrapper w-full md:flex-row flex-col" v-if="articleType">
       <section class="space-x-2 md:flex items-center hidden">
         <Icon :icon="articleType.icon" />
         <span>{{ articleType.name }}</span>

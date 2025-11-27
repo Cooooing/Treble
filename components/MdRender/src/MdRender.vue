@@ -4,7 +4,7 @@ import { after } from 'node:test';
   import Vditor from 'vditor';
   const props = defineProps<{
     md: string;
-    html: string;
+    html?: string;
   }>();
   const render = ref(true);
   const contentRef = ref<HTMLDivElement>();
@@ -19,9 +19,6 @@ import { after } from 'node:test';
         hljs: {
           style: daisyuiTheme.hlTheme,
           lineNumber: true,
-          enable: true,
-        },
-        speech: {
           enable: true,
         },
         anchor: 1,
@@ -50,6 +47,6 @@ import { after } from 'node:test';
   })
 </script>
 <template>
-  <div v-bind="$attrs" v-if="render" v-html="props.html"></div>
+  <div v-bind="$attrs" v-if="render && props.html" v-html="props.html"></div>
   <div v-bind="$attrs" v-if="md" ref="contentRef"></div>
 </template>

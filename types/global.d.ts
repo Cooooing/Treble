@@ -75,7 +75,13 @@ declare global {
     interface PageContext {
       user?: IUser;
       token?: string;
+      title?: string;
       daisyui?: string;
     }
+  }
+
+  interface HTMLElement {
+    showModal?: () => void;
+    close?: () => void;
   }
 } 

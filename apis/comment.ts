@@ -44,7 +44,7 @@ export interface ICommentQuery {
 
 
 /**
- * common.api.content.v1.Comment
+ * 评论
  */
 export interface IComment {
     /**
@@ -66,7 +66,7 @@ export interface IComment {
     /**
      * 创建时间
      */
-    created_at: Date;
+    created_at: IDateLite;
     /**
      * 创建人
      */
@@ -106,7 +106,7 @@ export interface IComment {
     /**
      * 更新时间
      */
-    updated_at: Date;
+    updated_at: IDateLite;
     /**
      * 更新人
      */
@@ -123,12 +123,13 @@ export interface IComment {
  * 接口ID：365115464
  * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-365115464
  */
-export function addComment(data: ICommentPost) {
+export function addComment(data: ICommentPost, errorRef: Ref<string>) {
   return defHttp.post<{
     commentId: number;
   }>({
     url: '/content/v1/comment/add',
     data,
+    errorRef,
   });
 }
 

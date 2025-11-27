@@ -48,6 +48,7 @@ onMounted(() => {
       if (props.modelValue) {
         vditor.value?.setValue(props.modelValue);
       }
+      emit("update:modelValue", vditor.value?.getValue() || "");
     },
     hint: {
       extend: [
@@ -118,6 +119,11 @@ defineExpose({
   },
   focus() {
     vditor.value?.focus();
+  },
+  clearCache() {
+    if (props.name) {
+      vditor.value?.clearCache();
+    }
   },
 });
 </script>

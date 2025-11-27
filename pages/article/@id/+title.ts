@@ -6,5 +6,5 @@ import { Data } from "./+data";
 
  
 export function title(pageContext: PageContext) {
-  return (pageContext.data as Data).article.title + ' | ' + process.env.VITE_GLOB_APP_TITLE
+  return (pageContext.data as Data).article.title + ' | ' + pageContext.title
 }

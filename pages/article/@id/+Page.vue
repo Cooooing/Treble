@@ -30,7 +30,7 @@ onMounted(() => {
 <template>
   <article class="flex flex-col">
     <header v-show="needShowHeader" class="fixed left-0 right-0 top-0 bg-base-100 shadow-lg z-100">
-      <section class="flex items-center justify-between px-2 h-12 z-10 max-w-[1300px] m-auto">
+      <section class="flex items-center justify-between px-2 h-12 z-10 wrapper">
         <section>
           <Logo icon-only />
         </section>
@@ -54,7 +54,7 @@ onMounted(() => {
       </footer>
     </main>
     <footer class="mx-auto md:max-w-[800px] px-2 md:px-10 bg-base-200 pb-8 w-full">
-      <Comments :comments="comments" />
+      <Comments :comments="comments" :article="article" />
     </footer>
   </article>
 </template>
