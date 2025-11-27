@@ -4,7 +4,7 @@
   import { LayoutContextKey } from '@/pages/index';
   import { IArticle } from '@/apis/article';
   import Editor from '@/components/Editor/src/Editor.vue';
-import { fromNow } from '@/utils/date';
+  import { fromNow } from '@/utils/date';
 
   const props = defineProps<{
     article: IArticle
@@ -13,6 +13,7 @@ import { fromNow } from '@/utils/date';
 
   const { pageContext } = inject(LayoutContextKey)!;
   const { user } = pageContext;
+  const prefixCls = useDesign('article-comments');
 
   const replyComment = ref<IComment | null>(null);
   const editorRef = ref<InstanceType<typeof Editor>>();
@@ -40,9 +41,26 @@ import { fromNow } from '@/utils/date';
     await addComment(comment.value, error);
     close();
   }
+
+  function likeComment(commentId: string) {
+    console.log('like comment', commentId);
+  }
+  function thankComment(commentId: string) {
+    console.log('thank comment', commentId);
+  }
+  function focusComment(commentId: string) {
+    const el = document.getElementById(`comment_${commentId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight');
+      setTimeout(() => {
+        el.classList.remove('highlight');
+      }, 2000);
+    }
+  }
 </script>
 <template>
-  <article>
+  <article :class="prefixCls">
     <header class="border-b border-base-content/50">
       <h1 class="text-base mb-1 px-2">{{ comments.page.total || 0 }} 回帖</h1>
     </header>
@@ -54,7 +72,13 @@ import { fromNow } from '@/utils/date';
         </div>
       </header>
       <main v-if="comments.rows?.length">
-        <section v-for="comment in comments.rows" :key="comment.id" class="border-b border-base-content/50 pt-4 group">
+        <section 
+          v-for="comment in comments.rows" 
+          :key="comment.id" 
+          class="border-b border-base-content/50 pt-4 group"
+          :class="`${prefixCls}-item`"
+          :id="`comment_${comment.id}`"
+        >
           <section class="flex">
             <section>
               <Avatar :url="comment.user.avatar_url" :size="40" />
@@ -64,17 +88,30 @@ import { fromNow } from '@/utils/date';
                 <div class="flex items-center gap-1 text-xs">
                   <section class="font-bold">{{ comment.user.name }}</section>
                   <span>·</span>
-                  <section class="text-base-content/50">{{ fromNow(comment.created_at.seconds * 1000) }}</section>
+                  <section class="text-base-content/50">
+                    {{ fromNow(comment.created_at.seconds * 1000) }}
+                  </section>
                 </div>
-                <section></section>
+                <section>
+                  <a 
+                    :href="`#` + comment.reply_id" 
+                    @click="focusComment(comment.reply_id)" 
+                    v-if="comment.reply_user && comment.reply_id">
+                    <Icon icon="entypo:reply" class="scale-x-[-1]" />
+                    <Avatar :url="comment.reply_user.avatar_url" :size="15" square />
+                    <span>{{ comment.reply_user.name }}</span>
+                  </a>
+                </section>
               </section>
               <MdRender :md="comment.content" />
               <section class="flex items-center justify-end gap-2 group-hover:visible invisible">
-                <button class="btn btn-text tooltip" @click="thankComment(comment.id)" data-tip="回复">
+                <button class="btn btn-text tooltip" @click="thankComment(comment.id)" data-tip="感谢">
                   <Icon icon="si:heart-line" />
+                  <span>{{ comment.thank_count || 0 }}</span>
                 </button>
-                <button class="btn btn-text tooltip" @click="likeComment(comment.id)" data-tip="回复">
+                <button class="btn btn-text tooltip" @click="likeComment(comment.id)" data-tip="点赞">
                   <Icon icon="streamline-plump:like-1" />
+                  <span>{{ comment.like_count || 0 }}</span>
                 </button>
                 <button class="btn btn-text tooltip" @click="openCommentEditor(comment.id)" data-tip="回复">
                   <Icon icon="entypo:reply" />
@@ -91,7 +128,10 @@ import { fromNow } from '@/utils/date';
               <header class="flex justify-between items-center pb-2">
                 <section class="space-x-2">
                   <Icon icon="entypo:reply" class="scale-x-[-1]" />
-                  <span v-if="replyComment"></span>
+                  <span v-if="replyComment" class="inline-flex items-center gap-1">
+                    <Avatar :url="replyComment.user.avatar_url" :size="15" square />
+                    <span>{{ replyComment.user.name }}</span>
+                  </span>
                   <span v-else>{{ article.title }}</span>
                 </section>
                 <section>

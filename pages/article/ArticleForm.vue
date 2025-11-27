@@ -11,6 +11,7 @@
     type?: number;
   }>();
 
+  const prefixCls = useDesign('article-post');
   const isRaward = ref(false);
   const articleType = computed(() => {
     return articleTypes.find(
@@ -99,6 +100,7 @@
     class="flex flex-col"
     :rules="rules"
     :model="data"
+    :class="prefixCls"
     @validate-failed="error = $event.error?.message || ''"
   >
     <section>

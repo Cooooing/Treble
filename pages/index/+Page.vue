@@ -1,8 +1,9 @@
+<script setup lang="ts">
+  const prefixCls = useDesign('index');
+</script>
 <template>
-  <article>
+  <article :class="prefixCls">
     首页
   </article>
 </template>
 
-<script setup lang="ts">
-</script>

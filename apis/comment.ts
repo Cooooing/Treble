@@ -47,74 +47,78 @@ export interface ICommentQuery {
  * 评论
  */
 export interface IComment {
-    /**
-     * 文章Id
-     */
-    article_id: string;
-    /**
-     * 收藏数量
-     */
-    collect_count: string;
-    /**
-     * 子评论
-     */
-    comments: IComment[];
-    /**
-     * 评论内容
-     */
-    content: string;
-    /**
-     * 创建时间
-     */
-    created_at: IDateLite;
-    /**
-     * 创建人
-     */
-    created_by: string;
-    /**
-     * 评论Id
-     */
-    id: string;
-    /**
-     * 评论层级
-     */
-    level: string;
-    /**
-     * 点赞数量
-     */
-    like_count: string;
-    /**
-     * 父级评论Id
-     */
-    parent_id?: string;
-    /**
-     * 子评论数量
-     */
-    reply_count: string;
-    /**
-     * 回复评论Id
-     */
-    reply_id?: string;
-    /**
-     * 回复评论的用户信息
-     */
-    reply_user?: IUser;
-    /**
-     * 状态
-     */
-    status: string;
-    /**
-     * 更新时间
-     */
-    updated_at: IDateLite;
-    /**
-     * 更新人
-     */
-    updated_by: string;
-    /**
-     * 评论用户信息
-     */
-    user: IUser;
+  /**
+   * 文章Id
+   */
+  article_id: string;
+  /**
+   * 收藏数量
+   */
+  collect_count: string;
+  /**
+   * 子评论
+   */
+  comments: IComment[];
+  /**
+   * 评论内容
+   */
+  content: string;
+  /**
+   * 创建时间
+   */
+  created_at: IDateLite;
+  /**
+   * 创建人
+   */
+  created_by: string;
+  /**
+   * 评论Id
+   */
+  id: string;
+  /**
+   * 评论层级
+   */
+  level: string;
+  /**
+   * 点赞数量
+   */
+  like_count: string;
+  /**
+   * 父级评论Id
+   */
+  parent_id?: string;
+  /**
+   * 子评论数量
+   */
+  reply_count: string;
+  /**
+   * 回复评论Id
+   */
+  reply_id?: string;
+  /**
+   * 回复评论的用户信息
+   */
+  reply_user?: IUser;
+  /**
+   * 状态
+   */
+  status: string;
+  /**
+   * 感谢数
+   */
+  thank_count: number;
+  /**
+   * 更新时间
+   */
+  updated_at: IDateLite;
+  /**
+   * 更新人
+   */
+  updated_by: string;
+  /**
+   * 评论用户信息
+   */
+  user: IUser;
 }
 
 /**

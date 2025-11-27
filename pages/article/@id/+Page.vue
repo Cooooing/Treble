@@ -24,12 +24,13 @@ onMounted(() => {
     wait: 100,
   });
 });
+const prefixCls = useDesign('article');
 
 </script>
 
 <template>
-  <article class="flex flex-col">
-    <header v-show="needShowHeader" class="fixed left-0 right-0 top-0 bg-base-100 shadow-lg z-100">
+  <article class="flex flex-col" :class="prefixCls">
+    <header v-show="needShowHeader" :class="`${prefixCls}-header fixed left-0 right-0 top-0 bg-base-100 shadow-lg z-100`">
       <section class="flex items-center justify-between px-2 h-12 z-10 wrapper">
         <section>
           <Logo icon-only />
@@ -40,8 +41,8 @@ onMounted(() => {
         </section>
       </section>
     </header>
-    <main class="mx-auto mt-8 px-2 md:px-10 md:max-w-[800px] space-y-8 bg-base-200 w-full py-8">
-      <header ref="titleRef" class="text-3xl font-bold text-center">{{ article.title }}</header>
+    <main :class="`${prefixCls}-content mx-auto mt-8 px-2 md:px-10 md:max-w-[800px] space-y-8 bg-base-200 w-full py-8`">
+      <header ref="titleRef" :class="`${prefixCls}-title text-3xl font-bold text-center`">{{ article.title }}</header>
       <MdRender 
         ref="contentRef" 
         class="vditor-reset" 
@@ -49,7 +50,7 @@ onMounted(() => {
         :html="article.content_render"
       > 
       </MdRender>
-      <footer>
+      <footer :class="`${prefixCls}-footer`">
         <Author :article="article" />
       </footer>
     </main>
