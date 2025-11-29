@@ -25,6 +25,7 @@
     })
     .catch((errors: FormValidate[]) => {
       callback?.(false, errors);
+      error.value = errors.map(e => e.error?.message).join(', ');
       return Promise.reject(errors);
     });
   }

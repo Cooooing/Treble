@@ -37,7 +37,6 @@ export function validator(rules: Recordable<RuleItem[]>, data?: any, callback?: 
       return true as const;
     })
     .catch((err: { errors: ValidateError[] | null, fields: ValidateFieldsError | Values }) => {
-      console.dir(err);
       if (!err.fields) return true as const;
       const errors = err.errors?.map((e) => ({
         error: new Error(e.message),
