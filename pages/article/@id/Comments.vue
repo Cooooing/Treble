@@ -96,7 +96,9 @@
                   <a 
                     :href="`#` + comment.reply_id" 
                     @click="focusComment(comment.reply_id)" 
-                    v-if="comment.reply_user && comment.reply_id">
+                    v-if="comment.reply_user && comment.reply_id"
+                    class="inline-flex items-center gap-1"
+                  >
                     <Icon icon="entypo:reply" class="scale-x-[-1]" />
                     <Avatar :url="comment.reply_user.avatar_url" :size="15" square />
                     <span>{{ comment.reply_user.name }}</span>
