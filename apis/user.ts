@@ -189,6 +189,50 @@ export interface IUser {
   url: string;
 }
 
+export interface IUserUpdate {
+  /**
+   * 头像URL
+   */
+  avatar_url?: string;
+  /**
+   * 启用邮件订阅
+   */
+  enable_email_subscribe?: boolean;
+  /**
+   * 启用Web通知
+   */
+  enable_web_notify?: boolean;
+  /**
+   * 用户语言
+   */
+  language?: string;
+  /**
+   * 移动端皮肤主题
+   */
+  mobile_theme?: string;
+  /**
+   * 皮肤主题
+   */
+  theme?: string;
+  /**
+   * 时区
+   */
+  timezone?: string;
+}
+
+/**
+ * 获取当前用户信息
+ * POST /v1/user/getCurrentUser
+ * 接口ID：379919834
+ * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-379919834
+ */
+export function getCurrentUser(headers?: Record<string, string>) {
+  return defHttp.post<{ user: IUser }>({
+    url: '/user/v1/user/getCurrentUser',
+    headers,
+  });
+}
+
 /**
  * 分页查询用户
  * POST /user/v1/user/page
@@ -198,6 +242,32 @@ export interface IUser {
 export function getUsers(data: IBasicPageParams<IUserQuery>) {
   return defHttp.post<IBasicPageResult<IUser>>({
     url: '/user/v1/user/page',
+    data,
+  });
+}
+
+/**
+ * 查询单个用户
+ * POST /v1/user/getOne
+ * 接口ID：370061636
+ * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-370061636
+ */
+export function getUser(name: string) {
+  return defHttp.post<{user: IUser}>({
+    url: '/user/v1/user/getOne',
+    data: { name },
+  });
+}
+
+/**
+ * 更新用户设置
+ * POST /v1/user/updateSetting
+ * 接口ID：379919835
+ * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-379919835
+ */
+export function settingUser(data: IUserUpdate) {
+  return defHttp.post<{ user: IUser }>({
+    url: '/user/v1/user/updateSetting',
     data,
   });
 }

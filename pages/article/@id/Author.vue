@@ -20,7 +20,7 @@
           发表于 {{ fromNow(article.created_at.seconds * 1000) }}
         </span>
       </section>
-      <section class="flex gap-2 px-4">
+      <section class="flex gap-4 px-4">
         <div class="inline-flex flex-col items-center">
           <span>{{ article.author_user.city || '未知' }}</span>
           <span class="text-xs">位置</span>

@@ -67,7 +67,7 @@
     <main>
       <header class="flex items-center w-full p-0 my-2">
         <Avatar :url="user.avatar_url" :size="40" square />
-        <div @click="openCommentEditor()" class="text-primary cursor-pointer border border-base-content/50 ml-3 flex h-10 flex-1 items-center px-3 rounded">
+        <div @click="openCommentEditor()" class="text-primary cursor-pointer border border-base-content/20 ml-3 flex h-10 flex-1 items-center px-3 rounded">
           <span>请输入回帖内容...</span>
         </div>
       </header>
@@ -75,7 +75,7 @@
         <section 
           v-for="comment in comments.rows" 
           :key="comment.id" 
-          class="border-b border-base-content/50 pt-4 group"
+          class="border-b border-base-content/20 pt-4 group"
           :class="`${prefixCls}-item`"
           :id="`comment_${comment.id}`"
         >
