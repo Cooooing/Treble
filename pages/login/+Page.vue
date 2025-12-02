@@ -40,7 +40,7 @@
           ref="formRef"
           :model="account"
           is="fieldset"
-          class="fieldset bg-base-200 border-base-100 rounded-box w-xs border p-4"
+          class="fieldset bg-base-100 border-base-100 rounded-box w-xs border p-4"
           :class="`${prefixCls}-form`"
         >
           <legend class="fieldset-legend flex items-center text-2xl">

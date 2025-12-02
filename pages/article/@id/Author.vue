@@ -9,7 +9,7 @@
 </script>
 
 <template>
-  <section class="flex bg-base-100">
+  <section class="flex bg-base-200">
     <section>
       <Avatar :url="article.author_user.avatar_url" :size="60" square  />
     </section>

@@ -13,10 +13,16 @@
   import { useData } from "vike-vue/useData";
   import { Data } from './+data';
   import { LayoutContextKey } from '@/pages/index';
+import { useDaisyUI } from '@/stores/useDaisyUI';
 
   const { theme } = useData<Data>();
   const pageContext = usePageContext();
   provide(LayoutContextKey, { pageContext });
+
+  onMounted(() => {
+    const daisyuiTheme = useDaisyUI();
+    daisyuiTheme.setTheme(daisyuiTheme.currentTheme);
+  });
   
 </script>
 

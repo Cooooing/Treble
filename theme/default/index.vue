@@ -8,7 +8,7 @@
 </script>
 
 <template>
-  <article class="layout bg-base-300" :class="prefixCls">
+  <article class="layout bg-base-200" :class="prefixCls">
     <Header :class="`${prefixCls}-header`"></Header>
     <Content :class="`${prefixCls}-content`">
       <template #default>

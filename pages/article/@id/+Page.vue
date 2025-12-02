@@ -24,7 +24,7 @@ onMounted(() => {
     wait: 100,
   });
 });
-const prefixCls = useDesign('article');
+const { prefixCls } = useDesign('article');
 
 </script>
 
@@ -41,7 +41,7 @@ const prefixCls = useDesign('article');
         </section>
       </section>
     </header>
-    <main :class="`${prefixCls}-content mx-auto mt-8 px-2 md:px-10 md:max-w-[800px] space-y-8 bg-base-200 w-full py-8`">
+    <main :class="`${prefixCls}-content mx-auto mt-8 px-2 md:px-10 md:max-w-[800px] space-y-8 bg-base-100 w-full py-8`">
       <header ref="titleRef" :class="`${prefixCls}-title text-3xl font-bold text-center`">{{ article.title }}</header>
       <MdRender 
         ref="contentRef" 
@@ -54,7 +54,7 @@ const prefixCls = useDesign('article');
         <Author :article="article" />
       </footer>
     </main>
-    <footer class="mx-auto md:max-w-[800px] px-2 md:px-10 bg-base-200 pb-8 w-full">
+    <footer class="mx-auto md:max-w-[800px] px-2 md:px-10 bg-base-100 pb-8 w-full">
       <Comments :comments="comments" :article="article" />
     </footer>
   </article>

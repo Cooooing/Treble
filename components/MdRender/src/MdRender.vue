@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { useDaisyUI } from '@/stores/useDaisyUI';
-import { after } from 'node:test';
   import Vditor from 'vditor';
+
   const props = defineProps<{
     md: string;
     html?: string;
@@ -47,6 +47,6 @@ import { after } from 'node:test';
   })
 </script>
 <template>
-  <div v-bind="$attrs" v-if="render && props.html" v-html="props.html"></div>
-  <div v-bind="$attrs" v-if="md" ref="contentRef"></div>
+  <div v-bind="$attrs" v-show="render && props.html" v-html="props.html"></div>
+  <div v-bind="$attrs" v-if="md" v-show="!render" ref="contentRef"></div>
 </template>

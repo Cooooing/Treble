@@ -19,7 +19,7 @@
       <ThemeIcon />
       <Icon icon="formkit:down" />
     </a>
-    <div tabindex="-1" class="dropdown-content bg-base-200 text-base-content rounded-box top-px h-122 max-h-[calc(100vh-8.6rem)] overflow-y-auto border-(length:--border) border-white/5 shadow-2xl outline-(length:--border) outline-black/5 mt-8">
+    <div tabindex="-1" class="dropdown-content bg-base-300 text-base-content rounded-box top-px h-122 max-h-[calc(100vh-8.6rem)] overflow-y-auto border-(length:--border) border-white/5 shadow-2xl outline-(length:--border) outline-black/5 mt-8">
       <ul class="menu w-56" id="theme-menu">
         <li class="menu-title text-xs">主题色</li>
         <li v-for="theme in daisyuiTheme.themes" :key="theme">

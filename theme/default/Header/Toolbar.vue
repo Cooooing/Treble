@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { clientOnly } from 'vike-vue/clientOnly';
-  import { usePageContext } from 'vike-vue/usePageContext'
   import { logout } from '@/apis/auth';
   import { reload } from 'vike/client/router';
 
@@ -28,8 +27,8 @@
       <ThemeSwitchClientOnly />
       <a role="button" href="/article/pre" class="btn btn-active btn-primary btn-sm">+ 发帖</a>
       <div class="dropdown dropdown-end">
-        <Avatar :url="page.user.avatarUrl || `/api/user/v1/user/avatar/${page.user.name}`" :size="32" class="cursor-pointer" tabindex="0" />
-        <ul tabindex="-1" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+        <Avatar :url="page.user.avatar_url || `/api/user/v1/user/avatar/${page.user.name}`" :size="32" class="cursor-pointer" tabindex="0" />
+        <ul tabindex="-1" class="dropdown-content menu bg-base-300 rounded-box z-1 w-52 p-2 shadow-sm">
           <li><a class="text-inherit">个人主页</a></li>
           <li><a class="text-inherit">设置</a></li>
           <li><a class="text-inherit" @click="onLogout">登出</a></li>

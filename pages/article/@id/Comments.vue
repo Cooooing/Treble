@@ -86,7 +86,10 @@
             <section class="flex-1 ml-3">
               <section class="flex justify-between items-center">
                 <div class="flex items-center gap-1 text-xs">
-                  <section class="font-bold">{{ comment.user.name }}</section>
+                  <section class="font-bold">
+                    {{ comment.user.nickname || comment.user.name }}
+                    <span v-if="comment.user.nickname">({{ comment.user.name }})</span>
+                  </section>
                   <span>·</span>
                   <section class="text-base-content/50">
                     {{ fromNow(comment.created_at.seconds * 1000) }}
@@ -105,7 +108,7 @@
                   </a>
                 </section>
               </section>
-              <MdRender :md="comment.content" />
+              <section v-html="comment.content_render"></section>
               <section class="flex items-center justify-end gap-2 group-hover:visible invisible">
                 <button class="btn btn-text tooltip" @click="thankComment(comment.id)" data-tip="感谢">
                   <Icon icon="si:heart-line" />

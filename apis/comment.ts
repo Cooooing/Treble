@@ -64,6 +64,10 @@ export interface IComment {
    */
   content: string;
   /**
+   * 评论内容渲染
+   */
+  content_render: string;
+  /**
    * 创建时间
    */
   created_at: IDateLite;

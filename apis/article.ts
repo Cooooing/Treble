@@ -1,5 +1,6 @@
 import { defHttp } from "@/utils/http";
 import { IUser } from "./user";
+import { IBasicPageParams, IBasicPageResult } from "./common";
 
 /**
  * common.api.content.v1.TagSave
@@ -250,6 +251,37 @@ export interface IPostscript {
   updatedBy?: string;
 }
 
+export interface IArticleQuery {
+    /**
+     * 作者Id
+     */
+    authorId?: string;
+    /**
+     * 领域
+     */
+    domainId?: string;
+    /**
+     * 查询关键词
+     */
+    keyword?: string;
+    /**
+     * 排序 0-最新 1-最热
+     */
+    order?: number;
+    /**
+     * 状态 0-正常 3-草稿
+     */
+    status?: number;
+    /**
+     * 标签
+     */
+    tagId?: string;
+    /**
+     * 类型 0-普通 1-问答 2-投票 3-抽奖
+     */
+    type?: number;
+}
+
 /**
  * 新增文章
  * POST /content/v1/article/add
@@ -325,9 +357,21 @@ export function getArticle(articleId: number | string) {
  */
 export function publishArticleDraft(article_id: string, errorRef?: Ref<string>) {
   return defHttp.post({
-    url: '/v1/article/publish',
+    url: '/content/v1/article/publish',
     data: { article_id },
     errorRef
   });
 }
 
+/**
+ * 查询文章
+ * POST /v1/article/page
+ * 接口ID：376424992
+ * 接口地址：https://app.apifox.com/link/project/7258948/apis/api-376424992
+ */
+export function getArticles(data: IBasicPageParams<IArticleQuery>) {
+  return defHttp.post<IBasicPageResult<IArticle>>({
+    url: '/content/v1/article/page',
+    data,
+  });
+}
