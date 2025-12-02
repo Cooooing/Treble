@@ -24,22 +24,22 @@ export interface ICommentPost {
  * 评论查询参数
  */
 export interface ICommentQuery {
-    /**
-     * 文章Id
-     */
-    article_id?: string;
-    /**
-     * 评论Id，查询该评论的回复。需为文章的评论，回复时间正序。
-     */
-    comment_id?: string;
-    /**
-     * 排序 0-最新 1-最热
-     */
-    order?: number;
-    /**
-     * 用户Id
-     */
-    user_id?: string;
+  /**
+   * 文章Id
+   */
+  article_id?: string;
+  /**
+   * 评论Id，查询该评论的回复。需为文章的评论，回复时间正序。
+   */
+  comment_id?: string;
+  /**
+   * 排序 0-最新 1-最热
+   */
+  order?: number;
+  /**
+   * 用户Id
+   */
+  user_id?: string;
 }
 
 

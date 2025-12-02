@@ -4,22 +4,32 @@ import { Data } from "./+data";
 const { user, articles } = useData<Data>();
 const pageContext = usePageContext();
 
-const isCommentsPage = computed(() => pageContext.urlOriginal.endsWith("/comments"));
+const original = ref(pageContext.urlOriginal);
+const isCommentsPage = computed(() => original.value.endsWith("/comments"));
 const tabActive = ref(isCommentsPage.value ? "comments" : "posts");
+onMounted(() => {
+  original.value = location.href;
+  tabActive.value = isCommentsPage.value ? "comments" : "posts";
+});
 </script>
 <template>
   <article class="flex gap-4 wrapper m-4">
     <main class="flex-1">
       <div role="tablist" class="tabs tabs-lift w-full flex border-b-2 border-base-100">
-        <a role="tab" class="tab flex-1" :class="{ 'tab-active': tabActive == 'posts' }" @click="tabActive = 'posts'">
+        <a 
+          role="tab" 
+          :href="`/member/${user.name}`" 
+          class="tab flex-1" 
+          :class="{ 'tab-active': tabActive == 'posts' }" 
+          @click.prevent.stop="tabActive = 'posts'">
           帖子
         </a>
         <a
           role="tab"
-          href="./comments"
+          :href="`/member/${user.name}/comments`"
           class="tab flex-1"
           :class="{ 'tab-active': tabActive == 'comments' }"
-          @click="tabActive = 'comments'"
+          @click.prevent.stop="tabActive = 'comments'"
         >
           回帖
         </a>

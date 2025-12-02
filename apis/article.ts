@@ -120,6 +120,10 @@ export interface IArticle {
    */
   content_render: string;
   /**
+   * 封面图片URL
+   */
+  cover_image_url?: string;
+  /**
    * 创建时间
    */
   created_at: IDateLite;

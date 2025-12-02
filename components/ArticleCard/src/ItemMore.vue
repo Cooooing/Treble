@@ -10,13 +10,13 @@ import { formatDate } from '@/utils';
 <template>
   <section class="truncate space-y-1 p-2 border-b border-base-content/20">
     <section class="truncate text-base font-bold">
-      <a :href="`/article/${article.id}`">
+      <a class="text-inherit" :href="`/article/${article.id}`">
         {{ article.title }}
       </a>
     </section>
     <section class="text-xs space-x-1">
       <template v-if="article.tags?.length">
-        <a v-for="tag in article.tags" :key="tag.id" :href="`/tag/${tag.name}`" class="badge badge-xs badge-primary">
+        <a v-for="tag in article.tags" :key="tag.id" :href="`/tag/${tag.name}`" class="badge badge-outline badge-xs badge-primary">
           {{ tag.name }}
         </a>
         <span>·</span>
@@ -33,7 +33,4 @@ import { formatDate } from '@/utils';
 </template>
 
 <style lang="less" scoped>
-a {
-  color: inherit;
-}
 </style>
