@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useData } from "vike-vue/useData";
 import { Data } from "./+data";
-const { user } = useData<Data>();
+const { user, articles } = useData<Data>();
 const pageContext = usePageContext();
 
 const isCommentsPage = computed(() => pageContext.urlOriginal.endsWith("/comments"));
@@ -24,7 +24,9 @@ const tabActive = ref(isCommentsPage.value ? "comments" : "posts");
           回帖
         </a>
       </div>
-      <section></section>
+      <section>
+        <ArticleCard class="rounded-t-none!" mode="list-more" v-if="tabActive == 'posts'" :articles="articles" />
+      </section>
     </main>
     <aside class="card w-91 flex-none bg-base-100 px-4 py-8">
       <section class="text-center">
