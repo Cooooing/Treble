@@ -5,6 +5,10 @@
   defineProps<{
     article: IArticle
   }>()
+
+  function toPreview(content: string) {
+    return content.replace(/!\[.*?\]\([^)]+(\)|$)/g, '[图片]').replace(/(?=[^!])\[.*?\]\([^)]+(\)|$)/g, '[链接]');
+  }
 </script>
 
 <template>
@@ -47,7 +51,7 @@
             </span>
           </section>
         </section>
-        <section class="opacity-80">{{ article.content }}</section>
+        <section class="opacity-80">{{ toPreview(article.content) }}</section>
       </section>
       <section v-if="article.cover_image_url" class="inline-flex w-[180px] flex-none p-3">
         <img :src="article.cover_image_url + `?imageView2/1/w/180/h/135/format/jpg/interlace/1/q`" class="w-full h-auto rounded" />

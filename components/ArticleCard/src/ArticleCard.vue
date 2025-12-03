@@ -15,7 +15,7 @@ import ItemMore from './ItemMore.vue';
 </script>
 
 <template>
-  <section class="card bg-base-100 shadow-md p-2">
+  <section class="card bg-base-100 shadow-md p-4">
     <header v-if="title" class="card-header flex justify-between items-center py-2 border-b border-base-content/20">
       <div class="card-title text-sm px-2">{{ title }}</div>
       <div v-if="more">
