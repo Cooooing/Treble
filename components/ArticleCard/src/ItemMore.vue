@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { IArticle } from '@/apis/article';
-import { formatDate } from '@/utils';
+  import { formatDateTime } from '@/utils';
 
   defineProps<{
     article: IArticle
@@ -26,7 +26,7 @@ import { formatDate } from '@/utils';
       </span>
       <span>·</span>
       <span>
-        {{ formatDate(article.created_at.seconds * 1000) }}
+        {{ formatDateTime(article.created_at.seconds * 1000) }}
       </span>
     </section>
   </section>

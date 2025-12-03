@@ -108,7 +108,7 @@
                   </a>
                 </section>
               </section>
-              <section v-html="comment.content_render"></section>
+              <section class="vditor-reset" v-html="comment.content_render"></section>
               <section class="flex items-center justify-end gap-2 group-hover:visible invisible">
                 <button class="btn btn-text tooltip" @click="thankComment(comment.id)" data-tip="感谢">
                   <Icon icon="si:heart-line" />

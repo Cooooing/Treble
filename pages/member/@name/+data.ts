@@ -14,7 +14,7 @@ export async function data(pageContext: PageContextServer) {
     page: { page: p || 1, size: 20 }
   });
   const { rows: comments } = await getComments({ 
-    query: { user_id: user.id }, 
+    query: { user_id: user.id, with_article: true }, 
     page: { page: p || 1, size: 20 }
   });
   return { user, articles, comments };

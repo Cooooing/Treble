@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useData } from "vike-vue/useData";
 import { Data } from "./+data";
-const { user, articles } = useData<Data>();
+import Comments from "./Comments.vue";
+
+const { user, articles, comments } = useData<Data>();
 const pageContext = usePageContext();
 
 const original = ref(pageContext.urlOriginal);
@@ -36,6 +38,7 @@ onMounted(() => {
       </div>
       <section>
         <ArticleCard class="rounded-t-none!" mode="list-more" v-if="tabActive == 'posts'" :articles="articles" />
+        <Comments :comments="comments" v-if="tabActive == 'comments'" />
       </section>
     </main>
     <aside class="card w-91 flex-none bg-base-100 px-4 py-8">

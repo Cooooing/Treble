@@ -9,10 +9,16 @@
 <template>
   <section class="truncate flex items-center gap-2 py-1 px-2">
     <section>
-      <Avatar :url="article.author_user.avatar_url" :size="20" square  />
+      <MemberLink 
+        :username="article.author_user.name" 
+        :avatar="article.author_user.avatar_url" 
+        :size="20" 
+        square
+        class="rounded overflow-hidden"
+      />
     </section>
     <section class="truncate">
-      <a :href="`/article/${article.id}`">
+      <a :href="`/article/${article.id}`" class="hover:border-b border-dashed text-current">
         {{ article.title }}
       </a>
     </section>
@@ -20,7 +26,4 @@
 </template>
 
 <style lang="less" scoped>
-a {
-  color: inherit;
-}
 </style>

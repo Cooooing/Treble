@@ -1,6 +1,7 @@
 import { defHttp } from "@/utils/http";
 import { IUser } from "./user";
 import { IBasicPageParams, IBasicPageResult } from "./common";
+import { IArticle } from "./article";
 
 /**
  * 评论发布
@@ -40,6 +41,10 @@ export interface ICommentQuery {
    * 用户Id
    */
   user_id?: string;
+  /**
+   * 是否包含文章信息
+   */
+  with_article?: boolean;
 }
 
 
@@ -123,6 +128,10 @@ export interface IComment {
    * 评论用户信息
    */
   user: IUser;
+  /**
+   * 文章信息
+   */
+  article?: IArticle;
 }
 
 /**
