@@ -22,12 +22,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Step 2: Set up Go environment + cache
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25'
-
+      # Step 2: Set up Node environment + cache
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
@@ -55,8 +50,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: app/gateway/Dockerfile
+          file: ./Dockerfile
           push: true
           tags: |
-            registry.cn-hangzhou.aliyuncs.com/docker-cooooing/gateway:latest
-            ghcr.io/cooooing/gateway:latest
+            registry.cn-hangzhou.aliyuncs.com/docker-cooooing/treble:latest
+            ghcr.io/cooooing/treble:latest
