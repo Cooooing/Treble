@@ -1,50 +1,64 @@
 <script setup lang="ts">
-  import { useDaisyUI } from '@/stores/useDaisyUI';
+  import { onMounted, onUnmounted, ref } from "vue";
+  import { defaultTheme, isDarkTheme, type Theme } from '@/utils/theme';
   import Vditor from 'vditor';
 
   const props = defineProps<{
     md: string;
     html?: string;
   }>();
+  const emit = defineEmits<{
+    (event: 'rendered', headings: Array<{ id: string; level: number; text: string }>): void;
+  }>();
   const render = ref(true);
   const contentRef = ref<HTMLDivElement>();
 
-  function mdRender(daisyuiTheme: ReturnType<typeof useDaisyUI>) {
+  function mdRender(theme: Theme) {
     if (!contentRef.value) return
     Vditor.preview(
       contentRef.value, 
       props.md,
       {
-        mode: daisyuiTheme.isDarkTheme ? 'dark' : 'light',
+        mode: isDarkTheme(theme) ? 'dark' : 'light',
         hljs: {
-          style: daisyuiTheme.hlTheme,
+          style: isDarkTheme(theme) ? 'github-dark' : 'github',
           lineNumber: true,
           enable: true,
         },
         anchor: 1,
         after() {
           render.value = false;
+          const headings = Array.from(contentRef.value?.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6') || []).map((heading, index) => {
+            const id = heading.id || `article-heading-${index + 1}`;
+            heading.id = id;
+            return { id, level: Number(heading.tagName.slice(1)), text: heading.textContent?.trim() || '' };
+          }).filter((heading) => heading.text);
+          emit('rendered', headings);
         },
         transform: (html: string) => {
           return html
             .replace(/<table/g, `<div 
-            class="overflow-x-auto rounded-box border border-base-content bg-base-100 max-h-96">
-            <table class="table table-zebra table-pin-rows table-pin-cols"`)
+            class="table-wrap"><table`)
             .replace(/<\/table>/g, '</table></div>');
         }
       },
     );
   }
 
+  function handleThemeChange(event: Event) {
+    mdRender((event as CustomEvent<Theme>).detail);
+  }
+
   onMounted(() => {
-    const daisyuiTheme = useDaisyUI();
+    const theme = ref<Theme>(defaultTheme);
     if (props.md && contentRef.value) {
-      mdRender(daisyuiTheme);
-      watch(() => daisyuiTheme.hlTheme, () => {
-        mdRender(daisyuiTheme);
-      });
+      theme.value = document.documentElement.dataset.theme === 'dark' ? 'dark' : defaultTheme;
+      mdRender(theme.value);
+      window.addEventListener('treble-theme-change', handleThemeChange);
     }
   })
+
+  onUnmounted(() => window.removeEventListener('treble-theme-change', handleThemeChange));
 </script>
 <template>
   <div v-bind="$attrs" v-show="render && props.html" v-html="props.html"></div>

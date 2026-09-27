@@ -1,26 +1,23 @@
 <script setup lang="ts">
+import Avatar from "@/components/Avatar";
 
-defineProps<{
+const props = defineProps<{
   username: string;
   avatar?: string;
   size?: number;
   square?: boolean;
-}>()
+}>();
 </script>
 <template>
-  <a :href="`/member/${username}`" v-if="!avatar" class="hover:underline-current">
-    <slot :username="username">
-      <span>{{ username }}</span>
-    </slot>
-  </a>
-  <a :href="`/member/${username}`" v-else>
-    <Avatar :url="avatar" :size="size || 24" :square="square" />
-  </a>
+  <span :aria-label="username">
+    <slot v-if="$slots.default" :username="username" />
+    <Avatar
+      v-else-if="props.avatar !== undefined || props.size"
+      :url="avatar"
+      :name="username"
+      :size="size || 24"
+      :square="square"
+    />
+    <span v-else>{{ username }}</span>
+  </span>
 </template>
-
-<style lang="less" scoped>
-a {
-  color: inherit;
-  text-decoration: none;
-}
-</style>

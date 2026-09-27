@@ -24,7 +24,7 @@ export interface MessageHandler {
 
 export type MessageParams = MessageOptions | string;
 
-export type MessageTypedFn = (message: MessageParams) => MessageHandler;
+export type MessageTypedFn = (message: MessageParams, options?: Omit<MessageOptions, 'message' | 'type'>) => MessageHandler;
 
 export interface MessageFn extends MessageTypedFn {
   success: MessageTypedFn;

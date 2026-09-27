@@ -1,0 +1,332 @@
+/* 社区内容页的共享展示层：首页双列、文章列表和领域/标签模块共用这一组规则。 */
+.index .wrapper {
+  display: block;
+}
+
+.index .index-main {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: auto;
+  margin: 0;
+}
+
+.index .index-main > .module {
+  min-width: 0;
+  margin: 0;
+}
+
+.article-list--compact > ul > li {
+  min-width: 0;
+  padding: 0;
+}
+
+.article-list__compact-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 15px;
+}
+
+.article-list__compact-row .avatar {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.article-list__compact-row .title {
+  min-width: 0;
+  color: var(--text-color);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.article-list__reply-link {
+  flex: 0 0 auto;
+  text-decoration: none;
+}
+
+.article-list__compact-row .count {
+  display: inline;
+}
+
+.article-list:not(.article-list--compact) > ul > li {
+  position: relative;
+  min-width: 0;
+  padding: 12px 15px 14px;
+}
+
+.article-list__stats {
+  float: right;
+  margin: 3px 0 0 12px;
+  white-space: nowrap;
+}
+
+.article-list:not(.article-list--compact) h2 {
+  min-width: 0;
+  margin: 0 110px 10px 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 22px;
+}
+
+.article-list:not(.article-list--compact) h2 a {
+  overflow-wrap: anywhere;
+}
+
+.article-list__body {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 10px;
+}
+
+.article-list__author {
+  flex: 0 0 48px;
+  width: 48px;
+}
+
+.article-list__author .avatar {
+  display: block;
+}
+
+.article-list__details {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.article-list__author-line {
+  min-height: 38px;
+  margin: 0;
+  line-height: 18px;
+}
+
+.article-list .author {
+  color: var(--text-gray-color);
+}
+
+.article-list .abstract {
+  display: -webkit-box;
+  margin-top: 5px;
+  overflow: hidden;
+  color: var(--text-gray-color);
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.article-list .abstract:hover,
+.article-list .author:hover {
+  color: #e59230;
+  text-decoration: none;
+}
+
+.article-list .abstract-img {
+  flex: 0 0 104px;
+  width: 104px;
+  height: 62px;
+  border-radius: 3px;
+  background-position: center;
+  background-size: cover;
+}
+
+.article-list .heat {
+  display: block;
+  position: static;
+  min-width: 2px;
+  max-width: 100px;
+  height: 2px;
+  margin-top: 10px;
+  background: #e59230;
+}
+
+.community-sidebar__domains,
+.community-sidebar__tags {
+  margin: 0;
+}
+
+.community-sidebar__domain {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.community-sidebar__domain:hover,
+.community-sidebar__domain:focus-visible {
+  color: #e59230;
+  text-decoration: none;
+}
+
+.community-sidebar__icon,
+.domain-page-header__icon {
+  display: inline-block;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--background-secondary-color) center / cover no-repeat;
+}
+
+.community-sidebar__empty {
+  margin: 0;
+  padding: 12px 15px;
+  color: var(--text-fade-color);
+  font-size: 13px;
+}
+
+.taxonomy-list__item {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 15px;
+  padding: 15px;
+}
+
+.taxonomy-list__icon-link {
+  display: block;
+  flex: 0 0 55px;
+}
+
+.taxonomy-list__icon {
+  flex: 0 0 55px;
+  display: block;
+  width: 55px;
+  height: 55px;
+}
+
+.taxonomy-list__item h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.taxonomy-list__meta {
+  margin: 8px 0 0;
+  line-height: 18px;
+}
+
+.domain-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.domain-page-header h1,
+.domain-page-header p {
+  margin: 0;
+}
+
+.domain-page-header h1 {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.domain-page-header p {
+  margin-top: 2px;
+  font-size: 13px;
+}
+
+.domain-page-header__icon {
+  flex-basis: 42px;
+  width: 42px;
+  height: 42px;
+}
+
+.domain-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--layer-border-color);
+  background: var(--background-secondary-color);
+}
+
+.domain-tags a {
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: var(--background-color);
+  color: var(--text-gray-color);
+  font-size: 12px;
+  line-height: 18px;
+  text-decoration: none;
+}
+
+.domain-tags a:hover,
+.domain-tags a:focus-visible {
+  background: #fff7ec;
+  color: #e59230;
+}
+
+html[data-theme="dark"] .article-list .title,
+html[data-theme="dark"] .article-list:not(.article-list--compact) h2 a,
+html[data-theme="dark"] .taxonomy-list__item h3 a {
+  color: #f0f6fc;
+}
+
+html[data-theme="dark"] .article-list .abstract,
+html[data-theme="dark"] .article-list .author,
+html[data-theme="dark"] .community-sidebar__empty {
+  color: #aeb8c2;
+}
+
+html[data-theme="dark"] .domain-tags {
+  border-color: #1f252b;
+  background: #24292e;
+}
+
+html[data-theme="dark"] .domain-tags a {
+  background: #2f363d;
+  color: #aeb8c2;
+}
+
+html[data-theme="dark"] .domain-tags a:hover,
+html[data-theme="dark"] .domain-tags a:focus-visible {
+  background: #444d56;
+  color: #79b8ff;
+}
+
+@media (max-width: 768px) {
+  .index .index-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .article-list:not(.article-list--compact) > ul > li {
+    padding: 12px 10px;
+  }
+
+  .article-list__stats {
+    float: none;
+    margin: 0 0 6px;
+  }
+
+  .article-list:not(.article-list--compact) h2 {
+    margin-right: 0;
+  }
+
+  .article-list .abstract-img {
+    display: none;
+  }
+
+  .taxonomy-list__item {
+    gap: 10px;
+    padding: 12px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .article-list *,
+  .community-sidebar__domain,
+  .domain-tags a {
+    transition: none !important;
+  }
+}
