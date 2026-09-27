@@ -1,18 +1,17 @@
-import { getCurrentUser } from "@/apis/user";
-import { Request } from "express"
-import type { PageContextServer } from 'vike/types'
+import type { PageContextServer } from "vike/types";
+import { bbsClient } from "@/utils/sdk";
+import { sessionCookieClearValue } from "@/server/bbsGateway";
 
 export async function onCreatePageContext(pageContext: PageContextServer) {
-  const req = pageContext.runtime.req as Request;
   pageContext.title = process.env.VITE_GLOB_APP_TITLE;
-  if (req?.session?.user) {
-    pageContext.user = await getCurrentUser(pageContext.headers || {}).then((res) => res.user).catch(() => null);
-    if (pageContext.user) {
-      pageContext.token = req.session.token;
-    } else {
-      delete req.session.user;
-      delete req.session.token;
-      req.session.save();
-    }
+  const hasSession = pageContext.headers?.cookie?.split(";").some((item) => item.trimStart().startsWith("treble.sid="));
+  if (!hasSession) return;
+
+  try {
+    const response = await bbsClient.account.getCurrent({ body: {} });
+    if (response.account?.profile) pageContext.user = response.account;
+  } catch {
+    pageContext.user = undefined;
+    pageContext.headersResponse?.append("set-cookie", sessionCookieClearValue(process.env.NODE_ENV === "production"));
   }
 }

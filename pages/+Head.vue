@@ -1,16 +1,13 @@
-<!-- https://vike.dev/Head -->
-
 <template>
   <link rel="icon" :href="logoUrl" />
-  <component is="script">
-    document.documentElement.insertAdjacentHTML(`beforeend`, `<input type="checkbox" checked="true" class="theme-controller hidden" value="${
-      localStorage.getItem(`theme`) || `fishpi`
-    }" />`)
-  </component>
+  <link rel="preload" :href="iconsUrl" as="script" />
+  <component :is="'script'" :src="iconsUrl" defer />
+  <script v-html="themeScript"></script>
 </template>
 
 <script setup lang="ts">
-import "@/assets/styles/tailwind.css";
-import "@/assets/styles/main.less";
-import logoUrl from "@/assets/images/logo.svg";
+import "@/assets/site/styles/site.css";
+import iconsUrl from "@/assets/site/icons.js?url";
+import logoUrl from "@/assets/site/images/favicon.png";
+const themeScript = `(()=>{try{const theme=localStorage.getItem("treble.theme");document.documentElement.dataset.theme=theme==="dark"?"dark":"light";document.cookie="treble.theme=; Max-Age=0; Path=/; SameSite=Lax"}catch{document.documentElement.dataset.theme="light"}})();`;
 </script>

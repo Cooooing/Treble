@@ -1,32 +1,24 @@
-<!-- https://vike.dev/Layout -->
-
 <template>
-  <div class="symbol-pool" v-html="svg"></div>
-  <component :is="ThemeComponents[theme || 'default']">
-    <slot></slot>
-  </component>
+  <div class="site-layout">
+    <SiteHeader />
+    <main class="bg" id="site-main">
+      <div id="page-container">
+        <div id="page-content" class="page-content"><slot /></div>
+      </div>
+    </main>
+    <SiteFooter />
+  </div>
 </template>
 
 <script lang="ts" setup>
-  import { components as ThemeComponents } from '@/theme/';
-  import svg from 'virtual:svg-icons-ssr-html'
-  import { useData } from "vike-vue/useData";
-  import { Data } from './+data';
-  import { LayoutContextKey } from '@/pages/index';
-import { useDaisyUI } from '@/stores/useDaisyUI';
-
-  const { theme } = useData<Data>();
-  const pageContext = usePageContext();
-  provide(LayoutContextKey, { pageContext });
-
-  onMounted(() => {
-    const daisyuiTheme = useDaisyUI();
-    daisyuiTheme.setTheme(daisyuiTheme.currentTheme);
-  });
-  
+import SiteFooter from "@/components/site/SiteFooter.vue";
+import SiteHeader from "@/components/site/SiteHeader.vue";
 </script>
 
-
 <style scoped>
-
+.site-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
 </style>

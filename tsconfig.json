@@ -4,31 +4,19 @@
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "Bundler",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext"
-    ],
-    "typeRoots": [
-      "./node_modules/",
-      "./node_modules/@types/",
-      "./types"
-    ],
-    "types": [
-      "vite/client",
-      "vite-plugin-svg-icons-ssr/client"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "typeRoots": ["./node_modules/", "./node_modules/@types/", "./types"],
+    "types": ["vite/client"],
     "paths": {
       "~/*": ["./components/*"],
       "@/*": ["./*"],
-      "#/*": ["./types/*"]
+      "#/*": ["./types/*"],
+      "@bass/bbs-sdk-fetch": ["../Bass/common/proto/gen-sdk/typescript-fetch/bff_bbs/src/index.ts"],
+      "@bass/bbs-sdk-fetch/*": ["../Bass/common/proto/gen-sdk/typescript-fetch/bff_bbs/src/*"]
     },
-    "jsx": "preserve",
     "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true
   },
-  "exclude": [
-    "dist"
-  ]
+  "exclude": ["dist"]
 }

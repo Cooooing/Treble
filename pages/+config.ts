@@ -1,19 +1,13 @@
 import type { Config } from "vike/types";
 import vikePhoton from "vike-photon/config";
 import vikeVue from "vike-vue/config";
-import vikeVuePinia from 'vike-vue-pinia/config'
-
-// Default config (can be overridden by pages)
-// https://vike.dev/config
 
 export default {
-  // https://vike.dev/head-tags
-  title: process.env.VITE_GLOB_APP_TITLE || "Treble",
-  description: "Fishpi",
+  title: "摸鱼派",
+  description: "摸鱼派社区",
 
-  extends: [vikeVue, vikePhoton, vikeVuePinia],
+  extends: [vikeVue, vikePhoton],
 
-  // https://vike.dev/vike-photon
   photon: {
     server: "../server/entry.ts",
   },

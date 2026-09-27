@@ -1,55 +1,86 @@
-Generated with [vike.dev/new](https://vike.dev/new) ([version 514](https://www.npmjs.com/package/create-vike/v/0.0.514)) using this command:
+# Treble
 
-```sh
-npm create vike@latest --- --vue --tailwindcss --daisyui --ts-rest --h3 --prettier
+Treble 是 BBS 的 SSR 前端。它只消费相邻 Bass 工作区本地生成的
+`@bass/bbs-sdk-fetch`。
+
+## 请求与认证边界
+
+```
+浏览器 ── /api/bbs/v1/... ──> Treble BBS 网关 ──> Bass BBS BFF
+                                   │
+                                   └── Redis：sid 对应的 Bass 双 Token
 ```
 
-## Contents
+浏览器只持有 HttpOnly 的 `treble.sid` 和 CSRF Cookie。网关从 Redis 读取
+Bass access/refresh token，负责注入 `Authorization`、刷新 token、CSRF 与请求 ID。
+页面 SSR 可恢复当前安全账户资料，但不会把 sid 或 token 写入 HTML。
 
-* [Vike](#vike)
+## 目录
 
-  * [Plus files](#plus-files)
-  * [Routing](#routing)
-  * [SSR](#ssr)
-  * [HTML Streaming](#html-streaming)
+| 目录          | 职责                                                                       |
+| ------------- | -------------------------------------------------------------------------- |
+| `pages/`      | Vike 文件路由、页面数据加载、SSR 用户恢复与私有页守卫。                    |
+| `layouts/`    | 唯一全局页面壳：顶栏、内容区和页脚。                                       |
+| `components/` | 可复用 Vue 视图组件；不承载 BFF 协议或会话逻辑。                           |
+| `services/`   | 按认证、内容、评论、社区划分的薄业务组合层；入参与返回值来自 SDK。         |
+| `utils/sdk/`  | 唯一的生成 SDK 客户端、同源代理 URL、BFF envelope 和错误处理中间件。       |
+| `utils/auth/` | 浏览器当前账户的非敏感 UI 状态。                                           |
+| `server/`     | Express/Photon 入口、BBS 网关与 Redis sid 会话。                           |
+| `assets/`     | 唯一的前端资源目录：主题 CSS、图片和图标精灵均由 Vite 构建并带版本指纹。   |
+| `build/`      | Vite 插件与依赖预构建配置。                                                 |
+| `types/`      | Vue 与全局 TypeScript 声明。                                                |
 
-* [Photon](#photon)
+`dist/`、`node_modules/`、`.gitnexus/`、IDE 配置、agent 上下文和本机 `.env`
+都不是源码，必须保持未跟踪。
 
-## Vike
+### 资源与样式约定
 
-This app is ready to start. It's powered by [Vike](https://vike.dev) and [Vue](https://vuejs.org/guide/quick-start.html).
+`assets/site/` 是页面静态资源与全局样式的唯一入口：图片通过模块 import，
+图标精灵通过 `?url` 注入，样式从 `assets/site/styles/site.css` 统一加载。
+项目不使用 `public/` 作为第二个静态文件根目录，也不保留 Less 或 Tailwind；组件样式
+只使用原生 CSS，且颜色、间距和主题状态引用全局语义变量。
 
-### Plus files
+## 本地开发
 
-[The + files are the interface](https://vike.dev/config) between Vike and your code.
+先在 Bass 生成 BBS SDK：
 
-* [`+config.ts`](https://vike.dev/settings) — Settings (e.g. `<title>`)
-* [`+Page.vue`](https://vike.dev/Page) — The `<Page>` component
-* [`+data.ts`](https://vike.dev/data) — Fetching data (for your `<Page>` component)
-* [`+Layout.vue`](https://vike.dev/Layout) — The `<Layout>` component (wraps your `<Page>` components)
-* [`+Head.vue`](https://vike.dev/Head) - Sets `<head>` tags
-* [`/pages/_error/+Page.vue`](https://vike.dev/error-page) — The error page (rendered when an error occurs)
-* [`+onPageTransitionStart.ts`](https://vike.dev/onPageTransitionStart) and `+onPageTransitionEnd.ts` — For page transition animations
+```sh
+make -C ../Bass/app/bbs sdk-typescript-fetch
+```
 
-### Routing
+然后在 Treble 创建本机配置并启动：
 
-[Vike's built-in router](https://vike.dev/routing) lets you choose between:
+```sh
+cp .env.example .env
+pnpm install
+pnpm dev
+```
 
-* [Filesystem Routing](https://vike.dev/filesystem-routing) (the URL of a page is determined based on where its `+Page.vue` file is located on the filesystem)
-* [Route Strings](https://vike.dev/route-string)
-* [Route Functions](https://vike.dev/route-function)
+`BASS_REPO` 未设置时，默认使用相邻的 `../Bass`。Vite 会直接读取并监听
+`common/proto/gen-sdk/typescript-fetch/bff_bbs/src`；重新生成 SDK 后应刷新浏览器。
 
-### SSR
+`.env` 仅供本机 Node 服务读取，至少配置：
 
-SSR is enabled by default. You can [disable it](https://vike.dev/ssr) for all or specific pages.
+| 变量          | 用途                                                  |
+| ------------- | ----------------------------------------------------- |
+| `BBS_BFF_URL` | 唯一 BBS BFF 地址，开发默认 `http://127.0.0.1:8001`。 |
+| `REDIS_URL`   | Treble 私有 Redis，会话存储使用。                     |
+| `PORT`        | Treble Node 服务端口，默认 `2324`。                   |
+| `BASS_REPO`   | 可选的 Bass 本地仓库路径。                            |
 
-### HTML Streaming
+不要把真实密码、token 或机器绝对路径提交到 Git；只更新 `.env.example` 中的脱敏示例。
 
-You can [enable/disable HTML streaming](https://vike.dev/stream) for all or specific pages.
+## 验证与构建
 
-## Photon
+```sh
+pnpm exec tsc --noEmit
+pnpm build
+pnpm preview
+```
 
-[Photon](https://photonjs.dev) is a next-generation server and deployment toolkit.
-It supports popular deployments ([self-hosted](https://photonjs.dev/self-hosted), [Cloudflare](https://photonjs.dev/cloudflare), [Vercel](https://photonjs.dev/vercel), and [more](https://photonjs.dev/deploy))
-and popular servers ([Hono](https://photonjs.dev/hono), [Express](https://photonjs.dev/express), [Fastify](https://photonjs.dev/fastify), and [more](https://photonjs.dev/server)).
+开发环境在浏览器 Network 中应能看到 `/api/bbs/v1/...` 请求和
+`X-Treble-Proxy-Request-ID`，可用同一请求 ID 在 Treble 与 Bass 日志中关联排查。
 
+容器镜像仅封装已构建的 `dist/`，因此先在有本地 Bass SDK 的环境执行 `pnpm build`，
+再执行 `docker build -t treble .`。运行时通过容器环境变量提供 `BBS_BFF_URL`、
+`REDIS_URL` 与 `PORT`，不复制 `.env` 到镜像。

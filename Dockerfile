@@ -1,18 +1,11 @@
-FROM node:25-alpine AS builder
-WORKDIR /app
-
-COPY . .
-RUN npm ci
-RUN npm run build
-
 FROM node:25-alpine
 WORKDIR /app
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
+COPY dist ./dist
+COPY package.json pnpm-lock.yaml ./
 
 ENV NODE_ENV=production
-RUN npm ci --omit=dev && npm cache clean --force
+RUN corepack enable && pnpm install --prod --frozen-lockfile && pnpm store prune
 
 ENV PORT=2324
 ENV TZ=Asia/Shanghai
