@@ -1,141 +1,200 @@
 <script setup lang="ts">
-  import { navigate } from 'vike/client/router';
-  import { VFormInstance, VFormItem } from '~/VForm';
-  import { Rules } from 'async-validator';
-  import { checkEmailExist, checkUsernameExist, IRegister, registerByEmail, verifyRegisterByEmail } from '@/apis/auth';
+import { onBeforeUnmount, reactive, ref } from "vue";
+import { navigate } from "vike/client/router";
+import type { RegisterReq } from "@bass/bbs-sdk-fetch/models/RegisterReq";
+import { message } from "@/components/Message";
+import { bbsClient } from "@/utils/sdk";
+import BrandMark from "@/components/BrandMark.vue";
+import Icon from "@/components/community/Icon.vue";
 
-  const prefixCls = useDesign('register');
+const account = reactive({ name: "", nickname: "", email: "", password: "", confirmation: "" });
+const verificationCode = ref("");
+const step = ref<1 | 2>(1);
+const loading = ref(false);
+const resendAfter = ref(0);
+let resendTimer: ReturnType<typeof setInterval> | undefined;
 
-  const account = ref<IRegister>({
-    name: '',
-    nickname: '',
-    email: '',
-    password: '',
-  });
+function validateAccount() {
+  if (!account.name.trim()) return "请输入用户名。";
+  if (!account.nickname.trim()) return "请输入昵称。";
+  if (!/^\S+@\S+\.\S+$/.test(account.email)) return "请输入正确的邮箱格式。";
+  if (account.password.length < 6 || account.password.length > 30) return "密码长度应为 6 到 30 个字符。";
+  if (account.password !== account.confirmation) return "两次输入的密码不一致。";
+  return "";
+}
 
-  const rules: Rules = {
-    name: [
-      { required: true, message: '请输入用户名' },
-      {
-        validator(_rule, value, callback) {
-          checkUsernameExist(value).then(({ exist }) => {
-            if (exist) {
-              callback(new Error('该用户名已被占用'));
-            } else {
-              callback();
-            }
-          }).catch((error) => {
-            callback(error);
-          });
-        }
-      }
-    ],
-    nickname: [
-      { required: true, message: '请输入昵称' },
-    ],
-    email: [
-      { required: true, message: '请输入邮箱' },
-      { type: 'email', message: '请输入正确的邮箱格式' },
-      { 
-        validator: (_rule, value, callback) => {
-          checkEmailExist(value).then(({ exist }) => {
-            if (exist) {
-              callback(new Error('该邮箱已被注册'));
-            } else {
-              callback();
-            }
-          });
-        },
-      }
-    ],
-    password: [
-      { required: true, message: '请输入密码' },
-      { min: 6, max: 30, message: '密码长度在6到30个字符之间' },
-    ],
-    code: [
-      { required: true, message: '请输入验证码' },
-    ],
-  };
-
-  const error = ref('');
-  const loading = ref(false);
-  const formRef = ref<VFormInstance>();
-  async function submit() {
-    if (!(await formRef.value?.validate())) return;
-    if (verify.value.codeToken) {
-      // 提交验证码，完成注册
-      loading.value = true;
-      error.value = '';
-      await verifyRegisterByEmail(verify.value, error)
-        .finally(() => loading.value = false);
-      $toast.success('注册成功！请前往登录。');
-      // 跳转到登录页
-      navigate('/login');
-      return;
+function startResendCountdown(seconds = 60) {
+  resendAfter.value = seconds;
+  if (resendTimer) clearInterval(resendTimer);
+  resendTimer = setInterval(() => {
+    resendAfter.value -= 1;
+    if (resendAfter.value <= 0 && resendTimer) {
+      clearInterval(resendTimer);
+      resendTimer = undefined;
     }
-    loading.value = true;
-    error.value = '';
-    const { code_token } = await registerByEmail(account.value, error)
-      .finally(() => loading.value = false);
-    verify.value.codeToken = code_token;
-  }
+  }, 1000);
+}
 
-  const verify = ref({
-    code: '',
-    codeToken: '',
-  });
+async function sendOtp() {
+  const validationError = validateAccount();
+  if (validationError) return void message.warning(validationError);
+  loading.value = true;
+  try {
+    await bbsClient.otp.sendEmailOtp({ sendEmailOtpReq: { email: account.email.trim() } });
+    step.value = 2;
+    verificationCode.value = "";
+    startResendCountdown();
+    message.success("验证码已发送，请查收邮箱。");
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "验证码发送失败，请稍后重试。");
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function register() {
+  if (!verificationCode.value.trim()) return void message.warning("请输入邮箱验证码。");
+  loading.value = true;
+  try {
+    await bbsClient.auth.register({
+      registerReq: {
+        type: "REGISTER_TYPE_EMAIL",
+        name: account.name.trim(),
+        nickname: account.nickname.trim(),
+        password: account.password,
+        emailCredential: { email: account.email.trim(), code: verificationCode.value.trim() },
+      } satisfies RegisterReq,
+    });
+    message.success("注册成功，请使用新账号登录。");
+    await navigate("/login");
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "注册失败，请检查验证码后重试。");
+  } finally {
+    loading.value = false;
+  }
+}
+
+onBeforeUnmount(() => {
+  if (resendTimer) clearInterval(resendTimer);
+});
 </script>
+
 <template>
-  <article class="flex md:flex-row flex-col p-8 wrapper md:pt-20" :class="prefixCls">
-    <section class="flex-1">
-      <section class="flex items-center justify-center">
-        <VForm
-          ref="formRef"
-          :model="!verify.codeToken ? account : verify"
-          is="fieldset"
-          class="fieldset bg-base-100 border-base-100 rounded-box w-xs border p-4"
-          :class="`${prefixCls}-form`"
-        >
-          <legend class="fieldset-legend flex items-center text-2xl">
-            <img src="@/assets/images/logo.svg" alt="logo" class="h-[1em]" />
-            <span>注册账号</span>
-          </legend>
-          <template v-if="verify.codeToken">
-            <!-- 验证邮箱，输入验证码 -->
-            <div role="alert" class="alert alert-info alert-outline text-sm">
-              <span>验证码已发送到您的邮箱，请查收。</span>
+  <div class="main">
+    <div class="wrapper verify">
+      <div class="verify-wrap">
+        <form class="form" novalidate @submit.prevent="step === 1 ? sendOtp() : register()">
+          <BrandMark class="verify__brand" />
+          <h2 class="verify__title">加入摸鱼派</h2>
+          <p class="verify__subtitle">创建账号，和鱼油们一起摸鱼</p>
+          <template v-if="step === 1">
+            <div class="input-wrap">
+              <Icon name="userrole" /><label class="sr-only" for="register-name">用户名</label
+              ><input
+                id="register-name"
+                v-model="account.name"
+                type="text"
+                name="username"
+                autocomplete="username"
+                aria-label="用户名"
+                placeholder="用户名"
+                :disabled="loading"
+                required
+              />
             </div>
-            <label class="label">邮箱验证码</label>
-            <input type="text" class="input" placeholder="请输入发送到您邮箱的验证码" v-model="verify.code" />
-            <VFormItem prop="code" :rules="rules.code" />
+            <div class="input-wrap">
+              <Icon name="userrole" /><label class="sr-only" for="register-nickname">昵称</label
+              ><input
+                id="register-nickname"
+                v-model="account.nickname"
+                type="text"
+                name="nickname"
+                autocomplete="nickname"
+                aria-label="昵称"
+                placeholder="昵称"
+                :disabled="loading"
+                required
+              />
+            </div>
+            <div class="input-wrap">
+              <Icon name="email" /><label class="sr-only" for="register-email">邮箱</label
+              ><input
+                id="register-email"
+                v-model="account.email"
+                type="email"
+                name="email"
+                autocomplete="email"
+                aria-label="邮箱"
+                placeholder="邮箱"
+                :disabled="loading"
+                required
+              />
+            </div>
+            <div class="input-wrap">
+              <Icon name="locked" /><label class="sr-only" for="register-password">密码</label
+              ><input
+                id="register-password"
+                v-model="account.password"
+                type="password"
+                name="new-password"
+                autocomplete="new-password"
+                aria-label="密码"
+                placeholder="密码（6 至 30 个字符）"
+                minlength="6"
+                maxlength="30"
+                :disabled="loading"
+                required
+              />
+            </div>
+            <div class="input-wrap">
+              <Icon name="locked" /><label class="sr-only" for="register-confirmation">确认密码</label
+              ><input
+                id="register-confirmation"
+                v-model="account.confirmation"
+                type="password"
+                autocomplete="new-password"
+                aria-label="确认密码"
+                placeholder="确认密码"
+                minlength="6"
+                maxlength="30"
+                :disabled="loading"
+                required
+              />
+            </div>
+            <button class="green" type="submit" :disabled="loading">
+              {{ loading ? "正在发送..." : "发送邮箱验证码" }}
+            </button>
           </template>
           <template v-else>
-            <label class="label">用户名</label>
-            <input type="text" class="input" placeholder="用户名" v-model="account.name" @change="formRef?.validate('name')" />
-            <VFormItem prop="name" :rules="rules.name" />
-            <label class="label">昵称</label>
-            <input type="text" class="input" placeholder="昵称" v-model="account.nickname" @change="formRef?.validate('nickname')" />
-            <VFormItem prop="nickname" :rules="rules.nickname" />
-            <label class="label">邮箱</label>
-            <input type="email" class="input" placeholder="邮箱" v-model="account.email" @change="formRef?.validate('email')" />
-            <VFormItem prop="email" :rules="rules.email" />
-            <label class="label">密码</label>
-            <input type="password" class="input" placeholder="密码" v-model="account.password" @change="formRef?.validate('password')" />
-            <VFormItem prop="password" :rules="rules.password" />
+            <p class="tip">验证码已发送至 {{ account.email }}，请查收邮件。</p>
+            <div class="input-wrap">
+              <Icon name="email" /><label class="sr-only" for="register-otp">邮箱验证码</label
+              ><input
+                id="register-otp"
+                v-model="verificationCode"
+                type="text"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                aria-label="邮箱验证码"
+                placeholder="邮箱验证码"
+                :disabled="loading"
+                required
+              />
+            </div>
+            <button class="green" type="submit" :disabled="loading">{{ loading ? "正在注册..." : "完成注册" }}</button>
+            <button type="button" :disabled="loading" @click="step = 1">返回修改资料</button>
+            <button type="button" :disabled="loading || resendAfter > 0" @click="sendOtp">
+              {{ resendAfter > 0 ? `${resendAfter} 秒后可重发` : "重新发送验证码" }}
+            </button>
           </template>
-          <button class="btn btn-neutral mt-4" @click="submit">
-            <span v-if="loading" class="loading loading-spinner"></span>
-            注册
-          </button>
-          <p v-if="error" role="alert" class="alert alert-error alert-soft">
-            <span>{{ error }}</span>
-          </p>
-        </VForm>
-      </section>
-    </section>
-    <PublicBoard />
-  </article>
+        </form>
+      </div>
+      <aside class="intro community-welcome vditor-reset" aria-labelledby="community-welcome-title">
+        <h2 id="community-welcome-title">🐟 鱼油，欢迎来到摸鱼派！</h2>
+        <p>如果你也是奋斗在一线、热爱工作的苦逼青年，期待与众多鱼油聚集起来，那就加入友好的摸鱼派社区吧！❤️</p>
+        <p>在这里有为你准备的聊天室、鱼游、充满生活感的帖子，只要来到摸鱼派，你就是我们的家庭成员～这里以「友善」为第一守则，你可以完全放开自己，和鱼油们畅所欲言，邂逅各行各业的搬砖人，参与摸鱼派有趣的活动 :)</p>
+        <p>日常、闲聊、生活、吐槽、提问、技术、读书、游戏、兴趣 ... 都可以在摸鱼派中讨论。</p>
+      </aside>
+    </div>
+  </div>
 </template>
-
-<script setup lang="ts">
-</script>

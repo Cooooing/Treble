@@ -1,72 +1,77 @@
 <script setup lang="ts">
-  import { ILogin, loginByAccount } from '@/apis/auth';
-  import { navigate } from 'vike/client/router';
-  import { VFormInstance, VFormItem } from '~/VForm';
+import { ref } from "vue";
+import { message } from "@/components/Message";
+import { loginByPassword } from "@/services/auth";
+import BrandMark from "@/components/BrandMark.vue";
+import Icon from "@/components/community/Icon.vue";
 
-  const prefixCls = useDesign('login');
+const account = ref("");
+const password = ref("");
+const loading = ref(false);
 
-  const account = ref<ILogin>({
-    account: '',
-    password: '',
-  });
-
-  const rules = {
-    account: [
-      { required: true, message: '请输入用户名或邮箱' },
-    ],
-    password: [
-      { required: true, message: '请输入密码' },
-    ],
-  };
-  const formRef = ref<VFormInstance>();
-  const error = ref('');
-  const loading = ref(false);
-  async function submit() {
-    error.value = '';
-    const valid = await formRef.value?.validate();
-    if (!valid) return;
-    loading.value = true;
-    await loginByAccount(account.value, error).finally(() => loading.value = false);
-    navigate('/');
+async function submit() {
+  if (!account.value.trim()) return void message.warning("请输入用户名或邮箱。");
+  if (!password.value) return void message.warning("请输入密码。");
+  loading.value = true;
+  try {
+    await loginByPassword(account.value.trim(), password.value);
+    window.location.assign("/");
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "登录失败，请稍后重试。");
+  } finally {
+    loading.value = false;
   }
-
+}
 </script>
 
 <template>
-    <article class="flex md:flex-row flex-col p-8 wrapper md:pt-30" :class="prefixCls">
-    <section class="flex-1">
-      <section class="flex items-center justify-center">
-        <VForm
-          ref="formRef"
-          :model="account"
-          is="fieldset"
-          class="fieldset bg-base-100 border-base-100 rounded-box w-xs border p-4"
-          :class="`${prefixCls}-form`"
-        >
-          <legend class="fieldset-legend flex items-center text-2xl">
-            <img src="@/assets/images/logo.svg" alt="logo" class="h-[1em]" />
-            <span>登录</span>
-          </legend>
-          <label class="input">
-            <Icon icon="mdi:account" />
-            <input type="search" class="grow" placeholder="用户名/邮箱" v-model="account.account" @change="formRef?.validate('account')" />
-          </label>
-          <VFormItem prop="account" :rules="rules.account" />
-          <label class="input">
-            <Icon icon="mdi:lock" />
-            <input type="password"class="grow" placeholder="密码" v-model="account.password" @change="formRef?.validate('password')" />
-          </label>
-          <VFormItem prop="password" :rules="rules.password" />
-          <button class="btn btn-neutral mt-4" @click="submit">
-            <span v-if="loading" class="loading loading-spinner"></span>
-            登录
-          </button>
-          <p v-if="error" role="alert" class="alert alert-error alert-soft">
-            <span>{{ error }}</span>
-          </p>
-        </VForm>
-      </section>
-    </section>
-    <PublicBoard />
-  </article>
+  <div class="main">
+    <div class="wrapper verify">
+      <div class="verify-wrap">
+        <form class="form" method="post" novalidate @submit.prevent="submit">
+          <BrandMark class="verify__brand" />
+          <h2 class="verify__title">登录摸鱼派</h2>
+          <p class="verify__subtitle">继续交流、分享与发现</p>
+          <div class="input-wrap">
+            <Icon name="userrole" />
+            <label class="sr-only" for="login-account">用户名或邮箱</label>
+            <input
+              id="login-account"
+              v-model="account"
+              type="text"
+              name="username"
+              autocomplete="username"
+              aria-label="用户名或邮箱"
+              placeholder="用户名或邮箱"
+              :disabled="loading"
+              required
+            />
+          </div>
+          <div class="input-wrap">
+            <Icon name="locked" />
+            <label class="sr-only" for="login-password">密码</label>
+            <input
+              id="login-password"
+              v-model="password"
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              aria-label="密码"
+              placeholder="密码"
+              :disabled="loading"
+              required
+            />
+          </div>
+          <button class="green" type="submit" :disabled="loading">{{ loading ? "正在登录..." : "登录" }}</button>
+          <a class="btn" href="/register">注册</a>
+        </form>
+      </div>
+      <aside class="intro community-welcome vditor-reset" aria-labelledby="community-welcome-title">
+        <h2 id="community-welcome-title">🐟 鱼油，欢迎来到摸鱼派！</h2>
+        <p>如果你也是奋斗在一线、热爱工作的苦逼青年，期待与众多鱼油聚集起来，那就加入友好的摸鱼派社区吧！❤️</p>
+        <p>在这里有为你准备的聊天室、鱼游、充满生活感的帖子，只要来到摸鱼派，你就是我们的家庭成员～这里以「友善」为第一守则，你可以完全放开自己，和鱼油们畅所欲言，邂逅各行各业的搬砖人，参与摸鱼派有趣的活动 :)</p>
+        <p>日常、闲聊、生活、吐槽、提问、技术、读书、游戏、兴趣 ... 都可以在摸鱼派中讨论。</p>
+      </aside>
+    </div>
+  </div>
 </template>

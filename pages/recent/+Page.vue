@@ -1,15 +1,16 @@
 <script setup lang="ts">
-  import { useData } from "vike-vue/useData";
-  import { Data } from "./+data";
+import { useData } from "vike-vue/useData";
+import ArticleCard from "@/components/ArticleCard";
+import ContentSidebar from "@/components/ContentSidebar.vue";
+import { Data } from "./+data";
 
-  const prefixCls = useDesign('index');
-  const { rows } = useData<Data>();
-
+const { rows, tags, domains } = useData<Data>();
 </script>
 <template>
-  <article :class="prefixCls" class="wrapper p-4 flex">
-    <ArticleCard mode="panel" :articles="rows" class="flex-1 w-1/3" />
-    <aside class="w-100 flex-none"></aside>
-  </article>
+  <div class="main">
+    <div class="wrapper">
+      <section class="content"><ArticleCard :articles="rows" title="最新" /></section>
+      <ContentSidebar :tags="tags" :domains="domains" />
+    </div>
+  </div>
 </template>
-

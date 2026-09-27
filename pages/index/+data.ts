@@ -1,20 +1,15 @@
-import { getArticles } from "@/apis/article";
-import { getComments } from "@/apis/comment";
-import type { PageContextServer } from "vike/types";
+import { bbsClient } from "@/utils/sdk";
 
 export type Data = Awaited<ReturnType<typeof data>>;
 
-export async function data(pageContext: PageContextServer) {
-  const recents = getArticles({ 
-    query: { order: 0 }, 
-    page: { page: 1, size: 15 }
-  }).then(res => res.rows);
-  const hots = getArticles({ 
-    query: { order: 1 }, 
-    page: { page: 1, size: 15 }
-  }).then(res => res.rows);
+export async function data() {
+  const [recentsResult, hotsResult] = await Promise.allSettled([
+    bbsClient.article.list({ listArticlesReq: { query: { order: "ARTICLE_ORDER_NEWEST" }, page: { page: 1, size: 15 } } }),
+    bbsClient.article.list({ listArticlesReq: { query: { order: "ARTICLE_ORDER_HOTTEST" }, page: { page: 1, size: 8 } } }),
+  ]);
   return {
-    recents: await recents,
-    hots: await hots,
+    recents: recentsResult.status === 'fulfilled' ? recentsResult.value.rows || [] : [],
+    hots: hotsResult.status === 'fulfilled' ? hotsResult.value.rows || [] : [],
+    contentError: recentsResult.status === 'rejected' ? '文章暂时无法加载，请刷新后重试。' : '',
   };
 }

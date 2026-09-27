@@ -1,43 +1,44 @@
 <script setup lang="ts">
-  import { IArticle } from '@/apis/article';
-  import { fromNow } from '@/utils/date';
-
-  const props = defineProps<{
-    article: IArticle
-  }>();
-
+import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
+import Avatar from "@/components/Avatar";
+import MemberLink from "@/components/MemberLink";
+import Icon from "@/components/community/Icon.vue";
+import { fromNow } from "@/utils/date";
+defineProps<{ article: ArticleDetail; replyCount: number }>();
 </script>
-
 <template>
-  <section class="flex bg-base-200">
-    <section>
-      <Avatar :url="article.author_user.avatar_url" :size="60" square  />
-    </section>
-    <section class="flex justify-between items-center flex-1 text-sm text-base-content/70">
-      <section class="inline-flex flex-col items-center px-3">
-        <span>{{ article.author_user.name }}</span>
-        <span>
-          发表于 {{ fromNow(article.created_at.seconds * 1000) }}
-        </span>
-      </section>
-      <section class="flex gap-4 px-4">
-        <div class="inline-flex flex-col items-center">
-          <span>{{ article.author_user.city || '未知' }}</span>
-          <span class="text-xs">位置</span>
-        </div>
-        <div class="inline-flex flex-col items-center">
-          <span>{{ article.like_count || 0 }}</span>
-          <span class="text-xs">点赞</span>
-        </div>
-        <div class="inline-flex flex-col items-center">
-          <span>{{ article.watch_count || 0 }}</span>
-          <span class="text-xs">关注</span>
-        </div>
-        <div class="inline-flex flex-col items-center">
-          <span>{{ article.collect_count || 0 }}</span>
-          <span class="text-xs">收藏</span>
-        </div>
-      </section>
-    </section>
-  </section>
+  <div class="article__meta">
+    <div>
+      <MemberLink :username="article.authorUser?.name || ''"
+        ><Avatar
+          class="avatar fn-left"
+          :url="article.authorUser?.avatarUrl"
+          :name="article.authorUser?.name"
+          :size="48"
+      /></MemberLink>
+    </div>
+    <div class="fn-flex-1">
+      <div id="articleMeta" class="fn-clear">
+        <MemberLink class="article__stats article__stats--a" :username="article.authorUser?.name || ''"
+          ><span class="article__cnt">{{ article.authorUser?.nickname || article.authorUser?.name || "匿名用户" }}</span
+          ><time>{{ article.createdAt ? fromNow(article.createdAt.getTime()) : "刚刚" }}</time></MemberLink
+        >
+        <span class="article__stats"
+          ><span class="article__cnt">{{ article.likeCount || 0 }}</span
+          >点赞</span
+        >
+        <span class="article__stats"
+          ><span class="article__cnt">{{ article.collectCount || 0 }}</span
+          >收藏</span
+        >
+        <span class="article__stats"
+          ><span class="article__cnt">{{ replyCount }}</span
+          >回复</span
+        >
+      </div>
+      <div class="fn-clear article__view">
+        <span class="fn-flex-inline"><Icon name="iconTop" /> {{ article.viewCount || 0 }}</span>
+      </div>
+    </div>
+  </div>
 </template>

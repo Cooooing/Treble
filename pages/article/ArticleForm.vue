@@ -1,198 +1,293 @@
 <script setup lang="ts">
-  import { getObjOfUrl } from "@/utils";
-  import { articleTypes } from "./index";
-  import { usePageContext } from "vike-vue/usePageContext";
-  import { addArticle, IArticle, IArticlePost, ITag, publishArticleDraft, updateArticleDraft } from "@/apis/article";
-  import { RuleItem, VFormInstance } from "~/VForm";
-  import { navigate } from "vike/client/router";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
+import type { ReqArticle, ReqArticleTypeEnum } from "@bass/bbs-sdk-fetch/models/ReqArticle";
+import type { RespTag } from "@bass/bbs-sdk-fetch/models/RespTag";
+import { navigate } from "vike/client/router";
+import ClientOnly from "@/components/ClientOnly";
+import { Editor } from "@/components/Editor";
+import { message } from "@/components/Message";
+import Icon from "@/components/community/Icon.vue";
+import DraftInbox from "@/components/community/DraftInbox.vue";
+import { publishArticle, saveArticleDraft, synchronizeArticleTags } from "@/services/content";
+import { getLocalArticleDraft, removeLocalArticleDraft, saveLocalArticleDraft } from "@/services/localDrafts";
+import { articleTypes } from "./index";
+import { bbsClient } from "@/utils/sdk";
 
-  const props = defineProps<{
-    article?: IArticlePost;
-    type?: number;
-  }>();
+const props = defineProps<{ article?: ArticleDetail; type?: ReqArticleTypeEnum }>();
+const type = (props.article?.type || props.type || "ARTICLE_TYPE_NORMAL") as ReqArticleTypeEnum;
+const form = reactive<ReqArticle>({
+  title: props.article?.title || "",
+  content: props.article?.content || "",
+  type,
+  statement: props.article?.statement || "",
+  commentable: props.article?.commentable ?? true,
+  rewardContent: props.article?.rewardContent || "",
+  rewardPoints: props.article?.rewardPoints,
+});
+const currentType = articleTypes.find((item) => item.type === type);
+const loading = ref(false);
+const rewardOpen = ref(Boolean(props.article?.rewardContent || props.article?.rewardPoints));
+const draftInboxOpen = ref(false);
+const availableTags = ref<RespTag[]>([]);
+const tagNames = ref<string[]>([]);
+const savedTagIds = ref<string[]>([]);
+const tagQuery = ref("");
+const tagMenuOpen = ref(false);
+const localDraftId = ref<string>();
+const articleId = ref(props.article?.id);
+let localSaveTimer: ReturnType<typeof window.setTimeout> | undefined;
 
-  const prefixCls = useDesign('article-post');
-  const isRaward = ref(false);
-  const articleType = computed(() => {
-    return articleTypes.find(
-      (a) => a.type === Number(props.type)
-    );
+const matchingTags = computed(() => {
+  const keyword = tagQuery.value.trim().toLocaleLowerCase();
+  return availableTags.value.filter(
+    (tag) => tag.name && !tagNames.value.some((name) => name.toLocaleLowerCase() === tag.name?.toLocaleLowerCase()) && (!keyword || tag.name.toLocaleLowerCase().includes(keyword)),
+  );
+});
+
+function normalizeTagName(value: string) {
+  return value.trim().replace(/[,，、；;]/g, "");
+}
+
+function saveLocalDraft() {
+  if (!form.title.trim() && !form.content.trim() && !tagNames.value.length) return;
+  const draft = saveLocalArticleDraft({
+    id: localDraftId.value,
+    articleId: articleId.value,
+    article: { ...form },
+    tagNames: tagNames.value,
   });
+  localDraftId.value = draft.id;
+}
 
-  const data = ref<IArticlePost>(props.article || {
-    title: "",
-    content: "",
-    tags: [],
-    reward_points: 0,
-    bounty_points: 0,
-    anonymous: false,
-    listable: true,
-    commentable: true,
-    statement: "无声明",
-    reward_content: '', 
-    status: 0, 
-    type: props.type || 0,
-  });
+function queueLocalDraftSave() {
+  if (localSaveTimer) window.clearTimeout(localSaveTimer);
+  localSaveTimer = window.setTimeout(saveLocalDraft, 300);
+}
 
-  const formRef = ref<VFormInstance>();
-  const rules = computed(() => {
-    const rules: Recordable<RuleItem[]> = {
-      title: [{ required: true, message: "标题不能为空" }],
-      tags: [
-        {
-          validator(_: any, value: ITag[], callback) {
-            const tags = value.map((t) => t.name).filter((t) => t.length > 0);
-            if (tags.length === 0) {
-              return callback(new Error("标签不能为空"));
-            }
-            if (tags.length > 4) {
-              return callback(new Error("标签不能超过4个"));
-            }
-            for (const tag of tags) {
-              if (tag.length > 9) {
-                return callback(new Error("每个标签不能超过9个字符"));
-              }
-            }
-            return callback();
-          },
-        },
-      ],
-      content: [{ required: true, message: "内容不能为空" }]
-    };
-    if (isRaward.value)  {
-      rules.rewardPoints = [{ required: true, message: "打赏积分不能小于 1" }];
-      rules.rewardContent = [{ required: true, message: "打赏内容不能为空" }];
-    }
-    if (props.type == 1) {
-      rules.bountyPoints = [{ required: true, message: "悬赏积分不能小于 1" }];
-    }
-    return rules;
-  })
-  
-  const contentRef = ref<InstanceType<typeof Editor>>();
-  const rawardRef = ref<InstanceType<typeof Editor>>();
-  const error = ref('');
-  const tags = computed<string[]>({
-    get() {
-      return data.value.tags.map(t => t.name!);
-    },
-    set(value: string[]) {
-      data.value.tags = value.map(name => ({ name }));
-    }
-  });
-  async function submit(status = 0) {
-    data.value.status = status;
-    if(!(await formRef.value?.validate())) return;
-    if (status == 0 && data.value.id) {
-      publishArticleDraft(data.value.id, error);
-    }
-    const { articleId } = await (data.value.id ? updateArticleDraft : addArticle)(data.value, error);
-    contentRef.value?.clearCache();
-    rawardRef.value?.clearCache();
-    if (status == 0) navigate(`/article/${articleId}`);
-    else navigate(`/article/post/${articleId}`);
+function selectTagName(name: string) {
+  const normalized = normalizeTagName(name);
+  if (!normalized) return;
+  if (Array.from(normalized).length > 9) {
+    message.warning("每个标签最多 9 个字符。");
+    return;
   }
+  if (tagNames.value.some((item) => item.toLocaleLowerCase() === normalized.toLocaleLowerCase())) {
+    message.warning("该标签已添加。");
+    return;
+  }
+  if (tagNames.value.length >= 4) {
+    message.warning("最多添加 4 个标签。");
+    return;
+  }
+  tagNames.value = [...tagNames.value, normalized];
+  tagQuery.value = "";
+  tagMenuOpen.value = false;
+}
+
+function removeTag(name: string) {
+  tagNames.value = tagNames.value.filter((item) => item !== name);
+}
+
+function confirmTypedTag() {
+  selectTagName(tagQuery.value);
+}
+
+function handleTagKeydown(event: KeyboardEvent) {
+  if (event.ctrlKey && event.key === "Enter") {
+    event.preventDefault();
+    void save(true);
+    return;
+  }
+  if (event.key === "Enter" || [",", "，", "、", "；", ";"].includes(event.key)) {
+    event.preventDefault();
+    confirmTypedTag();
+    return;
+  }
+  if (event.key === "Backspace" && !tagQuery.value) {
+    const lastTag = tagNames.value.at(-1);
+    if (lastTag) removeTag(lastTag);
+    return;
+  }
+  if (event.key === "Escape") tagMenuOpen.value = false;
+}
+
+function cleanedForm(): ReqArticle {
+  return {
+    ...form,
+    title: form.title.trim(),
+    content: form.content.trim(),
+    statement: form.statement?.trim() || undefined,
+    rewardContent: form.rewardContent?.trim() || undefined,
+  };
+}
+
+async function loadTags() {
+  const [tags, articleTags] = await Promise.all([
+    bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 100 }, query: { status: "TAG_STATUS_ENABLED" } } }),
+    articleId.value
+      ? bbsClient.tag.listArticleTags({ listArticleTagsReq: { articleId: articleId.value } })
+      : Promise.resolve({ rows: [] as RespTag[] }),
+  ]);
+  const linkedTags = articleTags.rows || [];
+  availableTags.value = [...(tags.rows || []), ...linkedTags.filter((tag) => !tags.rows?.some((item) => item.id === tag.id))];
+  savedTagIds.value = linkedTags.flatMap((tag) => (tag.id ? [tag.id] : []));
+  if (!tagNames.value.length) tagNames.value = linkedTags.flatMap((tag) => (tag.name ? [tag.name] : []));
+}
+
+async function save(publish: boolean) {
+  if (!form.title.trim()) return void message.warning("请输入文章标题。");
+  if (!form.content.trim()) return void message.warning("请输入文章内容。");
+  confirmTypedTag();
+  if (rewardOpen.value && !form.rewardContent?.trim()) return void message.warning("请输入打赏内容，或收起打赏设置。");
+  if (rewardOpen.value && (!form.rewardPoints || form.rewardPoints < 1)) return void message.warning("打赏积分必须大于 0。");
+  loading.value = true;
+  try {
+    saveLocalDraft();
+    const draft = await saveArticleDraft(cleanedForm(), articleId.value);
+    const id = draft.article?.id;
+    if (!id) throw new Error("保存草稿后未返回文章标识。");
+    articleId.value = id;
+    const tagIds = await synchronizeArticleTags(id, savedTagIds.value, tagNames.value, availableTags.value);
+    savedTagIds.value = tagIds;
+    saveLocalDraft();
+    if (!publish) {
+      message.success("草稿已保存。");
+      return;
+    }
+    await publishArticle(id);
+    if (localDraftId.value) removeLocalArticleDraft(localDraftId.value);
+    await navigate(`/article/${id}`);
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "保存失败，请稍后重试。");
+  } finally {
+    loading.value = false;
+  }
+}
+
+function openDraftInbox() {
+  saveLocalDraft();
+  draftInboxOpen.value = true;
+}
+
+onMounted(async () => {
+  const draftId = new URLSearchParams(window.location.search).get("draft");
+  if (draftId) {
+    const draft = getLocalArticleDraft(draftId);
+    if (draft) {
+      localDraftId.value = draft.id;
+      articleId.value = draft.articleId || articleId.value;
+      Object.assign(form, draft.article);
+      tagNames.value = [...draft.tagNames];
+      rewardOpen.value = Boolean(draft.article.rewardContent || draft.article.rewardPoints);
+    } else {
+      message.warning("本地草稿不存在或已被删除。");
+    }
+  }
+  try {
+    await loadTags();
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "标签加载失败，请刷新页面后重试。");
+  }
+});
+
+watch([form, tagNames], queueLocalDraftSave, { deep: true });
+onBeforeUnmount(() => {
+  if (localSaveTimer) window.clearTimeout(localSaveTimer);
+  saveLocalDraft();
+});
 </script>
+
 <template>
-  <VForm 
-    ref="formRef" 
-    is="article" 
-    class="flex flex-col"
-    :rules="rules"
-    :model="data"
-    :class="prefixCls"
-    @validate-failed="error = $event.error?.message || ''"
-  >
-    <section>
-      <label class="input join-item input-md input-ghost w-full border-b border-base-100">
-        <input type="text" placeholder="标题" required v-model="data.title" />
-      </label>
-    </section>
-    <section>
-      <Editor
-        ref="contentRef"
-        :options="{
-          outline: {
-            enable: true,
-            position: 'left',
-          },
-        }"
-        v-model="data.content"
-        name="article"
-      >
-        <template #fallback>
-          <div class="h-[70vh] flex items-center justify-center">
-            <span class="loading loading-infinity loading-xl"></span>
-          </div>
-        </template>
-      </Editor>
-    </section>
-    <section>
-      <InputTag class="input-ghost w-full border-b border-base-100 input-sm" v-model="tags" placeholder="标签（用逗号分隔，最多 4 个，每个最长 9 个字符）" />
-    </section>
-    <section v-if="type == 1">
-      <section class="px-10 py-2" v-if="!isRaward">
-        <button class="btn btn-ghost btn-block mt-4 py-3 hover:shadow-xl bg-base-100 h-auto" @click="isRaward = true">
-          打赏区 1. 当设置了打赏积分后，将启用打赏功能；2. 启用打赏需要 20 积分；3.
-          打赏区的内容只有在浏览者打赏后才对其可见 ▾
-        </button>
-      </section>
-      <section v-else>
+  <div class="main post-page post">
+    <form class="form" novalidate @submit.prevent="save(true)" @keydown.ctrl.enter.prevent="save(true)">
+      <label class="sr-only" for="articleTitle">文章标题</label>
+      <input id="articleTitle" v-model="form.title" type="text" maxlength="120" autocomplete="off" placeholder="标题" :disabled="loading" required />
+
+      <section class="post-article-content" aria-label="文章内容">
         <ClientOnly>
-          <Editor ref="rawardRef" height="30vh" v-model="data.reward_content">
-            <template #fallback>
-              <div class="h-[30vh] flex items-center justify-center">
-                <span class="loading loading-infinity loading-xl"></span>
-              </div>
-            </template>
-          </Editor>
+          <Editor
+            id="articleContent"
+            v-model="form.content"
+            :name="localDraftId || (articleId ? `article-${articleId}` : `post-${type}`)"
+            height="500px"
+            :options="{
+              placeholder: currentType?.editorHint,
+              outline: { enable: true, position: 'left' },
+              typewriterMode: true,
+              preview: { mode: 'both' },
+              resize: { enable: true, position: 'bottom' },
+            }"
+          />
         </ClientOnly>
-        <label class="input validator join-item input-sm input-ghost w-full border-b border-base-100">
-          <input type="number" placeholder="打赏积分" required v-model="data.reward_points" />
-        </label>
       </section>
-    </section>
-    <section v-if="type == 1">
-      <label class="input validator join-item input-sm input-ghost w-full border-b border-base-100">
-        <input type="number" placeholder="悬赏积分" required v-model="data.bounty_points" />
-      </label>
-    </section>
-    <section class="px-5 py-2">
-      <div role="alert" class="alert alert-error alert-soft text-xs py-2" v-if="error">
-        <span>{{error}}</span>
-      </div>
-    </section>
-    <section class="py-2 flex justify-between wrapper w-full md:flex-row flex-col" v-if="articleType">
-      <section class="space-x-2 md:flex items-center hidden">
-        <Icon :icon="articleType.icon" />
-        <span>{{ articleType.name }}</span>
-        <component :is="articleType.description" />
+
+      <section class="tags-wrap tag_selection" aria-label="文章标签">
+        <label class="sr-only" for="articleTags">文章标签</label>
+        <div class="tags-input">
+          <span v-for="name in tagNames" :key="name" class="tag tag--selected">
+            {{ name }}
+            <button type="button" :aria-label="`移除标签 ${name}`" :disabled="loading" @click="removeTag(name)">×</button>
+          </span>
+          <input
+            id="articleTags"
+            v-model="tagQuery"
+            :disabled="loading || tagNames.length >= 4"
+            autocomplete="off"
+            maxlength="9"
+            placeholder="标签（可选，逗号分隔，最多 4 个，每个最长 9 字符）"
+            @focus="tagMenuOpen = true"
+            @blur="window.setTimeout(() => (tagMenuOpen = false), 150)"
+            @keydown="handleTagKeydown"
+          />
+        </div>
+        <div v-if="tagMenuOpen && matchingTags.length" class="domains-tags" role="listbox" aria-label="标签建议">
+          <button v-for="tag in matchingTags.slice(0, 12)" :key="tag.id || tag.name" type="button" class="tag" :disabled="loading" @click="selectTagName(tag.name || '')">
+            {{ tag.name }}
+          </button>
+        </div>
+        <p v-else-if="tagMenuOpen && tagQuery.trim()" class="ft-fade article-tags__hint">按回车即可创建“{{ normalizeTagName(tagQuery) }}”标签。</p>
       </section>
-      <section class="flex-1 text-sm flex justify-end items-center space-x-2">
-        <label class="inline-flex whitespace-nowrap items-center gap-2 mr-4">
-          <span>创作声明</span>
-          <select class="select inline select-sm" v-model="data.statement">
-            <option selected>无声明</option>
-            <option>包含 AI 辅助创作</option>
-            <option>包含剧透</option>
-            <option>虚拟演绎，仅供娱乐</option>
-          </select>
-        </label>
-        <label class="inline-flex items-center gap-2 mr-4">
-          <input type="checkbox" class="checkbox checkbox-sm" v-model="data.anonymous" />
-          <span>匿名</span>
-        </label>
-        <label class="inline-flex items-center gap-2 mr-4">
-          <input type="checkbox" class="checkbox checkbox-sm" v-model="data.listable" />
-          <span>是否在列表展示</span>
-        </label>
-        <label class="inline-flex items-center gap-2 mr-4">
-          <input type="checkbox" class="checkbox checkbox-sm" v-model="data.commentable" />
-          <span>是否允许评论</span>
-        </label>
-        <button class="btn btn-outline btn-error btn-sm" @click="submit(3)">保存草稿</button>
-        <button class="btn btn-primary btn-sm" @click="submit()">发布</button>
+
+      <button v-if="!rewardOpen" id="showReward" class="fn-ellipsis" type="button" :disabled="loading" @click="rewardOpen = true">
+        打赏区 1. 当设置了打赏积分后，将启用打赏功能 2. 启用打赏需要 20 积分 3. 打赏区的内容只有在浏览者打赏后才对其可见 &dtrif;
+      </button>
+      <section v-if="rewardOpen" class="article-reward-content" aria-label="打赏设置">
+        <label class="sr-only" for="articleRewardContent">打赏内容</label>
+        <ClientOnly>
+          <Editor id="articleRewardContent" v-model="form.rewardContent" :name="articleId ? `article-reward-${articleId}` : undefined" height="200px" :options="{ placeholder: '写下打赏后可见的内容', preview: { mode: 'editor' }, resize: { enable: false } }" />
+        </ClientOnly>
+        <label class="sr-only" for="articleRewardPoint">打赏积分</label>
+        <input id="articleRewardPoint" v-model.number="form.rewardPoints" type="number" min="1" :disabled="loading" placeholder="打赏积分" />
       </section>
-    </section>
-  </VForm>
+
+      <section class="wrapper post__footer">
+        <div class="post__type">
+          <Icon :name="currentType?.icon || 'article'" class="post__info" aria-hidden="true" />
+          <span>{{ currentType?.name || "发布文章" }}</span>
+          <span class="ft-gray">{{ currentType?.description }}</span>
+        </div>
+        <div class="article-settings">
+          <div class="article-settings__options">
+            <label class="article-anonymous article-settings__statement" for="articleStatement">创作声明
+              <select id="articleStatement" v-model="form.statement" :disabled="loading">
+                <option value="">无声明</option><option value="包含 AI 辅助创作">包含 AI 辅助创作</option><option value="包含剧透">包含剧透</option><option value="虚构演绎，仅供娱乐">虚构演绎，仅供娱乐</option>
+              </select>
+            </label>
+            <label class="article-anonymous" for="articleCommentable">允许回帖 <input id="articleCommentable" v-model="form.commentable" type="checkbox" :disabled="loading" /></label>
+          </div>
+          <div class="article-settings__actions article-post-actions">
+            <button class="article-draft-action" type="button" :disabled="loading" @click="openDraftInbox">草稿箱</button>
+            <button class="article-draft-action" type="button" :disabled="loading" @click="save(false)">{{ loading ? "正在保存..." : "存草稿" }}</button>
+            <button class="green article-publish-action" type="submit" :disabled="loading">{{ loading ? "正在发布..." : "发布" }}</button>
+          </div>
+        </div>
+      </section>
+    </form>
+    <DraftInbox v-model="draftInboxOpen" />
+  </div>
 </template>
+
+<style scoped>
+.article-tags__hint { margin: 8px 0 0; font-size: 12px; }
+</style>
