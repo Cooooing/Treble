@@ -20,6 +20,7 @@ import { bbsClient } from "@/utils/sdk";
 
 const props = defineProps<{ article: ArticleDetail; comments: ListCommentThreadsResp }>();
 const pageContext = usePageContext();
+const account = computed(() => typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value);
 const threads = ref(props.comments.rows || []);
 const threadPage = ref(props.comments.page);
 const commentOrder = ref<ListCommentThreadsReqOrderEnum>(ListCommentThreadsReqOrderEnum.COMMENT_ORDER_HOTTEST);
@@ -41,7 +42,7 @@ const commentEditorOptions = {
 } satisfies IOptions;
 
 function openCommentEditor(target?: RespCommentListItem) {
-  if (!currentAccount.value && !pageContext.user) {
+  if (!account.value) {
     window.location.assign(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
     return;
   }
@@ -199,11 +200,11 @@ async function loadReplies(parentId: string, page: number) {
     </header>
 
     <div class="comment__reply">
-      <div v-if="currentAccount || pageContext.user" class="fn-flex">
+      <div v-if="account" class="fn-flex">
         <Avatar
           class="avatar"
-          :url="(currentAccount || pageContext.user)?.profile?.avatarUrl"
-          :name="(currentAccount || pageContext.user)?.profile?.name"
+          :url="account.profile?.avatarUrl"
+          :name="account.profile?.name"
           :size="48"
         />
         <button type="button" class="reply__text fn-flex-1" @click="openCommentEditor()">请输入回帖内容...</button>

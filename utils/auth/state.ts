@@ -5,6 +5,7 @@ import { bbsClient } from "@/utils/sdk";
 export const currentAccount = shallowRef<RespCurrentAccount>();
 
 export function setCurrentAccount(account?: RespCurrentAccount) {
+  if (typeof window === "undefined") return;
   currentAccount.value = account;
 }
 

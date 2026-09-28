@@ -206,6 +206,30 @@ export function createBbsGateway(options: GatewayOptions) {
     res.setHeader("x-treble-proxy-request-id", id);
     const path = new URL(req.url || "/", "http://treble.local").pathname;
     if (path === refreshPath) return sendJson(res, 403, "令牌刷新仅由 Treble 服务端处理");
+
+    if (path === logoutPath) {
+      const cookies = parseCookies(req.headers.cookie);
+      const sid = cookies.get(sessionCookieName);
+      let body = Buffer.alloc(0);
+      try {
+        body = await readBody(req);
+      } catch {
+        // 退出本地会话不依赖请求体可读。
+      }
+
+      try {
+        const repository = getSessionRepository();
+        const session = await repository.get(sid);
+        await repository.remove(sid);
+        if (session) void callBff(options, req, body, session.accessToken, id).catch(() => undefined);
+      } catch {
+        // Redis 故障时仍清除浏览器 sid，避免用户被困在失效登录态。
+      }
+
+      clearSessionCookie(res, options.isProduction);
+      return sendJson(res, 200, "已退出登录");
+    }
+
     if (!validateCsrf(req)) return sendJson(res, 403, "CSRF 校验失败，请刷新页面后重试");
 
     let body: Buffer;
@@ -221,10 +245,6 @@ export function createBbsGateway(options: GatewayOptions) {
     try {
       session = path === loginPath ? undefined : await getUsableSession(options, sid, id);
     } catch (error) {
-      if (path === logoutPath) {
-        clearSessionCookie(res, options.isProduction);
-        return sendJson(res, 200, "已退出登录");
-      }
       if (error instanceof SessionStoreError) return sendJson(res, 503, error.message);
       return sendJson(res, 503, "会话服务暂时不可用");
     }
@@ -238,11 +258,6 @@ export function createBbsGateway(options: GatewayOptions) {
         else clearSessionCookie(res, options.isProduction);
       }
     } catch {
-      if (path === logoutPath) {
-        await getSessionRepository().remove(sid).catch(() => undefined);
-        clearSessionCookie(res, options.isProduction);
-        return sendJson(res, 200, "已退出登录");
-      }
       return sendJson(res, 502, "BBS 服务暂时不可用");
     }
 
@@ -269,11 +284,7 @@ export function createBbsGateway(options: GatewayOptions) {
       return res.end(JSON.stringify({ code: envelope.code, msg: envelope.msg, data: { account: envelope.data.account } }));
     }
 
-    if (path === logoutPath) {
-      await getSessionRepository().remove(sid).catch(() => undefined);
-      clearSessionCookie(res, options.isProduction);
-      if (response.status === 401) return sendJson(res, 200, "已退出登录");
-    } else if (sid && !session) {
+    if (sid && !session) {
       clearSessionCookie(res, options.isProduction);
     }
     await writeResponse(response, res);

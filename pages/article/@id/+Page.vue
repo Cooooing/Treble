@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useData } from "vike-vue/useData";
 import { usePageContext } from "vike-vue/usePageContext";
 import { message } from "@/components/Message";
@@ -14,6 +14,7 @@ import { bbsClient } from "@/utils/sdk";
 
 const data = useData<Data>();
 const pageContext = usePageContext();
+const account = computed(() => typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value);
 const articleState = ref(data.article);
 const actionPending = ref<"like" | "thank" | "collect">();
 const articleHeadings = ref<Array<{ id: string; level: number; text: string }>>([]);
@@ -42,7 +43,7 @@ function scrollToHeading(id: string) {
 async function changeArticleAction(action: "like" | "thank" | "collect") {
   const currentArticle = articleState.value;
   if (!currentArticle?.id) return;
-  if (!currentAccount.value && !pageContext.user) {
+  if (!account.value) {
     loginForArticleAction();
     return;
   }

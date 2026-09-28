@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { usePageContext } from "vike-vue/usePageContext";
 import Avatar from "@/components/Avatar";
 import Icon from "@/components/community/Icon.vue";
@@ -19,13 +19,14 @@ const menus = [
   { name: "最热", path: "/hot", icon: "fire" },
 ];
 
-watch(
-  () => pageContext.user,
-  (account) => {
-    if (account) setCurrentAccount(account);
-  },
-  { immediate: true },
-);
+const account = computed(() => {
+  if (typeof window === "undefined") return pageContext.user;
+  return pageContext.user || currentAccount.value;
+});
+
+function syncClientAccount() {
+  setCurrentAccount(pageContext.user);
+}
 
 function closeWhenClickingOutside(event: PointerEvent) {
   if (!accountMenu.value?.contains(event.target as Node)) accountMenu.value?.removeAttribute("open");
@@ -55,7 +56,8 @@ onMounted(async () => {
   document.addEventListener("pointerdown", closeWhenClickingOutside);
   document.addEventListener("keydown", closeOnEscape);
   theme.value = getStoredTheme();
-  if (currentAccount.value) {
+  syncClientAccount();
+  if (account.value) {
     try {
       unreadCount.value = (await bbsClient.notification.countUnread({ body: {} })).count || 0;
     } catch {
@@ -67,6 +69,12 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   document.removeEventListener("pointerdown", closeWhenClickingOutside);
   document.removeEventListener("keydown", closeOnEscape);
+});
+
+watch(() => pageContext.user, (nextAccount) => {
+  if (typeof window === "undefined") return;
+  setCurrentAccount(nextAccount);
+  if (!nextAccount) unreadCount.value = 0;
 });
 </script>
 
@@ -94,14 +102,14 @@ onBeforeUnmount(() => {
       >
         <Icon :name="theme === 'dark' ? 'color-moon' : 'color-sun'" />
       </button>
-      <template v-if="currentAccount">
+      <template v-if="account">
         <a href="/notifications" class="no-msg" aria-label="通知中心"
           ><Icon name="notification" />&nbsp;{{ unreadCount }}</a
         >
         <a href="/pre-post" class="pre-post"><Icon name="addpost" />&nbsp;发帖</a>
         <details ref="accountMenu" class="account-menu">
           <summary class="account-menu__trigger" aria-label="打开账户菜单">
-            <Avatar :url="currentAccount.profile?.avatarUrl" :name="currentAccount.profile?.name" :size="32" />
+            <Avatar :url="account.profile?.avatarUrl" :name="account.profile?.name" :size="32" />
           </summary>
           <nav id="account-menu-panel" class="person-list show account-menu__panel" aria-label="账户菜单">
             <ul>
@@ -172,75 +180,70 @@ onBeforeUnmount(() => {
   z-index: 1002;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 .account-menu__panel ul {
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.account-menu__panel button {
+.account-menu__panel li {
+  overflow: hidden;
+}
+.account-menu__panel :is(a, button) {
   display: block;
   width: 100%;
+  min-height: 36px;
   padding: 8px 10px;
   border: 0;
+  border-radius: 0;
+  box-sizing: border-box;
   background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
-}
-.account-menu__panel button:hover,
-.account-menu__panel button:focus-visible {
-  background: rgba(248, 250, 252, 0.9);
   outline: none;
+  transform: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+  will-change: auto !important;
+}
+.account-menu__panel :is(a, button):hover,
+.account-menu__panel :is(a, button):focus-visible {
+  background: rgba(248, 250, 252, 0.9);
+  color: #e59230;
+  outline: none;
+  transform: none !important;
+  box-shadow: none !important;
 }
 .nav-auth-link {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  margin: 0 2px;
-  padding: 0 12px;
+  flex: 0 0 52px;
+  width: 52px;
+  min-height: 36px;
+  margin: 8px 3px;
+  padding: 0;
   border: 0;
   border-radius: 6px;
+  box-sizing: border-box;
   color: #3b3e43;
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
   text-decoration: none;
-  transition:
-    color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-    background-color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.nav-auth-link::after {
-  position: absolute;
-  right: 20%;
-  bottom: 0;
-  left: 20%;
-  height: 2px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #e59230 0%, #ffb86c 100%);
-  content: "";
-  opacity: 0;
-  transform: scaleX(0.6);
-  transition:
-    opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
+.nav-auth-link:visited { color: #3b3e43; }
 .nav-auth-link:hover,
 .nav-auth-link:focus-visible {
   background: #fff7ec;
   color: #e59230;
 }
-.nav-auth-link:hover::after,
-.nav-auth-link:focus-visible::after {
-  opacity: 1;
-  transform: scaleX(1);
-}
 .nav-auth-link:focus-visible {
-  outline: 2px solid #e59230;
-  outline-offset: -2px;
+  outline: 0;
 }
 :global(html[data-theme="dark"]) .theme-toggle:hover,
 :global(html[data-theme="dark"]) .theme-toggle:focus-visible,
@@ -250,11 +253,15 @@ onBeforeUnmount(() => {
   background: #444d56;
   color: #79b8ff;
 }
-:global(html[data-theme="dark"]) .account-menu__panel button:hover,
-:global(html[data-theme="dark"]) .account-menu__panel button:focus-visible {
+:global(html[data-theme="dark"]) .account-menu__panel :is(a, button):hover,
+:global(html[data-theme="dark"]) .account-menu__panel :is(a, button):focus-visible {
   background: #3a444d;
+  color: #79b8ff;
 }
 :global(html[data-theme="dark"]) .nav-auth-link {
+  color: #d7dde5;
+}
+:global(html[data-theme="dark"]) .nav-auth-link:visited {
   color: #d7dde5;
 }
 :global(html[data-theme="dark"]) .nav-auth-link:hover,
