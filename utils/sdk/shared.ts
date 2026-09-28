@@ -19,6 +19,11 @@ function isAbsoluteUrl(url: string) {
   return /^https?:\/\//i.test(url);
 }
 
+function browserRequestId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID();
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function toBbsProxyUrl(url: string, basePath: string) {
   const normalizedBasePath = basePath.replace(/\/$/, "");
   const parsedUrl = isAbsoluteUrl(url) ? new URL(url) : undefined;
@@ -97,7 +102,7 @@ export function createSdkFetch(options: {
 
     const proxyUrl = toBbsProxyUrl(url, options.proxyPath);
     const headers = new Headers(init?.headers);
-    headers.set("x-request-id", crypto.randomUUID());
+    headers.set("x-request-id", browserRequestId());
     if (init?.method && !["GET", "HEAD", "OPTIONS"].includes(init.method.toUpperCase())) {
       const csrf = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("treble.csrf="))?.slice("treble.csrf=".length);
       if (csrf) headers.set("x-treble-csrf", decodeURIComponent(csrf));
