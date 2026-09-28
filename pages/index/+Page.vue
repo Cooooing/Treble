@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, toRefs } from "vue";
 import { useData } from "vike-vue/useData";
 import ArticleCard from "@/components/ArticleCard";
 import { message } from "@/components/Message";
 import { Data } from "./+data";
 
-const { recents, hots, contentError } = useData<Data>();
+const { recents, hots, contentError } = toRefs(useData<Data>());
 
 onMounted(() => {
-  if (contentError) message.error(contentError);
+  if (contentError.value) message.error(contentError.value);
 });
 </script>
 <template>

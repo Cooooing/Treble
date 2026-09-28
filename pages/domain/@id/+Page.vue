@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useData } from "vike-vue/useData";
+import { toRefs } from "vue";
 import ArticleCard from "@/components/ArticleCard";
 import ContentSidebar from "@/components/ContentSidebar.vue";
 import type { Data } from "./+data";
 
-const { domain, articles, domainTags, sidebarTags, domains } = useData<Data>();
+const { domain, articles, domainTags, sidebarTags, domains } = toRefs(useData<Data>());
 </script>
 
 <template>

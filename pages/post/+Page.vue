@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import type { ReqArticleTypeEnum } from "@bass/bbs-sdk-fetch/models/ReqArticle";
+import { computed } from "vue";
 import { usePageContext } from "vike-vue/usePageContext";
 import ArticleForm from "@/pages/article/ArticleForm.vue";
 import { articleTypes } from "@/pages/article";
 
-const requestedType = new URLSearchParams(usePageContext().urlOriginal.split("?")[1] || "").get("type");
-const type = articleTypes.find((item) => item.type === requestedType)?.type as ReqArticleTypeEnum | undefined;
+const pageContext = usePageContext();
+const type = computed(() => {
+  const requestedType = new URL(pageContext.urlOriginal, "http://treble.local").searchParams.get("type");
+  return articleTypes.find((item) => item.type === requestedType)?.type as ReqArticleTypeEnum | undefined;
+});
 </script>
 
-<template><ArticleForm :type="type || 'ARTICLE_TYPE_NORMAL'" /></template>
+<template><ArticleForm :key="pageContext.urlOriginal" :type="type || 'ARTICLE_TYPE_NORMAL'" /></template>

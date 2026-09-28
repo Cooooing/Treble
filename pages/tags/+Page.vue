@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useData } from "vike-vue/useData";
+import { toRefs } from "vue";
 import Panel from "@/components/community/Panel.vue";
 import ContentSidebar from "@/components/ContentSidebar.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
 import type { Data } from "./+data";
 
-const { rows, domains } = useData<Data>();
+const { rows, domains } = toRefs(useData<Data>());
 </script>
 
 <template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, toRefs, watch } from "vue";
 import { useData } from "vike-vue/useData";
 import type { RespNotification } from "@bass/bbs-sdk-fetch/models/RespNotification";
 import { message } from "@/components/Message";
@@ -8,11 +8,11 @@ import { bbsClient } from "@/utils/sdk";
 import EmptyState from "@/components/ui/EmptyState.vue";
 import type { Data } from "./+data";
 
-const { rows } = useData<Data>();
-const notifications = ref<RespNotification[]>(rows || []);
+const { rows } = toRefs(useData<Data>());
+const notifications = ref<RespNotification[]>(rows.value || []);
 const marking = ref(false);
 
-onMounted(async () => {
+async function markUnreadNotifications() {
   const unreadIds = notifications.value.flatMap((notification) =>
     notification.id && !notification.readAt ? [notification.id] : [],
   );
@@ -30,6 +30,15 @@ onMounted(async () => {
   } finally {
     marking.value = false;
   }
+}
+
+watch(rows, (nextRows) => {
+  notifications.value = nextRows || [];
+  void markUnreadNotifications();
+});
+
+onMounted(() => {
+  void markUnreadNotifications();
 });
 </script>
 
