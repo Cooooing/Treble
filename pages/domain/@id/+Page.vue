@@ -4,30 +4,35 @@ import ArticleCard from "@/components/ArticleCard";
 import ContentSidebar from "@/components/ContentSidebar.vue";
 import type { Data } from "./+data";
 
-const { domain, articles, tags, domains } = useData<Data>();
+const { domain, articles, domainTags, sidebarTags, domains } = useData<Data>();
 </script>
 
 <template>
   <div class="main">
     <div class="wrapper">
       <section class="content">
-        <header class="module-header domain-page-header">
-          <span
-            class="domain-page-header__icon"
-            :style="domain.icon ? { backgroundImage: `url(${domain.icon.startsWith('/v1/') ? `/api/bbs${domain.icon}` : domain.icon})` } : undefined"
-            aria-hidden="true"
-          ></span>
-          <div>
-            <h1>{{ domain.name }}</h1>
-            <p class="ft-fade">{{ domain.description || "暂无领域描述。" }}</p>
+        <section class="module taxonomy-page__intro">
+          <div class="module-panel">
+            <div class="taxonomy-page__identity">
+              <span
+                v-if="domain.icon"
+                class="avatar taxonomy-page__icon"
+                :style="{ backgroundImage: `url(${domain.icon.startsWith('/v1/') ? `/api/bbs${domain.icon}` : domain.icon})` }"
+                aria-hidden="true"
+              ></span>
+              <div>
+                <h1><a :href="`/domain/${domain.code || domain.id}`">{{ domain.name }}</a></h1>
+                <p class="ft-fade">{{ domain.description || "暂无领域描述。" }}</p>
+              </div>
+            </div>
+            <nav v-if="domainTags.length" class="domain-tags" aria-label="领域标签">
+              <a v-for="tag in domainTags" :key="tag.id || tag.name" rel="tag" :href="`/tag/${encodeURIComponent(tag.name || '')}`">{{ tag.name }}</a>
+            </nav>
           </div>
-        </header>
-        <section v-if="tags.length" class="domain-tags" aria-label="领域标签">
-          <a v-for="tag in tags" :key="tag.id || tag.name" :href="`/tag/${encodeURIComponent(tag.name || '')}`">{{ tag.name }}</a>
         </section>
         <ArticleCard :articles="articles" title="领域文章" />
       </section>
-      <ContentSidebar :tags="tags.slice(0, 12)" :domains="domains" />
+      <ContentSidebar :tags="sidebarTags" :domains="domains" />
     </div>
   </div>
 </template>

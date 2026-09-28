@@ -13,8 +13,8 @@ export async function data(pageContext: PageContext) {
   if (!tag) throw render(404, "你访问的标签不存在或已被删除。");
   const [articles, tags, domains] = await Promise.all([
     bbsClient.article.list({ listArticlesReq: { query: { tagId: tag.id }, page: { page: 1, size: 15 } } }),
-    bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 12 } } }),
-    bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 8 } } }),
+    bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 100 } } }),
+    bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 100 } } }),
   ]);
   return { tag, articles: articles.rows || [], tags: tags.rows || [], domains: domains.rows || [] };
 }

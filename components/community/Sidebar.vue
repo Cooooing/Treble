@@ -24,11 +24,9 @@ defineProps<{ tags?: RespTag[]; domains?: RespDomain[] }>();
       <p v-else class="community-sidebar__empty">暂无领域</p>
     </Panel>
     <Panel title="标签" more-href="/tags">
-      <ul v-if="tags?.length" class="tags community-sidebar__tags">
-        <li v-for="tag in tags" :key="tag.id || tag.name">
-          <a :href="`/tag/${encodeURIComponent(tag.name || '')}`" :title="tag.description || tag.name">{{ tag.name }}</a>
-        </li>
-      </ul>
+      <nav v-if="tags?.length" class="community-sidebar__tags" aria-label="标签目录">
+        <a v-for="tag in tags" :key="tag.id || tag.name" rel="tag" :href="`/tag/${encodeURIComponent(tag.name || '')}`" :title="tag.description || tag.name">{{ tag.name }}</a>
+      </nav>
       <p v-else class="community-sidebar__empty">暂无标签</p>
     </Panel>
   </aside>

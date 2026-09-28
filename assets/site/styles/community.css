@@ -36,10 +36,15 @@
 }
 
 .article-list__compact-row .title {
+  display: block;
   min-width: 0;
   color: var(--text-color);
   font-size: 14px;
   line-height: 20px;
+}
+
+.article-list__compact-details {
+  min-width: 0;
 }
 
 .article-list__reply-link {
@@ -57,18 +62,36 @@
   padding: 12px 15px 14px;
 }
 
+.article-list__info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  min-height: 20px;
+  gap: 12px;
+}
+
 .article-list__stats {
-  float: right;
-  margin: 3px 0 0 12px;
+  flex: 0 0 auto;
   white-space: nowrap;
 }
 
+.article-list__taxonomy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.article-list__stats a { text-decoration: none; }
+
+.article-list__stats a:hover,
+.article-list__stats a:focus-visible { color: #e59230; text-decoration: none; }
+
 .article-list:not(.article-list--compact) h2 {
   min-width: 0;
-  margin: 0 110px 10px 0;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 22px;
+  margin: 5px 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px;
 }
 
 .article-list:not(.article-list--compact) h2 a {
@@ -82,9 +105,17 @@
   gap: 10px;
 }
 
+.article-list__author-row {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 10px;
+}
+
 .article-list__author {
-  flex: 0 0 48px;
-  width: 48px;
+  display: block;
+  flex: 0 0 28px;
+  width: 28px;
 }
 
 .article-list__author .avatar {
@@ -97,7 +128,7 @@
 }
 
 .article-list__author-line {
-  min-height: 38px;
+  min-height: 28px;
   margin: 0;
   line-height: 18px;
 }
@@ -147,6 +178,34 @@
 .community-sidebar__domains,
 .community-sidebar__tags {
   margin: 0;
+}
+
+.community-sidebar__domains {
+  max-height: 288px;
+  overflow-y: auto;
+}
+
+.community-sidebar__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  max-height: 288px;
+  padding: 8px 10px 10px;
+  overflow-y: auto;
+}
+
+.community-sidebar__tags a {
+  margin-right: 8px;
+  color: #4285f4;
+  font-size: 12px;
+  line-height: 20px;
+  text-decoration: none;
+}
+
+.community-sidebar__tags a:hover,
+.community-sidebar__tags a:focus-visible {
+  color: #e59230;
+  text-decoration: none;
 }
 
 .community-sidebar__domain {
@@ -213,29 +272,48 @@
   line-height: 18px;
 }
 
-.domain-page-header {
+.taxonomy-page__intro {
+  margin-bottom: 20px;
+}
+
+.taxonomy-page__intro .module-panel {
+  padding: 15px;
+}
+
+.taxonomy-page__identity {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.domain-page-header h1,
-.domain-page-header p {
+.taxonomy-page__identity h1,
+.taxonomy-page__identity p {
   margin: 0;
 }
 
-.domain-page-header h1 {
+.taxonomy-page__identity h1 {
   font-size: 18px;
-  font-weight: 400;
+  font-weight: 700;
   line-height: 24px;
 }
 
-.domain-page-header p {
+.taxonomy-page__identity h1 a {
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.taxonomy-page__identity h1 a:hover,
+.taxonomy-page__identity h1 a:focus-visible {
+  color: #e59230;
+  text-decoration: none;
+}
+
+.taxonomy-page__identity p {
   margin-top: 2px;
   font-size: 13px;
 }
 
-.domain-page-header__icon {
+.taxonomy-page__icon {
   flex-basis: 42px;
   width: 42px;
   height: 42px;
@@ -244,25 +322,22 @@
 .domain-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--layer-border-color);
-  background: var(--background-secondary-color);
+  gap: 2px 0;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--layer-border-color);
 }
 
 .domain-tags a {
-  padding: 3px 8px;
-  border-radius: 3px;
-  background: var(--background-color);
-  color: var(--text-gray-color);
+  margin-right: 10px;
+  color: #4285f4;
   font-size: 12px;
-  line-height: 18px;
+  line-height: 20px;
   text-decoration: none;
 }
 
 .domain-tags a:hover,
 .domain-tags a:focus-visible {
-  background: #fff7ec;
   color: #e59230;
 }
 
@@ -278,19 +353,16 @@ html[data-theme="dark"] .community-sidebar__empty {
   color: #aeb8c2;
 }
 
-html[data-theme="dark"] .domain-tags {
-  border-color: #1f252b;
-  background: #24292e;
+html[data-theme="dark"] .taxonomy-page__identity h1 a {
+  color: #f0f6fc;
 }
 
-html[data-theme="dark"] .domain-tags a {
-  background: #2f363d;
-  color: #aeb8c2;
+html[data-theme="dark"] :is(.community-sidebar__tags a, .domain-tags a) {
+  color: #79b8ff;
 }
 
-html[data-theme="dark"] .domain-tags a:hover,
-html[data-theme="dark"] .domain-tags a:focus-visible {
-  background: #444d56;
+html[data-theme="dark"] :is(.community-sidebar__tags a, .domain-tags a):hover,
+html[data-theme="dark"] :is(.community-sidebar__tags a, .domain-tags a):focus-visible {
   color: #79b8ff;
 }
 
@@ -304,9 +376,11 @@ html[data-theme="dark"] .domain-tags a:focus-visible {
     padding: 12px 10px;
   }
 
-  .article-list__stats {
-    float: none;
-    margin: 0 0 6px;
+  .article-list__info {
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+    margin-bottom: 0;
   }
 
   .article-list:not(.article-list--compact) h2 {

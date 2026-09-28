@@ -10,6 +10,7 @@ import Author from "./Author.vue";
 import Comments from "./Comments.vue";
 import Postscripts from "./Postscripts.vue";
 import Icon from "@/components/community/Icon.vue";
+import ArticleTaxonomy from "@/components/community/ArticleTaxonomy.vue";
 import Avatar from "@/components/Avatar";
 import { currentAccount } from "@/utils/auth/state";
 import { bbsClient } from "@/utils/sdk";
@@ -134,6 +135,7 @@ onMounted(() => {
               <span>{{ articleState.rewardPoints || 0 }} 积分悬赏</span>
               <div class="vditor-reset" v-html="articleState.rewardContentRender" />
             </section>
+            <ArticleTaxonomy :domains="articleState.domains" :tags="articleState.tags" />
           </div>
         </div>
         <Postscripts

@@ -13,11 +13,18 @@ export async function data(pageContext: PageContext) {
 
   if (!domain) throw render(404, "你访问的领域不存在或已被删除。");
 
-  const [articles, tags, domains] = await Promise.all([
+  const [articles, domainTags, sidebarTags, domains] = await Promise.all([
     bbsClient.article.list({ listArticlesReq: { query: { domainId: domain.id }, page: { page: 1, size: 15 } } }),
     bbsClient.tag.list({ listTagsReq: { query: { domainId: domain.id }, page: { page: 1, size: 100 } } }),
-    bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 8 } } }),
+    bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 100 } } }),
+    bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 100 } } }),
   ]);
 
-  return { domain, articles: articles.rows || [], tags: tags.rows || [], domains: domains.rows || [] };
+  return {
+    domain,
+    articles: articles.rows || [],
+    domainTags: domainTags.rows || [],
+    sidebarTags: sidebarTags.rows || [],
+    domains: domains.rows || [],
+  };
 }

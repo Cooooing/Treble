@@ -34,7 +34,7 @@ const { rows, tags } = useData<Data>();
           <EmptyState v-else />
         </Panel>
       </section>
-      <ContentSidebar :tags="tags.slice(0, 12)" :domains="rows.slice(0, 8)" />
+      <ContentSidebar :tags="tags" :domains="rows" />
     </div>
   </div>
 </template>
