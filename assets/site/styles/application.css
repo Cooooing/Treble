@@ -34,6 +34,87 @@
   text-align: center;
 }
 
+.verify .verify__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+  margin: 10px 0 0;
+  padding: 0 12px;
+  border: 1px solid #d1d5da;
+  border-radius: 3px;
+  box-sizing: border-box;
+  color: #616161;
+  font: inherit;
+  line-height: 34px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transform: none;
+  box-shadow: none;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.verify .verify__action:hover,
+.verify .verify__action:focus-visible {
+  border-color: #e59230;
+  background-color: #fff7ec;
+  color: #e59230;
+  outline: 0;
+  transform: none;
+  box-shadow: none;
+}
+
+.verify .verify__action:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.verify .verify__action--primary {
+  border-color: #60b044;
+  background-color: #60b044;
+  color: #fff;
+}
+
+.verify .verify__action--primary:hover,
+.verify .verify__action--primary:focus-visible {
+  border-color: #4e9634;
+  background-color: #4e9634;
+  color: #fff;
+}
+
+.verify .verify__action:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+html[data-theme="dark"] .verify .verify__action {
+  border-color: #586069;
+  background-color: #2f363d;
+  color: #d1d5da;
+}
+
+html[data-theme="dark"] .verify .verify__action:hover,
+html[data-theme="dark"] .verify .verify__action:focus-visible {
+  border-color: #79b8ff;
+  background-color: #444d56;
+  color: #79b8ff;
+}
+
+html[data-theme="dark"] .verify .verify__action--primary {
+  border-color: #2ea043;
+  background-color: #2ea043;
+  color: #fff;
+}
+
+html[data-theme="dark"] .verify .verify__action--primary:hover,
+html[data-theme="dark"] .verify .verify__action--primary:focus-visible {
+  border-color: #3fb950;
+  background-color: #3fb950;
+  color: #fff;
+}
+
 .verify .community-welcome {
   box-sizing: border-box;
   font-size: 14px;
@@ -63,8 +144,12 @@
 
 #page-container,
 .page-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   width: 100%;
   min-width: 0;
+  min-height: 0;
 }
 
 .empty-state {
@@ -446,6 +531,67 @@ html[data-theme="dark"] .post-page .article-draft-action {
   border-color: #4b5965;
   background: #303a44;
   color: #d3dce5;
+}
+html[data-theme="dark"] .post-page.post,
+html[data-theme="dark"] .post-page .editor-shell,
+html[data-theme="dark"] .post-page .editor-shell .vditor,
+html[data-theme="dark"] .post-page .editor-shell .vditor-content,
+html[data-theme="dark"] .post-page .editor-shell .vditor-wysiwyg,
+html[data-theme="dark"] .post-page .editor-shell .vditor-ir,
+html[data-theme="dark"] .post-page .editor-shell .vditor-sv {
+  background: #2f363d;
+}
+html[data-theme="dark"] .post-page .editor-shell .vditor-toolbar {
+  border-bottom-color: #46515c;
+  background: #343d46;
+}
+html[data-theme="dark"] .post-page .editor-shell .vditor-wysiwyg,
+html[data-theme="dark"] .post-page .editor-shell .vditor-ir,
+html[data-theme="dark"] .post-page .editor-shell .vditor-sv,
+html[data-theme="dark"] .post-page .editor-shell .vditor-sv textarea {
+  color: #e6edf3;
+}
+html[data-theme="dark"] .post-page .editor-shell .vditor-sv textarea {
+  background: #2f363d;
+}
+html[data-theme="dark"] .post-page #articleTitle,
+html[data-theme="dark"] .post-page .tags-input input,
+html[data-theme="dark"] .post-page #articleRewardPoint {
+  background: transparent;
+  color: #e6edf3;
+}
+html[data-theme="dark"] .post-page #articleTitle:focus,
+html[data-theme="dark"] .post-page .tags-input input:focus,
+html[data-theme="dark"] .post-page #articleRewardPoint:focus {
+  box-shadow: none;
+  transform: none;
+  animation: none;
+}
+html[data-theme="dark"] .post-page .tags-input:focus-within,
+html[data-theme="dark"] .post-page #articleRewardPoint:focus {
+  border-color: #79b8ff;
+}
+html[data-theme="dark"] .post-page .article-draft-action:hover,
+html[data-theme="dark"] .post-page .article-draft-action:focus-visible {
+  border-color: #79b8ff;
+  background: #394653;
+  color: #f0f6fc;
+  box-shadow: none;
+  transform: none;
+}
+html[data-theme="dark"] .post-page .article-post-actions > button.green {
+  border-color: #2ea043;
+  background: #2ea043;
+  color: #fff;
+  box-shadow: none;
+}
+html[data-theme="dark"] .post-page .article-post-actions > button.green:hover,
+html[data-theme="dark"] .post-page .article-post-actions > button.green:focus-visible {
+  border-color: #3fb950;
+  background: #3fb950;
+  color: #fff;
+  box-shadow: none;
+  transform: none;
 }
 @media (max-width: 768px) {
   .post-page #articleTitle { padding: 14px 10px 8px; font-size: 22px; }

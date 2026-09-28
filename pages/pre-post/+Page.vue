@@ -21,9 +21,12 @@ import Icon from "@/components/community/Icon.vue";
 
 <style scoped>
 .pre-post-wrap {
-  display: flex;
-  align-items: center;
-  min-height: calc(100dvh - 155px);
+  display: grid;
+  flex: 1 1 auto;
+  place-items: center;
+  min-height: 0;
+  padding: 24px 0;
+  box-sizing: border-box;
 }
 
 .pre-post-wrap > div { width: 100%; }
@@ -87,7 +90,9 @@ import Icon from "@/components/community/Icon.vue";
 
 @media (max-width: 768px) {
   .pre-post-wrap {
-    align-items: flex-start;
+    display: block;
+    flex: 0 0 auto;
+    padding-block: 0;
   }
   .pre-post {
     display: block;

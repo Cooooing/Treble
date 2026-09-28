@@ -29,7 +29,6 @@ async function submit() {
     <div class="wrapper verify">
       <div class="verify-wrap">
         <form class="form" method="post" novalidate @submit.prevent="submit">
-          <BrandMark class="verify__brand" />
           <h2 class="verify__title">登录摸鱼派</h2>
           <p class="verify__subtitle">继续交流、分享与发现</p>
           <div class="input-wrap">
@@ -62,8 +61,10 @@ async function submit() {
               required
             />
           </div>
-          <button class="green" type="submit" :disabled="loading">{{ loading ? "正在登录..." : "登录" }}</button>
-          <a class="btn" href="/register">注册</a>
+          <button class="verify__action verify__action--primary" type="submit" :disabled="loading">
+            {{ loading ? "正在登录..." : "登录" }}
+          </button>
+          <a class="verify__action verify__action--secondary" href="/register">注册</a>
         </form>
       </div>
       <aside class="intro community-welcome vditor-reset" aria-labelledby="community-welcome-title">

@@ -84,7 +84,6 @@ onBeforeUnmount(() => {
     <div class="wrapper verify">
       <div class="verify-wrap">
         <form class="form" novalidate @submit.prevent="step === 1 ? sendOtp() : register()">
-          <BrandMark class="verify__brand" />
           <h2 class="verify__title">加入摸鱼派</h2>
           <p class="verify__subtitle">创建账号，和鱼油们一起摸鱼</p>
           <template v-if="step === 1">
@@ -161,7 +160,7 @@ onBeforeUnmount(() => {
                 required
               />
             </div>
-            <button class="green" type="submit" :disabled="loading">
+            <button class="verify__action verify__action--primary" type="submit" :disabled="loading">
               {{ loading ? "正在发送..." : "发送邮箱验证码" }}
             </button>
           </template>
@@ -181,9 +180,18 @@ onBeforeUnmount(() => {
                 required
               />
             </div>
-            <button class="green" type="submit" :disabled="loading">{{ loading ? "正在注册..." : "完成注册" }}</button>
-            <button type="button" :disabled="loading" @click="step = 1">返回修改资料</button>
-            <button type="button" :disabled="loading || resendAfter > 0" @click="sendOtp">
+            <button class="verify__action verify__action--primary" type="submit" :disabled="loading">
+              {{ loading ? "正在注册..." : "完成注册" }}
+            </button>
+            <button class="verify__action verify__action--secondary" type="button" :disabled="loading" @click="step = 1">
+              返回修改资料
+            </button>
+            <button
+              class="verify__action verify__action--secondary"
+              type="button"
+              :disabled="loading || resendAfter > 0"
+              @click="sendOtp"
+            >
               {{ resendAfter > 0 ? `${resendAfter} 秒后可重发` : "重新发送验证码" }}
             </button>
           </template>

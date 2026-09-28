@@ -131,8 +131,25 @@ html[data-theme="dark"] textarea::placeholder {
 html[data-theme="dark"] .verify .form input[type="text"],
 html[data-theme="dark"] .verify .form input[type="password"],
 html[data-theme="dark"] .verify .form input[type="email"] {
-  background-color: #24292e;
+  background-color: transparent;
+  border-color: transparent;
   color: #d1d5da;
+}
+
+html[data-theme="dark"] .verify .input-wrap {
+  border: 1px solid #46515c;
+  background-color: #303941;
+}
+
+html[data-theme="dark"] .verify .input-wrap:focus-within {
+  border-color: #79b8ff;
+}
+
+html[data-theme="dark"] .verify .input-wrap input:focus {
+  border-color: transparent !important;
+  box-shadow: none;
+  transform: none;
+  animation: none;
 }
 html[data-theme="dark"] input:focus,
 html[data-theme="dark"] textarea:focus,
