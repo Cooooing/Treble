@@ -99,7 +99,7 @@ defineExpose({ close });
   position: fixed;
   top: 70px;
   left: 50%;
-  z-index: 1100;
+  z-index: 2147483647;
   width: min(32rem, calc(100vw - 2rem));
   pointer-events: none;
   transform: translateX(-50%);

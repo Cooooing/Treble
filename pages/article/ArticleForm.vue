@@ -10,7 +10,7 @@ import { message } from "@/components/Message";
 import Icon from "@/components/community/Icon.vue";
 import DraftInbox from "@/components/community/DraftInbox.vue";
 import { publishArticle, saveArticleDraft, synchronizeArticleTags } from "@/services/content";
-import { getLocalArticleDraft, removeLocalArticleDraft, saveLocalArticleDraft } from "@/services/localDrafts";
+import { consumeServerArticleDraftRestore, getLocalArticleDraft, hasPendingServerArticleDraftRestore, removeLocalArticleDraft, saveLocalArticleDraft } from "@/services/localDrafts";
 import { articleTypes } from "./index";
 import { bbsClient } from "@/utils/sdk";
 
@@ -34,9 +34,11 @@ const tagNames = ref<string[]>([]);
 const savedTagIds = ref<string[]>([]);
 const tagQuery = ref("");
 const tagMenuOpen = ref(false);
-const localDraftId = ref<string>();
+const recoveryDraftSavedToServer = ref(Boolean(props.article?.id));
 const articleId = ref(props.article?.id);
 let localSaveTimer: ReturnType<typeof window.setTimeout> | undefined;
+let formInitialized = false;
+let retainLocalRecovery = true;
 
 const matchingTags = computed(() => {
   const keyword = tagQuery.value.trim().toLocaleLowerCase();
@@ -49,20 +51,20 @@ function normalizeTagName(value: string) {
   return value.trim().replace(/[,，、；;]/g, "");
 }
 
-function saveLocalDraft() {
-  if (!form.title.trim() && !form.content.trim() && !tagNames.value.length) return;
+function saveLocalDraft(savedToServer = false) {
+  if (hasPendingServerArticleDraftRestore(type)) return;
   const draft = saveLocalArticleDraft({
-    id: localDraftId.value,
     articleId: articleId.value,
     article: { ...form },
     tagNames: tagNames.value,
+    savedToServer,
   });
-  localDraftId.value = draft.id;
+  recoveryDraftSavedToServer.value = draft?.savedToServer || false;
 }
 
 function queueLocalDraftSave() {
   if (localSaveTimer) window.clearTimeout(localSaveTimer);
-  localSaveTimer = window.setTimeout(saveLocalDraft, 300);
+  localSaveTimer = window.setTimeout(() => saveLocalDraft(false), 100);
 }
 
 function selectTagName(name: string) {
@@ -122,17 +124,23 @@ function cleanedForm(): ReqArticle {
   };
 }
 
-async function loadTags() {
+async function loadTags(keepLocalTagNames = false) {
   const [tags, articleTags] = await Promise.all([
     bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 100 }, query: { status: "TAG_STATUS_ENABLED" } } }),
     articleId.value
       ? bbsClient.tag.listArticleTags({ listArticleTagsReq: { articleId: articleId.value } })
       : Promise.resolve({ rows: [] as RespTag[] }),
   ]);
-  const linkedTags = articleTags.rows || [];
+  const seenTagIDs = new Set<string>();
+  const linkedTags = [...(articleTags.rows || []), ...(props.article?.tags || [])].filter((tag) => {
+    if (!tag.id) return Boolean(tag.name);
+    if (seenTagIDs.has(tag.id)) return false;
+    seenTagIDs.add(tag.id);
+    return true;
+  });
   availableTags.value = [...(tags.rows || []), ...linkedTags.filter((tag) => !tags.rows?.some((item) => item.id === tag.id))];
   savedTagIds.value = linkedTags.flatMap((tag) => (tag.id ? [tag.id] : []));
-  if (!tagNames.value.length) tagNames.value = linkedTags.flatMap((tag) => (tag.name ? [tag.name] : []));
+  if (!keepLocalTagNames) tagNames.value = linkedTags.flatMap((tag) => (tag.name ? [tag.name] : []));
 }
 
 async function save(publish: boolean) {
@@ -143,20 +151,21 @@ async function save(publish: boolean) {
   if (rewardOpen.value && (!form.rewardPoints || form.rewardPoints < 1)) return void message.warning("打赏积分必须大于 0。");
   loading.value = true;
   try {
-    saveLocalDraft();
+    saveLocalDraft(false);
     const draft = await saveArticleDraft(cleanedForm(), articleId.value);
     const id = draft.article?.id;
     if (!id) throw new Error("保存草稿后未返回文章标识。");
     articleId.value = id;
     const tagIds = await synchronizeArticleTags(id, savedTagIds.value, tagNames.value, availableTags.value);
     savedTagIds.value = tagIds;
-    saveLocalDraft();
+    saveLocalDraft(true);
     if (!publish) {
       message.success("草稿已保存。");
       return;
     }
     await publishArticle(id);
-    if (localDraftId.value) removeLocalArticleDraft(localDraftId.value);
+    retainLocalRecovery = false;
+    removeLocalArticleDraft(type);
     await navigate(`/article/${id}`);
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "保存失败，请稍后重试。");
@@ -166,35 +175,40 @@ async function save(publish: boolean) {
 }
 
 function openDraftInbox() {
-  saveLocalDraft();
+  saveLocalDraft(recoveryDraftSavedToServer.value);
   draftInboxOpen.value = true;
 }
 
 onMounted(async () => {
-  const draftId = new URLSearchParams(window.location.search).get("draft");
-  if (draftId) {
-    const draft = getLocalArticleDraft(draftId);
-    if (draft) {
-      localDraftId.value = draft.id;
-      articleId.value = draft.articleId || articleId.value;
-      Object.assign(form, draft.article);
-      tagNames.value = [...draft.tagNames];
-      rewardOpen.value = Boolean(draft.article.rewardContent || draft.article.rewardPoints);
-    } else {
-      message.warning("本地草稿不存在或已被删除。");
-    }
+  tagQuery.value = "";
+  tagMenuOpen.value = false;
+  const restoringServerDraft = consumeServerArticleDraftRestore(props.article?.id, type);
+  const draft = getLocalArticleDraft(type);
+  const shouldRestoreLocalDraft = !restoringServerDraft && Boolean(draft && !draft.savedToServer && (!props.article || draft.articleId === props.article.id));
+  if (shouldRestoreLocalDraft && draft) {
+    articleId.value = draft.articleId || articleId.value;
+    Object.assign(form, draft.article);
+    tagNames.value = [...draft.tagNames];
+    rewardOpen.value = Boolean(draft.article.rewardContent || draft.article.rewardPoints);
+    recoveryDraftSavedToServer.value = false;
   }
   try {
-    await loadTags();
+    await loadTags(shouldRestoreLocalDraft);
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "标签加载失败，请刷新页面后重试。");
+  } finally {
+    formInitialized = true;
   }
 });
 
-watch([form, tagNames], queueLocalDraftSave, { deep: true });
+watch([form, tagNames], () => {
+  if (!formInitialized) return;
+  recoveryDraftSavedToServer.value = false;
+  queueLocalDraftSave();
+}, { deep: true });
 onBeforeUnmount(() => {
   if (localSaveTimer) window.clearTimeout(localSaveTimer);
-  saveLocalDraft();
+  if (retainLocalRecovery) saveLocalDraft(recoveryDraftSavedToServer.value);
 });
 </script>
 
@@ -209,7 +223,7 @@ onBeforeUnmount(() => {
           <Editor
             id="articleContent"
             v-model="form.content"
-            :name="localDraftId || (articleId ? `article-${articleId}` : `post-${type}`)"
+            :name="articleId ? `article-${articleId}` : `post-${type}`"
             height="500px"
             :options="{
               placeholder: currentType?.editorHint,
@@ -237,12 +251,14 @@ onBeforeUnmount(() => {
             maxlength="9"
             placeholder="标签（可选，逗号分隔，最多 4 个，每个最长 9 字符）"
             @focus="tagMenuOpen = true"
-            @blur="window.setTimeout(() => (tagMenuOpen = false), 150)"
+            @click="tagMenuOpen = true"
+            @input="tagMenuOpen = true"
+            @blur="tagMenuOpen = false"
             @keydown="handleTagKeydown"
           />
         </div>
         <div v-if="tagMenuOpen && matchingTags.length" class="domains-tags" role="listbox" aria-label="标签建议">
-          <button v-for="tag in matchingTags.slice(0, 12)" :key="tag.id || tag.name" type="button" class="tag" :disabled="loading" @click="selectTagName(tag.name || '')">
+          <button v-for="tag in matchingTags.slice(0, 12)" :key="tag.id || tag.name" type="button" class="tag" :disabled="loading" @pointerdown.prevent @click="selectTagName(tag.name || '')">
             {{ tag.name }}
           </button>
         </div>
