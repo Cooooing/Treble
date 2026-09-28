@@ -13,6 +13,8 @@ const step = ref<1 | 2>(1);
 const loading = ref(false);
 const resendAfter = ref(0);
 let resendTimer: ReturnType<typeof setInterval> | undefined;
+let nameAvailabilityRequest = 0;
+let emailAvailabilityRequest = 0;
 
 function normalizeName(value: string) {
   return value.trim().toLowerCase();
@@ -75,6 +77,36 @@ function validateAccount() {
   const fields: Array<keyof typeof fieldErrors> = ["name", "email", "password", "confirmation"];
   const firstInvalidField = fields.find((field) => validateField(field));
   return firstInvalidField ? fieldErrors[firstInvalidField] : "";
+}
+
+async function checkNameAvailability() {
+  if (validateField("name")) return;
+  const name = normalizeName(account.name);
+  const requestID = ++nameAvailabilityRequest;
+  try {
+    const availability = await bbsClient.auth.checkRegistrationAvailability({ name });
+    if (requestID !== nameAvailabilityRequest || name !== normalizeName(account.name)) return;
+    fieldErrors.name = availability.nameAvailable === false ? "该用户名已被占用。" : "";
+  } catch {
+    if (requestID === nameAvailabilityRequest && name === normalizeName(account.name)) {
+      fieldErrors.name = "暂时无法检查用户名，请稍后继续注册。";
+    }
+  }
+}
+
+async function checkEmailAvailability() {
+  if (validateField("email")) return;
+  const email = normalizeEmail(account.email);
+  const requestID = ++emailAvailabilityRequest;
+  try {
+    const availability = await bbsClient.auth.checkRegistrationAvailability({ email });
+    if (requestID !== emailAvailabilityRequest || email !== normalizeEmail(account.email)) return;
+    fieldErrors.email = availability.emailCanRegister === false ? "当前邮箱暂不可注册。" : "";
+  } catch {
+    if (requestID === emailAvailabilityRequest && email === normalizeEmail(account.email)) {
+      fieldErrors.email = "暂时无法检查邮箱，请稍后继续注册。";
+    }
+  }
 }
 
 function startResendCountdown(seconds = 60) {
@@ -156,7 +188,7 @@ onBeforeUnmount(() => {
                   placeholder="用户名（4–32 位）"
                   :disabled="loading"
                   :aria-invalid="Boolean(fieldErrors.name)"
-                  @blur="validateField('name')"
+                  @blur="checkNameAvailability"
                   required
                 />
               </div>
@@ -175,7 +207,7 @@ onBeforeUnmount(() => {
                   placeholder="邮箱"
                   :disabled="loading"
                   :aria-invalid="Boolean(fieldErrors.email)"
-                  @blur="validateField('email')"
+                  @blur="checkEmailAvailability"
                   required
                 />
               </div>
