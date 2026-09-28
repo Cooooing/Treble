@@ -9,6 +9,11 @@ async function startServer() {
   dotenv.config();
   const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 2324;
   const isDevelopment = process.env.NODE_ENV !== "production";
+  const cookieSecureOverride = process.env.TREBLE_COOKIE_SECURE;
+  if (cookieSecureOverride !== undefined && cookieSecureOverride !== "true" && cookieSecureOverride !== "false") {
+    throw new Error("TREBLE_COOKIE_SECURE 必须为 true 或 false");
+  }
+  const secureCookies = cookieSecureOverride === undefined ? !isDevelopment : cookieSecureOverride === "true";
   const app = express();
 
   const bbsBffUrl = process.env.BBS_BFF_URL;
@@ -17,8 +22,8 @@ async function startServer() {
   }
 
   console.log(`BBS 会话网关：/api/bbs --> ${bbsBffUrl}`);
-  app.use(ensureCsrfCookie(!isDevelopment));
-  app.use("/api/bbs", createBbsGateway({ bffUrl: bbsBffUrl, isProduction: !isDevelopment }));
+  app.use(ensureCsrfCookie(secureCookies));
+  app.use("/api/bbs", createBbsGateway({ bffUrl: bbsBffUrl, isProduction: secureCookies }));
 
   await apply(app, []);
 
