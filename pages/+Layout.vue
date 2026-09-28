@@ -21,4 +21,18 @@ import SiteHeader from "@/components/site/SiteHeader.vue";
   flex-direction: column;
   min-height: 100dvh;
 }
+
+.site-layout > #site-main {
+  display: flex;
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
+#page-container,
+#page-content {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 0;
+}
 </style>

@@ -167,6 +167,8 @@
 }
 .article-page .article__meta {
   display: flex;
+  box-sizing: border-box;
+  width: 100%;
   margin-top: 15px;
   border-radius: 3px;
   background: var(--background-secondary-color);
