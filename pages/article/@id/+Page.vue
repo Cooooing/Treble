@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
+import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostscript";
 import { useData } from "vike-vue/useData";
 import { usePageContext } from "vike-vue/usePageContext";
 import { message } from "@/components/Message";
@@ -7,6 +8,7 @@ import { Data } from "./+data";
 import MdRender from "@/components/MdRender";
 import Author from "./Author.vue";
 import Comments from "./Comments.vue";
+import Postscripts from "./Postscripts.vue";
 import Icon from "@/components/community/Icon.vue";
 import Avatar from "@/components/Avatar";
 import { currentAccount } from "@/utils/auth/state";
@@ -16,17 +18,29 @@ const data = useData<Data>();
 const pageContext = usePageContext();
 const account = computed(() => typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value);
 const articleState = ref(data.article);
+const postscripts = ref<ArticlePostscript[]>(data.postscripts || data.article?.postscripts || []);
 const actionPending = ref<"like" | "thank" | "collect">();
 const articleHeadings = ref<Array<{ id: string; level: number; text: string }>>([]);
+const canAddPostscript = computed(() => Boolean(
+  account.value?.profile?.id
+  && articleState.value?.createdBy
+  && account.value.profile.id === articleState.value.createdBy,
+));
 
 watch(
   () => data.article,
   (article) => {
     articleState.value = article;
+    postscripts.value = data.postscripts || article?.postscripts || [];
     articleHeadings.value = [];
     actionPending.value = undefined;
   },
 );
+
+function addPostscript(postscript: ArticlePostscript) {
+  postscripts.value = [...postscripts.value, postscript];
+  if (articleState.value) articleState.value.hasPostscript = true;
+}
 
 function loginForArticleAction() {
   window.location.assign(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
@@ -119,6 +133,12 @@ onMounted(() => {
               <span>{{ articleState.rewardPoints || 0 }} 积分悬赏</span>
               <div class="vditor-reset" v-html="articleState.rewardContentRender" />
             </section>
+            <Postscripts
+              :article-id="articleState.id || ''"
+              :can-add="canAddPostscript"
+              :postscripts="postscripts"
+              @added="addPostscript"
+            />
             <div class="article-tail">
               <Author
                 :article="articleState"

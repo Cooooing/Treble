@@ -3,6 +3,7 @@ import { bbsClient } from "@/utils/sdk";
 import { render } from "vike/abort";
 import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
+import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostscript";
 import type { ListCommentThreadsResp } from "@bass/bbs-sdk-fetch/models/ListCommentThreadsResp";
 import type { PageContextServer } from "vike/types";
 
@@ -11,12 +12,13 @@ export type Data = {
   comments?: ListCommentThreadsResp;
   latest?: ArticleListItem[];
   hottest?: ArticleListItem[];
+  postscripts?: ArticlePostscript[];
   error?: string;
 };
 
 export async function data(pageContext: PageContextServer): Promise<Data> {
   try {
-    const [article, comments, latest, hottest] = await Promise.all([
+    const [article, comments, latest, hottest, postscripts] = await Promise.all([
       bbsClient.article
         .get({ getArticleReq: { articleId: pageContext.routeParams.id } })
         .then((response) => response.article),
@@ -44,8 +46,11 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
           },
         })
         .then((response) => response.rows || []),
+      bbsClient.postscript
+        .list({ listPostscriptsReq: { articleId: pageContext.routeParams.id } })
+        .then((response) => response.rows || []),
     ]);
-    return { article, comments, latest, hottest };
+    return { article, comments, latest, hottest, postscripts };
   } catch (cause) {
     if (cause instanceof ApiError && (cause.status === 404 || cause.code === 404)) {
       throw render(404, "你访问的文章不存在或已被删除。");

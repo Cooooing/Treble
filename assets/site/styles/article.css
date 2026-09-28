@@ -93,6 +93,84 @@
   font-size: 12px;
 }
 
+.article-page .article-postscripts {
+  margin-top: 24px;
+  border-top: 1px solid var(--layer-border-color);
+}
+.article-page .article-postscripts__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+}
+.article-page .article-postscripts__header h2 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.article-page .article-postscripts__add {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--toc-hover-color);
+  cursor: pointer;
+  font: inherit;
+}
+.article-page .article-postscripts__add:hover,
+.article-page .article-postscripts__add:focus-visible {
+  background: var(--background-secondary-color);
+  outline: 0;
+}
+.article-page .article-postscripts__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.article-page .article-postscripts__list > li {
+  padding: 14px 16px;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 3px;
+  background: var(--background-secondary-color);
+}
+.article-page .article-postscripts__list > li + li { margin-top: 10px; }
+.article-page .article-postscripts__list header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: var(--text-fade-color);
+  font-size: 12px;
+}
+.article-page .article-postscripts__list strong { color: var(--text-color); font-weight: 500; }
+.article-page .article-postscripts__list time { white-space: nowrap; }
+.article-page .article-postscripts__list p { margin: 0; color: var(--text-color); line-height: 1.65; white-space: pre-wrap; }
+.article-page .article-postscripts__list .vditor-reset { color: var(--text-color); font-size: 14px; line-height: 1.65; }
+.article-page .article-postscripts__list .vditor-reset > :last-child { margin-bottom: 0; }
+.article-page .article-postscripts__editor { margin-top: 12px; }
+.article-page .article-postscripts__editor label { display: block; margin-bottom: 8px; color: var(--text-color); font-size: 14px; }
+.article-page .article-postscripts__editor textarea {
+  display: block;
+  width: 100%;
+  min-height: 96px;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid var(--input-border-color);
+  border-radius: 3px;
+  background: var(--layer-background-color);
+  color: var(--text-color);
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+.article-page .article-postscripts__editor textarea:focus { border-color: var(--toc-hover-color); outline: 0; }
+.article-page .article-postscripts__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.article-page .article-postscripts__actions button { min-height: 32px; padding: 0 12px; }
+
 .article-page .article-tail {
   padding-top: 15px;
 }
@@ -762,6 +840,16 @@ html[data-theme="dark"] .article-page .article__view {
 html[data-theme="dark"] .article-page #articleRewardContent {
   background-color: #24292e;
   background-image: none;
+}
+html[data-theme="dark"] .article-page .article-postscripts__list > li,
+html[data-theme="dark"] .article-page .article-postscripts__add:hover,
+html[data-theme="dark"] .article-page .article-postscripts__add:focus-visible {
+  background: #24292e;
+}
+html[data-theme="dark"] .article-page .article-postscripts__editor textarea {
+  border-color: rgb(255 255 255 / 12%);
+  background: #191919;
+  color: #f0f6fc;
 }
 
 @media (min-width: 1025px) {
