@@ -19,6 +19,7 @@ const pageContext = usePageContext();
 const account = computed(() => typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value);
 const articleState = ref(data.article);
 const postscripts = ref<ArticlePostscript[]>(data.postscripts || data.article?.postscripts || []);
+const postscriptEditorOpen = ref(false);
 const actionPending = ref<"like" | "thank" | "collect">();
 const articleHeadings = ref<Array<{ id: string; level: number; text: string }>>([]);
 const canAddPostscript = computed(() => Boolean(
@@ -133,18 +134,25 @@ onMounted(() => {
               <span>{{ articleState.rewardPoints || 0 }} 积分悬赏</span>
               <div class="vditor-reset" v-html="articleState.rewardContentRender" />
             </section>
-            <Postscripts
-              :article-id="articleState.id || ''"
-              :can-add="canAddPostscript"
-              :postscripts="postscripts"
-              @added="addPostscript"
-            />
-            <div class="article-tail">
+          </div>
+        </div>
+        <Postscripts
+          :article-id="articleState.id || ''"
+          :postscripts="postscripts"
+          v-model:editor-open="postscriptEditorOpen"
+          @added="addPostscript"
+        />
+        <section v-if="canAddPostscript" class="article-author-actions" aria-label="作者操作">
+          <div class="wrapper">
+              <button type="button" @click="postscriptEditorOpen = true">添加附言</button>
+          </div>
+        </section>
+        <div class="article-tail">
+          <div class="wrapper">
               <Author
                 :article="articleState"
                 :reply-count="data.comments.page?.total || data.comments.rows?.length || 0"
               />
-            </div>
           </div>
         </div>
         <main class="main article-discussion">

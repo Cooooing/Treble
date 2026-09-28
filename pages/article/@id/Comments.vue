@@ -8,15 +8,13 @@ import type { ListCommentRepliesResp } from "@bass/bbs-sdk-fetch/models/ListComm
 import type { ListCommentThreadsResp } from "@bass/bbs-sdk-fetch/models/ListCommentThreadsResp";
 import type { RespCommentListItem } from "@bass/bbs-sdk-fetch/models/RespCommentListItem";
 import type { RespCommentThread } from "@bass/bbs-sdk-fetch/models/RespCommentThread";
-import type { IOptions } from "vditor";
-import Editor from "@/components/Editor";
 import Avatar from "@/components/Avatar";
-import ClientOnly from "@/components/ClientOnly";
 import { message } from "@/components/Message";
 import Icon from "@/components/community/Icon.vue";
 import { currentAccount } from "@/utils/auth/state";
 import { fromNow } from "@/utils/date";
 import { bbsClient } from "@/utils/sdk";
+import ArticleEditorPanel from "./ArticleEditorPanel.vue";
 
 const props = defineProps<{ article: ArticleDetail; comments: ListCommentThreadsResp }>();
 const pageContext = usePageContext();
@@ -27,7 +25,7 @@ const commentOrder = ref<ListCommentThreadsReqOrderEnum>(ListCommentThreadsReqOr
 const replyPages = ref<Record<string, ListCommentRepliesResp>>({});
 const collapsedReplyParentIds = ref<Record<string, true>>({});
 const replyComment = ref<RespCommentListItem>();
-const editorRef = ref<InstanceType<typeof Editor>>();
+const editorPanelRef = ref<InstanceType<typeof ArticleEditorPanel>>();
 const submitting = ref(false);
 const loadingThreads = ref(false);
 const loadingReplyParentId = ref<string>();
@@ -35,12 +33,6 @@ const editorOpen = ref(false);
 const comment = ref<CreateCommentReq>({ articleId: props.article.id || "", content: "" });
 const total = computed(() => threadPage.value?.total || 0);
 const replyPageSize = 10;
-const commentEditorOptions = {
-  preview: { mode: "editor" },
-  resize: { enable: true, position: "top" },
-  placeholder: "友善地留下一个评论吧 :) ",
-} satisfies IOptions;
-
 function openCommentEditor(target?: RespCommentListItem) {
   if (!account.value) {
     window.location.assign(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
@@ -53,11 +45,11 @@ function openCommentEditor(target?: RespCommentListItem) {
 
 function closeCommentEditor() {
   editorOpen.value = false;
-  editorRef.value?.clearCache();
+  editorPanelRef.value?.clearCache();
 }
 
 async function submit() {
-  const content = editorRef.value?.getValue().trim() || comment.value.content.trim();
+  const content = editorPanelRef.value?.getValue().trim() || comment.value.content.trim();
   if (!content) {
     return void message.warning("评论内容不能为空。");
   }
@@ -315,38 +307,18 @@ async function loadReplies(parentId: string, page: number) {
     </div>
     <p v-else-if="!loadingThreads" class="comment-thread-list__empty">还没有回复，来抢沙发吧。</p>
 
-    <Transition name="comment-editor" :duration="{ enter: 260, leave: 180 }">
-      <section
-        v-if="editorOpen"
-        class="editor-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="发布回复"
-        @keydown.esc="closeCommentEditor"
-      >
-        <button type="button" class="editor-bg" aria-label="关闭回复编辑器" @click="closeCommentEditor" />
-        <div class="wrapper">
-          <header class="editor-panel__header">
-            <strong class="editor-panel__context">
-              <Icon name="reply" />
-              {{ replyComment ? `回复 ${replyComment.user?.nickname || replyComment.user?.name || "用户"}` : article.title }}
-            </strong>
-            <button type="button" class="editor-panel__close" aria-label="收起回复编辑器" @click="closeCommentEditor">
-              <Icon name="down" />
-            </button>
-          </header>
-          <ClientOnly>
-            <Editor ref="editorRef" v-model="comment.content" name="comment" height="200px" :options="commentEditorOptions" />
-          </ClientOnly>
-          <footer class="comment-submit">
-            <span class="ft-fade">请遵守社区规范。</span>
-            <span class="comment-submit__actions">
-              <button type="button" class="comment-submit__cancel" :disabled="submitting" @click="closeCommentEditor">取消</button>
-              <button type="button" :disabled="submitting" class="green" @click="submit">{{ submitting ? "正在提交..." : "提交" }}</button>
-            </span>
-          </footer>
-        </div>
-      </section>
-    </Transition>
+    <ArticleEditorPanel
+      ref="editorPanelRef"
+      v-model="comment.content"
+      :open="editorOpen"
+      :title="replyComment ? `回复 ${replyComment.user?.nickname || replyComment.user?.name || '用户'}` : article.title || '发表评论'"
+      aria-label="发布回复"
+      editor-name="comment"
+      placeholder="友善地留下一个评论吧 :)"
+      submit-label="提交"
+      :submitting="submitting"
+      @close="closeCommentEditor"
+      @submit="submit"
+    />
   </section>
 </template>

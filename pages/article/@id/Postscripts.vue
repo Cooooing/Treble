@@ -4,10 +4,10 @@ import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostsc
 import { message } from "@/components/Message";
 import { fromNow } from "@/utils/date";
 import { bbsClient } from "@/utils/sdk";
+import ArticleEditorPanel from "./ArticleEditorPanel.vue";
 
 const props = defineProps<{
   articleId: string;
-  canAdd: boolean;
   postscripts: ArticlePostscript[];
 }>();
 
@@ -16,7 +16,8 @@ const emit = defineEmits<{
 }>();
 
 const content = ref("");
-const editorOpen = ref(false);
+const editorOpen = defineModel<boolean>("editorOpen", { default: false });
+const editorPanelRef = ref<InstanceType<typeof ArticleEditorPanel>>();
 const submitting = ref(false);
 
 const orderedPostscripts = computed(() => [...props.postscripts].sort((left, right) => {
@@ -26,10 +27,11 @@ const orderedPostscripts = computed(() => [...props.postscripts].sort((left, rig
 function closeEditor() {
   content.value = "";
   editorOpen.value = false;
+  editorPanelRef.value?.clearCache();
 }
 
 async function submit() {
-  const value = content.value.trim();
+  const value = editorPanelRef.value?.getValue().trim() || content.value.trim();
   if (!value) {
     message.warning("附言内容不能为空。");
     return;
@@ -52,37 +54,29 @@ async function submit() {
 </script>
 
 <template>
-  <section v-if="orderedPostscripts.length || canAdd" class="article-postscripts" aria-label="文章附言">
-    <header class="article-postscripts__header">
-      <h2>附言</h2>
-      <button v-if="canAdd && !editorOpen" type="button" class="article-postscripts__add" @click="editorOpen = true">添加附言</button>
-    </header>
-
-    <ol v-if="orderedPostscripts.length" class="article-postscripts__list">
+  <section v-if="orderedPostscripts.length" class="article-postscripts" aria-label="文章附言">
+    <ol class="article-postscripts__list">
       <li v-for="(postscript, index) in orderedPostscripts" :key="postscript.id">
         <header>
-          <strong>附言 {{ index + 1 }}</strong>
-          <time v-if="postscript.createdAt">{{ fromNow(postscript.createdAt) }}</time>
+          <h2>第 {{ index + 1 }} 条附言</h2>
+          <time>{{ postscript.createdAt ? fromNow(postscript.createdAt) : "刚刚" }}</time>
         </header>
         <div v-if="postscript.contentRender" class="vditor-reset" v-html="postscript.contentRender" />
         <p v-else>{{ postscript.content }}</p>
       </li>
     </ol>
-
-    <form v-if="editorOpen" class="article-postscripts__editor" @submit.prevent="submit">
-      <label for="postscript-content">添加附言</label>
-      <textarea
-        id="postscript-content"
-        v-model="content"
-        :disabled="submitting"
-        maxlength="2000"
-        placeholder="补充文章内容..."
-        rows="4"
-      />
-      <div class="article-postscripts__actions">
-        <button type="button" :disabled="submitting" @click="closeEditor">取消</button>
-        <button class="btn" type="submit" :disabled="submitting">{{ submitting ? "添加中..." : "添加附言" }}</button>
-      </div>
-    </form>
   </section>
+  <ArticleEditorPanel
+    ref="editorPanelRef"
+    v-model="content"
+    :open="editorOpen"
+    title="添加附言"
+    aria-label="添加附言"
+    editor-name="postscript"
+    placeholder="补充文章内容..."
+    submit-label="添加附言"
+    :submitting="submitting"
+    @close="closeEditor"
+    @submit="submit"
+  />
 </template>
