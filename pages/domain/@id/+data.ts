@@ -26,7 +26,7 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
     }
 
     const [articles, domainTags, sidebarTags, domains] = await Promise.all([
-      bbsClient.article.list({ listArticlesReq: { query: { domainId: domain.id }, page: { page: 1, size: 15 } } }),
+      bbsClient.article.list({ listArticlesReq: { query: { domainId: domain.id, publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" }, page: { page: 1, size: 15 } } }),
       bbsClient.tag.list({ listTagsReq: { query: { domainId: domain.id }, page: { page: 1, size: 100 } } }),
       bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 100 } } }),
       bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 100 } } }),

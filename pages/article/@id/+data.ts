@@ -21,7 +21,7 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
   try {
     const [article, comments, latest, hottest, postscripts] = await Promise.all([
       bbsClient.article
-        .get({ getArticleReq: { articleId: pageContext.routeParams.id } })
+        .get({ getArticleReq: { articleId: pageContext.routeParams.id, publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" } })
         .then((response) => response.article),
       bbsClient.comment.listThreads({
         listCommentThreadsReq: {

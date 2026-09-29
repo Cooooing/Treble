@@ -6,7 +6,7 @@ import { setPageStatus } from "../../pageStatus";
 export type Data = Awaited<ReturnType<typeof data>> & { error?: string; pageStatus?: 404 | 500 };
 export async function data(pageContext: PageContextServer): Promise<Data> {
   try {
-    return await bbsClient.article.get({ getArticleReq: { articleId: pageContext.routeParams.id } });
+    return await bbsClient.article.get({ getArticleReq: { articleId: pageContext.routeParams.id, publishStatus: "ARTICLE_PUBLISH_STATUS_DRAFT" } });
   } catch (cause) {
     if (cause instanceof ApiError && (cause.status === 404 || cause.code === 404)) {
       setPageStatus(pageContext, 404);
