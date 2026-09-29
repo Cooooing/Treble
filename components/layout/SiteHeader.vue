@@ -123,7 +123,7 @@ watch(
           </summary>
           <nav id="account-menu-panel" class="person-list show account-menu__panel" aria-label="账户菜单">
             <ul>
-              <li><AppLink href="/home">个人主页</AppLink></li>
+              <li><AppLink :href="account.profile?.name ? `/member/${account.profile.name}` : '/home'">个人主页</AppLink></li>
               <li><AppLink href="/settings">设置</AppLink></li>
               <li><AppLink href="/help">帮助</AppLink></li>
               <li><button type="button" @click="signOut">退出登录</button></li>

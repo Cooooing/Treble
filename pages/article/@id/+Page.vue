@@ -24,6 +24,7 @@ const account = computed(() =>
   typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value,
 );
 const articleState = ref(data.article);
+const replyCount = ref(data.comments?.page?.total || data.comments?.rows?.length || 0);
 const postscripts = ref<ArticlePostscript[]>(data.postscripts || data.article?.postscripts || []);
 const postscriptEditorOpen = ref(false);
 const actionPending = ref<"like" | "thank" | "collect">();
@@ -43,12 +44,17 @@ watch(
     postscripts.value = data.postscripts || article?.postscripts || [];
     articleHeadings.value = [];
     actionPending.value = undefined;
+    replyCount.value = data.comments?.page?.total || data.comments?.rows?.length || 0;
   },
 );
 
 function addPostscript(postscript: ArticlePostscript) {
   postscripts.value = [...postscripts.value, postscript];
   if (articleState.value) articleState.value.hasPostscript = true;
+}
+
+function updateReplyCount(total: number) {
+  replyCount.value = total;
 }
 
 function loginForArticleAction() {
@@ -161,16 +167,18 @@ onMounted(() => {
         </section>
         <div class="article-tail">
           <div class="wrapper">
-            <Author
-              :article="articleState"
-              :reply-count="data.comments.page?.total || data.comments.rows?.length || 0"
-            />
+            <Author :article="articleState" :reply-count="replyCount" />
           </div>
         </div>
         <main class="main article-discussion">
           <div id="articleCommentsPanel" class="wrapper">
             <section id="comments" class="comments module">
-              <Comments :key="articleState.id" :comments="data.comments" :article="articleState" />
+              <Comments
+                :key="articleState.id"
+                :comments="data.comments"
+                :article="articleState"
+                @updated="updateReplyCount"
+              />
             </section>
           </div>
         </main>

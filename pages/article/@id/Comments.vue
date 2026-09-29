@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { navigate, reload } from "vike/client/router";
+import { navigate } from "vike/client/router";
 import { usePageContext } from "vike-vue/usePageContext";
 import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
 import type { CreateCommentReq } from "@bass/bbs-sdk-fetch/models/CreateCommentReq";
@@ -18,6 +18,7 @@ import { bbsClient } from "@/utils/sdk";
 import ArticleEditorPanel from "./ArticleEditorPanel.vue";
 
 const props = defineProps<{ article: ArticleDetail; comments: ListCommentThreadsResp }>();
+const emit = defineEmits<{ updated: [total: number] }>();
 const pageContext = usePageContext();
 const account = computed(() =>
   typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value,
@@ -61,7 +62,7 @@ async function submit() {
   try {
     await bbsClient.comment.create({ createCommentReq: { ...comment.value, content } });
     closeCommentEditor();
-    await reload();
+    await loadThreads(1, ListCommentThreadsReqOrderEnum.COMMENT_ORDER_NEWEST);
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "评论提交失败，请稍后重试。");
   } finally {
@@ -97,6 +98,7 @@ async function loadThreads(page = 1, order = commentOrder.value) {
     commentOrder.value = order;
     threads.value = response.rows || [];
     threadPage.value = response.page;
+    emit("updated", response.page?.total || 0);
     replyPages.value = {};
     collapsedReplyParentIds.value = {};
   } catch (cause) {

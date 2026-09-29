@@ -57,9 +57,16 @@ function formatCount(value: number | undefined): string {
           </div>
         </template>
         <template v-else>
-          <div class="article-list__info ft-smaller">
-            <div class="article-list__taxonomy">
-              <ArticleTaxonomy :domains="article.domains" :tags="article.tags" inline />
+          <div class="article-list__headline">
+            <div class="article-list__headline-main">
+              <ArticleTaxonomy
+                v-if="article.domains?.length || article.tags?.length"
+                :domains="article.domains"
+                :tags="article.tags"
+              />
+              <h2>
+                <AppLink class="ft-a-title" :href="`/article/${article.id}`">{{ article.title || "未命名文章" }}</AppLink>
+              </h2>
             </div>
             <div class="article-list__stats ft-fade">
               <AppLink class="ft-fade" :href="`/article/${article.id}#comments`"
@@ -71,27 +78,30 @@ function formatCount(value: number | undefined): string {
               >
             </div>
           </div>
-          <h2>
-            <AppLink class="ft-a-title" :href="`/article/${article.id}`">{{ article.title || "未命名文章" }}</AppLink>
-          </h2>
           <div class="article-list__body">
             <div class="article-list__details">
               <div class="article-list__author-row">
-                <AppLink :href="article.authorUser?.url || '/'" class="article-list__author">
-                  <Avatar :url="article.authorUser?.avatarUrl" :name="article.authorUser?.name" :size="28" square />
+                <AppLink
+                  :href="article.authorUser?.name ? `/member/${article.authorUser.name}` : '/'"
+                  class="article-list__author"
+                >
+                  <Avatar :url="article.authorUser?.avatarUrl" :name="article.authorUser?.name" :size="40" square />
                 </AppLink>
-                <p class="article-list__author-line ft-smaller ft-fade">
-                  <AppLink :href="article.authorUser?.url || '/'" class="author">{{
-                    article.authorUser?.nickname || article.authorUser?.name || "匿名用户"
-                  }}</AppLink>
-                  <span v-if="article.authorUser?.introduction"> · {{ article.authorUser.introduction }}</span>
-                  <br />
-                  <span v-if="article.lastReplyUser"
-                    >{{ article.lastReplyUser.nickname || article.lastReplyUser.name || "匿名用户" }} 回复于
-                    {{ article.lastReplyAt ? fromNow(article.lastReplyAt) : "刚刚" }}</span
-                  >
-                  <span v-else>{{ article.publishedAt ? `${fromNow(article.publishedAt)} 发布` : "刚刚发布" }}</span>
-                </p>
+                <div class="article-list__author-line ft-smaller ft-fade">
+                  <p>
+                    <AppLink
+                      :href="article.authorUser?.name ? `/member/${article.authorUser.name}` : '/'"
+                      class="author"
+                      >{{ article.authorUser?.nickname || article.authorUser?.name || "匿名用户" }}</AppLink
+                    >
+                    <span v-if="article.authorUser?.introduction"> - {{ article.authorUser.introduction }}</span>
+                  </p>
+                  <p v-if="article.lastReplyUser">
+                    {{ article.lastReplyUser.nickname || article.lastReplyUser.name || "匿名用户" }} 回复于
+                    {{ article.lastReplyAt ? fromNow(article.lastReplyAt) : "刚刚" }}
+                  </p>
+                  <p v-else>{{ article.publishedAt ? `${fromNow(article.publishedAt)} 发布` : "刚刚发布" }}</p>
+                </div>
               </div>
               <AppLink v-if="article.content" class="abstract" :href="`/article/${article.id}`">{{
                 article.content
