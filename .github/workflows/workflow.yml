@@ -75,6 +75,8 @@ jobs:
           context: ./treble
           file: ./treble/Dockerfile
           push: true
+          # Alibaba Cloud Container Registry does not accept Buildx OCI attestations.
+          provenance: false
           tags: |
             registry.cn-hangzhou.aliyuncs.com/docker-cooooing/treble:latest
             ghcr.io/cooooing/treble:latest
