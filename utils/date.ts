@@ -9,3 +9,8 @@ export function fromNow(date: ConfigType): string {
   if (seconds < 60 * 60) return `${Math.floor(seconds / 60)}分钟前`;
   return target.format("YYYY-MM-DD HH:mm:ss");
 }
+
+export function formatDateTime(date: ConfigType): string {
+  const target = dayjs(date);
+  return target.isValid() ? target.format("YYYY-MM-DD HH:mm") : "";
+}

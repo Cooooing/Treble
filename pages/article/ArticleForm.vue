@@ -9,7 +9,8 @@ import RichTextEditor from "@/components/content/RichTextEditor.vue";
 import { message } from "@/components/feedback/message";
 import Icon from "@/components/ui/Icon.vue";
 import DraftInbox from "@/components/draft/DraftInbox.vue";
-import { publishArticle, saveArticleDraft, synchronizeArticleTags } from "@/services/content";
+import ScheduledPublishControl from "@/components/article/ScheduledPublishControl.vue";
+import { cancelArticleSchedule, publishArticle, saveArticleDraft, scheduleArticle, synchronizeArticleTags } from "@/services/content";
 import {
   consumeServerArticleDraftRestore,
   getLocalArticleDraft,
@@ -33,6 +34,7 @@ const form = reactive<ReqArticle>({
 });
 const currentType = articleTypes.find((item) => item.type === type);
 const loading = ref(false);
+const scheduled = ref(Boolean(props.article?.publishedAt && new Date(props.article.publishedAt).getTime() > Date.now()));
 const rewardOpen = ref(Boolean(props.article?.rewardContent || props.article?.rewardPoints));
 const draftInboxOpen = ref(false);
 const availableTags = ref<RespTag[]>([]);
@@ -155,7 +157,7 @@ async function loadTags(keepLocalTagNames = false) {
   if (!keepLocalTagNames) tagNames.value = linkedTags.flatMap((tag) => (tag.name ? [tag.name] : []));
 }
 
-async function save(publish: boolean) {
+async function save(publish: boolean): Promise<string | undefined> {
   if (!form.title.trim()) return void message.warning("请输入文章标题。");
   if (!form.content.trim()) return void message.warning("请输入文章内容。");
   confirmTypedTag();
@@ -174,14 +176,46 @@ async function save(publish: boolean) {
     saveLocalDraft(true);
     if (!publish) {
       message.success("草稿已保存。");
-      return;
+      return id;
     }
     await publishArticle(id);
     retainLocalRecovery = false;
     removeLocalArticleDraft(type);
     await navigate(`/article/${id}`);
+    return id;
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "保存失败，请稍后重试。");
+    return undefined;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function schedule(scheduledAt: Date) {
+  const id = await save(false);
+  if (!id) return;
+  loading.value = true;
+  try {
+    await scheduleArticle(id, scheduledAt);
+    saveLocalDraft(true);
+    scheduled.value = true;
+    message.success("已设置定时发布。");
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "定时发布设置失败，请稍后重试。");
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function cancelSchedule() {
+  if (!articleId.value) return;
+  loading.value = true;
+  try {
+    await cancelArticleSchedule(articleId.value);
+    scheduled.value = false;
+    message.success("已取消定时发布。");
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "取消定时发布失败，请稍后重试。");
   } finally {
     loading.value = false;
   }
@@ -366,6 +400,7 @@ onBeforeUnmount(() => {
             <button class="article-draft-action" type="button" :disabled="loading" @click="save(false)">
               {{ loading ? "正在保存..." : "存草稿" }}
             </button>
+            <ScheduledPublishControl :disabled="loading" :scheduled="scheduled" @schedule="schedule" @cancel="cancelSchedule" />
             <button class="green article-publish-action" type="submit" :disabled="loading">
               {{ loading ? "正在发布..." : "发布" }}
             </button>

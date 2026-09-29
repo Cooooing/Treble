@@ -55,3 +55,11 @@ export async function synchronizeArticleTags(
 export async function publishArticle(articleId: string) {
   await bbsClient.article.publish({ publishArticleReq: { articleId } });
 }
+
+export async function scheduleArticle(articleId: string, scheduledAt: Date) {
+  await bbsClient.article.publish({ publishArticleReq: { articleId, scheduledAt } });
+}
+
+export async function cancelArticleSchedule(articleId: string) {
+  await bbsClient.article.cancelPublish({ cancelPublishArticleReq: { articleId } });
+}

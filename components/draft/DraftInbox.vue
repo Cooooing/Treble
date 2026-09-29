@@ -13,6 +13,7 @@ import {
 } from "@/services/localDrafts";
 import { currentAccount } from "@/services/sessionState";
 import { bbsClient } from "@/utils/sdk";
+import { formatDateTime } from "@/utils/date";
 
 const isOpen = defineModel<boolean>({ default: false });
 const drafts = ref<ArticleListItem[]>([]);
@@ -36,6 +37,12 @@ async function refresh() {
     },
   });
   drafts.value = response.rows || [];
+}
+
+function scheduledAt(draft: ArticleListItem) {
+  if (!draft.publishedAt) return "";
+  const value = new Date(draft.publishedAt);
+  return value.getTime() > Date.now() ? formatDateTime(value) : "";
 }
 
 function close() {
@@ -166,22 +173,25 @@ onBeforeUnmount(() => {
                 <small>{{ draft.updatedAt ? new Date(draft.updatedAt).toLocaleString() : "刚刚" }}</small>
               </div>
               <div class="draft-inbox__actions">
-                <button
-                  class="draft-inbox__action"
-                  type="button"
-                  :disabled="Boolean(deletingId)"
-                  @click="restore(draft)"
-                >
-                  {{ pendingRestore === draft.id ? "确认恢复" : "恢复" }}
-                </button>
-                <button
-                  class="draft-inbox__action draft-inbox__action--danger"
-                  type="button"
-                  :disabled="Boolean(deletingId)"
-                  @click="deleteDraft(draft)"
-                >
-                  {{ deletingId === draft.id ? "正在删除..." : pendingDeletion === draft.id ? "确认删除" : "删除" }}
-                </button>
+                <div class="draft-inbox__action-buttons">
+                  <button
+                    class="draft-inbox__action"
+                    type="button"
+                    :disabled="Boolean(deletingId)"
+                    @click="restore(draft)"
+                  >
+                    {{ pendingRestore === draft.id ? "确认恢复" : "恢复" }}
+                  </button>
+                  <button
+                    class="draft-inbox__action draft-inbox__action--danger"
+                    type="button"
+                    :disabled="Boolean(deletingId)"
+                    @click="deleteDraft(draft)"
+                  >
+                    {{ deletingId === draft.id ? "正在删除..." : pendingDeletion === draft.id ? "确认删除" : "删除" }}
+                  </button>
+                </div>
+                <small v-if="scheduledAt(draft)" class="draft-inbox__scheduled">将于 {{ scheduledAt(draft) }} 发布</small>
               </div>
             </article>
           </div>
@@ -298,8 +308,19 @@ onBeforeUnmount(() => {
 }
 .draft-inbox__actions {
   display: flex;
+  align-items: flex-end;
+  flex-direction: column;
   flex: 0 0 auto;
   gap: 4px;
+}
+.draft-inbox__action-buttons {
+  display: flex;
+  gap: 4px;
+}
+.draft-inbox__scheduled {
+  color: var(--text-fade-color);
+  font-size: 12px;
+  text-align: right;
 }
 .draft-inbox__action {
   min-height: 32px;
