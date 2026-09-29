@@ -19,12 +19,12 @@ jobs:
 
     steps:
       - name: Checkout Treble
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: treble
 
       - name: Checkout Bass BFF SDK
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: Cooooing/Bass
           ref: sdk/bff_bbs/typescript-fetch
@@ -42,28 +42,35 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: treble/pnpm-lock.yaml
 
-      - name: Install and build Treble
+      # Restores pnpm's download cache; the install remains deterministic.
+      - name: Install dependencies
         working-directory: treble
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm build
+        run: pnpm install --frozen-lockfile
 
-      - name: Docker Login
+      - name: Build Treble
+        working-directory: treble
+        run: pnpm build
+
+      # The GitHub Actions cache shortens Docker rebuilds without being shipped.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Alibaba Cloud Registry
         uses: docker/login-action@v3
         with:
           registry: registry.cn-hangzhou.aliyuncs.com
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker Login (GHCR)
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
+      - name: Build and publish image
+        uses: docker/build-push-action@v7
         with:
           context: ./treble
           file: ./treble/Dockerfile
@@ -71,3 +78,5 @@ jobs:
           tags: |
             registry.cn-hangzhou.aliyuncs.com/docker-cooooing/treble:latest
             ghcr.io/cooooing/treble:latest
+          cache-from: type=gha,scope=treble-image
+          cache-to: type=gha,mode=max,scope=treble-image

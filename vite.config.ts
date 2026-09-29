@@ -43,6 +43,11 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
     esbuild: {
       drop: VITE_DROP_CONSOLE ? ["console", "debugger"] : [],
     },
+    // Browser and SSR rendering libraries are emitted into dist/server instead of
+    // duplicated in the runtime image's node_modules.
+    ssr: {
+      noExternal: ["dayjs", "lottie-web", "vditor"],
+    },
 
     plugins: [
       ...createVitePlugins(viteEnv, isBuild),
