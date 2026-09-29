@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { articleTypes } from "@/pages/article";
-import Icon from "@/components/community/Icon.vue";
+import Icon from "@/components/ui/Icon.vue";
+import AppLink from "@/components/ui/AppLink.vue";
 </script>
 
 <template>
@@ -8,10 +9,10 @@ import Icon from "@/components/community/Icon.vue";
     <div>
       <section class="wrapper pre-post" aria-label="选择发布类型">
         <article v-for="item in articleTypes" :key="item.type" class="pre-post__item">
-          <a class="pre-post__link" :href="`/post?type=${item.type}`">
+          <AppLink class="pre-post__link" :href="`/post?type=${item.type}`">
             <Icon :name="item.icon" />
             <span>{{ item.name }}</span>
-          </a>
+          </AppLink>
           <p class="ft-gray">{{ item.description }}</p>
         </article>
       </section>
@@ -29,7 +30,9 @@ import Icon from "@/components/community/Icon.vue";
   box-sizing: border-box;
 }
 
-.pre-post-wrap > div { width: 100%; }
+.pre-post-wrap > div {
+  width: 100%;
+}
 
 .pre-post {
   display: flex;
@@ -44,7 +47,9 @@ import Icon from "@/components/community/Icon.vue";
   text-align: right;
 }
 
-.pre-post__drafts a { color: var(--toc-hover-color); }
+.pre-post__drafts a {
+  color: var(--toc-hover-color);
+}
 
 .pre-post__item {
   flex: 1 1 0;

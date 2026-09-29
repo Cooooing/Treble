@@ -2,9 +2,10 @@
 import { onBeforeUnmount, reactive, ref } from "vue";
 import { navigate } from "vike/client/router";
 import type { RegisterReq } from "@bass/bbs-sdk-fetch/models/RegisterReq";
-import { message } from "@/components/Message";
+import { message } from "@/components/feedback/message";
 import { bbsClient } from "@/utils/sdk";
-import Icon from "@/components/community/Icon.vue";
+import Icon from "@/components/ui/Icon.vue";
+import "vditor/dist/index.css";
 
 const account = reactive({ name: "", email: "", password: "", confirmation: "" });
 const verificationCode = ref("");

@@ -2,13 +2,14 @@
 import { onMounted, ref, toRefs, watch } from "vue";
 import { useData } from "vike-vue/useData";
 import type { RespNotification } from "@bass/bbs-sdk-fetch/models/RespNotification";
-import { message } from "@/components/Message";
+import { message } from "@/components/feedback/message";
 import { fromNow } from "@/utils/date";
 import { bbsClient } from "@/utils/sdk";
-import EmptyState from "@/components/ui/EmptyState.vue";
+import EmptyState from "@/components/feedback/EmptyState.vue";
+import ErrorState from "@/components/feedback/ErrorState.vue";
 import type { Data } from "./+data";
 
-const { rows } = toRefs(useData<Data>());
+const { rows, error } = toRefs(useData<Data>());
 const notifications = ref<RespNotification[]>(rows.value || []);
 const marking = ref(false);
 
@@ -43,7 +44,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="main notifications-page">
+  <ErrorState v-if="error" title="通知暂时无法打开" :message="error" />
+  <div v-else class="main notifications-page">
     <div class="wrapper">
       <section class="content module notifications-panel">
         <header class="module-header notifications-panel__header">

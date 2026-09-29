@@ -1,5 +1,5 @@
 import { bbsClient } from "@/utils/sdk";
-import { clearAuthState, restoreCurrentUser } from "@/utils/auth/state";
+import { clearAuthState, restoreCurrentUser } from "@/services/sessionState";
 
 export async function loginByPassword(account: string, password: string) {
   await bbsClient.auth.login({

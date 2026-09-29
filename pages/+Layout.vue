@@ -11,8 +11,8 @@
 </template>
 
 <script lang="ts" setup>
-import SiteFooter from "@/components/site/SiteFooter.vue";
-import SiteHeader from "@/components/site/SiteHeader.vue";
+import SiteFooter from "@/components/layout/SiteFooter.vue";
+import SiteHeader from "@/components/layout/SiteHeader.vue";
 </script>
 
 <style scoped>

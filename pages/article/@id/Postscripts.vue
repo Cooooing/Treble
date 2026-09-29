@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostscript";
-import { message } from "@/components/Message";
+import { message } from "@/components/feedback/message";
 import { fromNow } from "@/utils/date";
 import { bbsClient } from "@/utils/sdk";
 import ArticleEditorPanel from "./ArticleEditorPanel.vue";
@@ -20,9 +20,11 @@ const editorOpen = defineModel<boolean>("editorOpen", { default: false });
 const editorPanelRef = ref<InstanceType<typeof ArticleEditorPanel>>();
 const submitting = ref(false);
 
-const orderedPostscripts = computed(() => [...props.postscripts].sort((left, right) => {
-  return (left.createdAt?.getTime() || 0) - (right.createdAt?.getTime() || 0);
-}));
+const orderedPostscripts = computed(() =>
+  [...props.postscripts].sort((left, right) => {
+    return (left.createdAt?.getTime() || 0) - (right.createdAt?.getTime() || 0);
+  }),
+);
 
 function closeEditor() {
   content.value = "";
@@ -40,7 +42,9 @@ async function submit() {
   if (submitting.value) return;
   submitting.value = true;
   try {
-    const response = await bbsClient.postscript.add({ addPostscriptReq: { articleId: props.articleId, content: value } });
+    const response = await bbsClient.postscript.add({
+      addPostscriptReq: { articleId: props.articleId, content: value },
+    });
     if (!response.postscript) throw new Error("附言已提交，但未返回内容。");
     emit("added", response.postscript);
     closeEditor();

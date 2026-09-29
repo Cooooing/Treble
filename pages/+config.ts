@@ -13,6 +13,7 @@ export default {
   },
 
   ssr: true,
+  clientRouting: true,
 
   passToClient: ["user"],
 } as Config;

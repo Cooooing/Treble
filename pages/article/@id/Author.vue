@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
-import Avatar from "@/components/Avatar";
-import MemberLink from "@/components/MemberLink";
-import Icon from "@/components/community/Icon.vue";
+import Avatar from "@/components/identity/Avatar.vue";
+import MemberLink from "@/components/identity/MemberLink.vue";
+import Icon from "@/components/ui/Icon.vue";
 import { fromNow } from "@/utils/date";
 defineProps<{ article: ArticleDetail; replyCount: number }>();
 </script>

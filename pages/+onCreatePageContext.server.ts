@@ -4,6 +4,7 @@ import { sessionCookieClearValue } from "@/server/bbsGateway";
 
 export async function onCreatePageContext(pageContext: PageContextServer) {
   pageContext.title = process.env.VITE_GLOB_APP_TITLE;
+  pageContext.user = undefined;
   const hasSession = pageContext.headers?.cookie?.split(";").some((item) => item.trimStart().startsWith("treble.sid="));
   if (!hasSession) return;
 

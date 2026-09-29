@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { message } from "@/components/Message";
+import { navigate } from "vike/client/router";
+import { message } from "@/components/feedback/message";
 import { loginByPassword } from "@/services/auth";
-import BrandMark from "@/components/BrandMark.vue";
-import Icon from "@/components/community/Icon.vue";
+import Icon from "@/components/ui/Icon.vue";
+import AppLink from "@/components/ui/AppLink.vue";
+import "vditor/dist/index.css";
 
 const account = ref("");
 const password = ref("");
@@ -15,7 +17,7 @@ async function submit() {
   loading.value = true;
   try {
     await loginByPassword(account.value.trim(), password.value);
-    window.location.assign("/");
+    await navigate("/");
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "登录失败，请稍后重试。");
   } finally {
@@ -64,13 +66,16 @@ async function submit() {
           <button class="verify__action verify__action--primary" type="submit" :disabled="loading">
             {{ loading ? "正在登录..." : "登录" }}
           </button>
-          <a class="verify__action verify__action--secondary" href="/register">注册</a>
+          <AppLink class="verify__action verify__action--secondary" href="/register">注册</AppLink>
         </form>
       </div>
       <aside class="intro community-welcome vditor-reset" aria-labelledby="community-welcome-title">
         <h2 id="community-welcome-title">🐟 鱼油，欢迎来到摸鱼派！</h2>
         <p>如果你也是奋斗在一线、热爱工作的苦逼青年，期待与众多鱼油聚集起来，那就加入友好的摸鱼派社区吧！❤️</p>
-        <p>在这里有为你准备的聊天室、鱼游、充满生活感的帖子，只要来到摸鱼派，你就是我们的家庭成员～这里以「友善」为第一守则，你可以完全放开自己，和鱼油们畅所欲言，邂逅各行各业的搬砖人，参与摸鱼派有趣的活动 :)</p>
+        <p>
+          在这里有为你准备的聊天室、鱼游、充满生活感的帖子，只要来到摸鱼派，你就是我们的家庭成员～这里以「友善」为第一守则，你可以完全放开自己，和鱼油们畅所欲言，邂逅各行各业的搬砖人，参与摸鱼派有趣的活动
+          :)
+        </p>
         <p>日常、闲聊、生活、吐槽、提问、技术、读书、游戏、兴趣 ... 都可以在摸鱼派中讨论。</p>
       </aside>
     </div>

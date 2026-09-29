@@ -4,13 +4,19 @@ import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
 import type { ReqArticle, ReqArticleTypeEnum } from "@bass/bbs-sdk-fetch/models/ReqArticle";
 import type { RespTag } from "@bass/bbs-sdk-fetch/models/RespTag";
 import { navigate } from "vike/client/router";
-import ClientOnly from "@/components/ClientOnly";
-import { Editor } from "@/components/Editor";
-import { message } from "@/components/Message";
-import Icon from "@/components/community/Icon.vue";
-import DraftInbox from "@/components/community/DraftInbox.vue";
+import ClientOnly from "@/components/ui/ClientOnly.vue";
+import RichTextEditor from "@/components/content/RichTextEditor.vue";
+import { message } from "@/components/feedback/message";
+import Icon from "@/components/ui/Icon.vue";
+import DraftInbox from "@/components/draft/DraftInbox.vue";
 import { publishArticle, saveArticleDraft, synchronizeArticleTags } from "@/services/content";
-import { consumeServerArticleDraftRestore, getLocalArticleDraft, hasPendingServerArticleDraftRestore, removeLocalArticleDraft, saveLocalArticleDraft } from "@/services/localDrafts";
+import {
+  consumeServerArticleDraftRestore,
+  getLocalArticleDraft,
+  hasPendingServerArticleDraftRestore,
+  removeLocalArticleDraft,
+  saveLocalArticleDraft,
+} from "@/services/localDrafts";
 import { articleTypes } from "./index";
 import { bbsClient } from "@/utils/sdk";
 
@@ -43,7 +49,10 @@ let retainLocalRecovery = true;
 const matchingTags = computed(() => {
   const keyword = tagQuery.value.trim().toLocaleLowerCase();
   return availableTags.value.filter(
-    (tag) => tag.name && !tagNames.value.some((name) => name.toLocaleLowerCase() === tag.name?.toLocaleLowerCase()) && (!keyword || tag.name.toLocaleLowerCase().includes(keyword)),
+    (tag) =>
+      tag.name &&
+      !tagNames.value.some((name) => name.toLocaleLowerCase() === tag.name?.toLocaleLowerCase()) &&
+      (!keyword || tag.name.toLocaleLowerCase().includes(keyword)),
   );
 });
 
@@ -138,7 +147,10 @@ async function loadTags(keepLocalTagNames = false) {
     seenTagIDs.add(tag.id);
     return true;
   });
-  availableTags.value = [...(tags.rows || []), ...linkedTags.filter((tag) => !tags.rows?.some((item) => item.id === tag.id))];
+  availableTags.value = [
+    ...(tags.rows || []),
+    ...linkedTags.filter((tag) => !tags.rows?.some((item) => item.id === tag.id)),
+  ];
   savedTagIds.value = linkedTags.flatMap((tag) => (tag.id ? [tag.id] : []));
   if (!keepLocalTagNames) tagNames.value = linkedTags.flatMap((tag) => (tag.name ? [tag.name] : []));
 }
@@ -148,7 +160,8 @@ async function save(publish: boolean) {
   if (!form.content.trim()) return void message.warning("请输入文章内容。");
   confirmTypedTag();
   if (rewardOpen.value && !form.rewardContent?.trim()) return void message.warning("请输入打赏内容，或收起打赏设置。");
-  if (rewardOpen.value && (!form.rewardPoints || form.rewardPoints < 1)) return void message.warning("打赏积分必须大于 0。");
+  if (rewardOpen.value && (!form.rewardPoints || form.rewardPoints < 1))
+    return void message.warning("打赏积分必须大于 0。");
   loading.value = true;
   try {
     saveLocalDraft(false);
@@ -184,7 +197,9 @@ onMounted(async () => {
   tagMenuOpen.value = false;
   const restoringServerDraft = consumeServerArticleDraftRestore(props.article?.id, type);
   const draft = getLocalArticleDraft(type);
-  const shouldRestoreLocalDraft = !restoringServerDraft && Boolean(draft && !draft.savedToServer && (!props.article || draft.articleId === props.article.id));
+  const shouldRestoreLocalDraft =
+    !restoringServerDraft &&
+    Boolean(draft && !draft.savedToServer && (!props.article || draft.articleId === props.article.id));
   if (shouldRestoreLocalDraft && draft) {
     articleId.value = draft.articleId || articleId.value;
     Object.assign(form, draft.article);
@@ -201,11 +216,15 @@ onMounted(async () => {
   }
 });
 
-watch([form, tagNames], () => {
-  if (!formInitialized) return;
-  recoveryDraftSavedToServer.value = false;
-  queueLocalDraftSave();
-}, { deep: true });
+watch(
+  [form, tagNames],
+  () => {
+    if (!formInitialized) return;
+    recoveryDraftSavedToServer.value = false;
+    queueLocalDraftSave();
+  },
+  { deep: true },
+);
 onBeforeUnmount(() => {
   if (localSaveTimer) window.clearTimeout(localSaveTimer);
   if (retainLocalRecovery) saveLocalDraft(recoveryDraftSavedToServer.value);
@@ -216,11 +235,20 @@ onBeforeUnmount(() => {
   <div class="main post-page post">
     <form class="form" novalidate @submit.prevent="save(true)" @keydown.ctrl.enter.prevent="save(true)">
       <label class="sr-only" for="articleTitle">文章标题</label>
-      <input id="articleTitle" v-model="form.title" type="text" maxlength="120" autocomplete="off" placeholder="标题" :disabled="loading" required />
+      <input
+        id="articleTitle"
+        v-model="form.title"
+        type="text"
+        maxlength="120"
+        autocomplete="off"
+        placeholder="标题"
+        :disabled="loading"
+        required
+      />
 
       <section class="post-article-content" aria-label="文章内容">
         <ClientOnly>
-          <Editor
+          <RichTextEditor
             id="articleContent"
             v-model="form.content"
             :name="articleId ? `article-${articleId}` : `post-${type}`"
@@ -241,7 +269,9 @@ onBeforeUnmount(() => {
         <div class="tags-input">
           <span v-for="name in tagNames" :key="name" class="tag tag--selected">
             {{ name }}
-            <button type="button" :aria-label="`移除标签 ${name}`" :disabled="loading" @click="removeTag(name)">×</button>
+            <button type="button" :aria-label="`移除标签 ${name}`" :disabled="loading" @click="removeTag(name)">
+              ×
+            </button>
           </span>
           <input
             id="articleTags"
@@ -258,23 +288,54 @@ onBeforeUnmount(() => {
           />
         </div>
         <div v-if="tagMenuOpen && matchingTags.length" class="domains-tags" role="listbox" aria-label="标签建议">
-          <button v-for="tag in matchingTags.slice(0, 12)" :key="tag.id || tag.name" type="button" class="tag" :disabled="loading" @pointerdown.prevent @click="selectTagName(tag.name || '')">
+          <button
+            v-for="tag in matchingTags.slice(0, 12)"
+            :key="tag.id || tag.name"
+            type="button"
+            class="tag"
+            :disabled="loading"
+            @pointerdown.prevent
+            @click="selectTagName(tag.name || '')"
+          >
             {{ tag.name }}
           </button>
         </div>
-        <p v-else-if="tagMenuOpen && tagQuery.trim()" class="ft-fade article-tags__hint">按回车即可创建“{{ normalizeTagName(tagQuery) }}”标签。</p>
+        <p v-else-if="tagMenuOpen && tagQuery.trim()" class="ft-fade article-tags__hint">
+          按回车即可创建“{{ normalizeTagName(tagQuery) }}”标签。
+        </p>
       </section>
 
-      <button v-if="!rewardOpen" id="showReward" class="fn-ellipsis" type="button" :disabled="loading" @click="rewardOpen = true">
-        打赏区 1. 当设置了打赏积分后，将启用打赏功能 2. 启用打赏需要 20 积分 3. 打赏区的内容只有在浏览者打赏后才对其可见 &dtrif;
+      <button
+        v-if="!rewardOpen"
+        id="showReward"
+        class="fn-ellipsis"
+        type="button"
+        :disabled="loading"
+        @click="rewardOpen = true"
+      >
+        打赏区 1. 当设置了打赏积分后，将启用打赏功能 2. 启用打赏需要 20 积分 3. 打赏区的内容只有在浏览者打赏后才对其可见
+        &dtrif;
       </button>
       <section v-if="rewardOpen" class="article-reward-content" aria-label="打赏设置">
         <label class="sr-only" for="articleRewardContent">打赏内容</label>
         <ClientOnly>
-          <Editor id="articleRewardContent" v-model="form.rewardContent" :name="articleId ? `article-reward-${articleId}` : undefined" height="200px" :options="{ placeholder: '写下打赏后可见的内容', preview: { mode: 'editor' }, resize: { enable: false } }" />
+          <RichTextEditor
+            id="articleRewardContent"
+            v-model="form.rewardContent"
+            :name="articleId ? `article-reward-${articleId}` : undefined"
+            height="200px"
+            :options="{ placeholder: '写下打赏后可见的内容', preview: { mode: 'editor' }, resize: { enable: false } }"
+          />
         </ClientOnly>
         <label class="sr-only" for="articleRewardPoint">打赏积分</label>
-        <input id="articleRewardPoint" v-model.number="form.rewardPoints" type="number" min="1" :disabled="loading" placeholder="打赏积分" />
+        <input
+          id="articleRewardPoint"
+          v-model.number="form.rewardPoints"
+          type="number"
+          min="1"
+          :disabled="loading"
+          placeholder="打赏积分"
+        />
       </section>
 
       <section class="wrapper post__footer">
@@ -285,17 +346,29 @@ onBeforeUnmount(() => {
         </div>
         <div class="article-settings">
           <div class="article-settings__options">
-            <label class="article-anonymous article-settings__statement" for="articleStatement">创作声明
+            <label class="article-anonymous article-settings__statement" for="articleStatement"
+              >创作声明
               <select id="articleStatement" v-model="form.statement" :disabled="loading">
-                <option value="">无声明</option><option value="包含 AI 辅助创作">包含 AI 辅助创作</option><option value="包含剧透">包含剧透</option><option value="虚构演绎，仅供娱乐">虚构演绎，仅供娱乐</option>
+                <option value="">无声明</option>
+                <option value="包含 AI 辅助创作">包含 AI 辅助创作</option>
+                <option value="包含剧透">包含剧透</option>
+                <option value="虚构演绎，仅供娱乐">虚构演绎，仅供娱乐</option>
               </select>
             </label>
-            <label class="article-anonymous" for="articleCommentable">允许回帖 <input id="articleCommentable" v-model="form.commentable" type="checkbox" :disabled="loading" /></label>
+            <label class="article-anonymous" for="articleCommentable"
+              >允许回帖 <input id="articleCommentable" v-model="form.commentable" type="checkbox" :disabled="loading"
+            /></label>
           </div>
           <div class="article-settings__actions article-post-actions">
-            <button class="article-draft-action" type="button" :disabled="loading" @click="openDraftInbox">草稿箱</button>
-            <button class="article-draft-action" type="button" :disabled="loading" @click="save(false)">{{ loading ? "正在保存..." : "存草稿" }}</button>
-            <button class="green article-publish-action" type="submit" :disabled="loading">{{ loading ? "正在发布..." : "发布" }}</button>
+            <button class="article-draft-action" type="button" :disabled="loading" @click="openDraftInbox">
+              草稿箱
+            </button>
+            <button class="article-draft-action" type="button" :disabled="loading" @click="save(false)">
+              {{ loading ? "正在保存..." : "存草稿" }}
+            </button>
+            <button class="green article-publish-action" type="submit" :disabled="loading">
+              {{ loading ? "正在发布..." : "发布" }}
+            </button>
           </div>
         </div>
       </section>
@@ -305,5 +378,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.article-tags__hint { margin: 8px 0 0; font-size: 12px; }
+.article-tags__hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+}
 </style>

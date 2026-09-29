@@ -1,11 +1,11 @@
 import { ApiError } from "@/utils/sdk";
 import { bbsClient } from "@/utils/sdk";
-import { render } from "vike/abort";
 import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
 import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostscript";
 import type { ListCommentThreadsResp } from "@bass/bbs-sdk-fetch/models/ListCommentThreadsResp";
 import type { PageContextServer } from "vike/types";
+import { setPageStatus } from "../../pageStatus";
 
 export type Data = {
   article?: ArticleDetail;
@@ -14,6 +14,7 @@ export type Data = {
   hottest?: ArticleListItem[];
   postscripts?: ArticlePostscript[];
   error?: string;
+  pageStatus?: 404 | 500;
 };
 
 export async function data(pageContext: PageContextServer): Promise<Data> {
@@ -53,8 +54,10 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
     return { article, comments, latest, hottest, postscripts };
   } catch (cause) {
     if (cause instanceof ApiError && (cause.status === 404 || cause.code === 404)) {
-      throw render(404, "你访问的文章不存在或已被删除。");
+      setPageStatus(pageContext, 404);
+      return { error: "你访问的文章不存在或已被删除。", pageStatus: 404 };
     }
-    return { error: cause instanceof Error ? cause.message : "文章暂时无法加载。" };
+    setPageStatus(pageContext, 500);
+    return { error: cause instanceof Error ? cause.message : "文章暂时无法加载。", pageStatus: 500 };
   }
 }

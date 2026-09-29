@@ -1,22 +1,25 @@
 <script setup lang="ts">
 import type { IOptions } from "vditor";
 import { ref } from "vue";
-import ClientOnly from "@/components/ClientOnly";
-import Editor from "@/components/Editor";
-import Icon from "@/components/community/Icon.vue";
+import ClientOnly from "@/components/ui/ClientOnly.vue";
+import RichTextEditor from "@/components/content/RichTextEditor.vue";
+import Icon from "@/components/ui/Icon.vue";
 
-const props = withDefaults(defineProps<{
-  open: boolean;
-  title: string;
-  ariaLabel: string;
-  editorName: string;
-  placeholder: string;
-  submitLabel: string;
-  submitting: boolean;
-  helperText?: string;
-}>(), {
-  helperText: "请遵守社区规范。",
-});
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    title: string;
+    ariaLabel: string;
+    editorName: string;
+    placeholder: string;
+    submitLabel: string;
+    submitting: boolean;
+    helperText?: string;
+  }>(),
+  {
+    helperText: "请遵守社区规范。",
+  },
+);
 
 const emit = defineEmits<{
   close: [];
@@ -24,7 +27,7 @@ const emit = defineEmits<{
 }>();
 
 const content = defineModel<string>({ required: true });
-const editorRef = ref<InstanceType<typeof Editor>>();
+const editorRef = ref<InstanceType<typeof RichTextEditor>>();
 const editorOptions = {
   preview: { mode: "editor" },
   resize: { enable: true, position: "top" },
@@ -58,18 +61,41 @@ defineExpose({ clearCache, getValue });
             <Icon name="reply" />
             {{ props.title }}
           </strong>
-          <button type="button" class="editor-panel__close" :aria-label="`收起${props.title}编辑器`" @click="emit('close')">
+          <button
+            type="button"
+            class="editor-panel__close"
+            :aria-label="`收起${props.title}编辑器`"
+            @click="emit('close')"
+          >
             <Icon name="down" />
           </button>
         </header>
         <ClientOnly>
-          <Editor ref="editorRef" v-model="content" :name="props.editorName" height="200px" :options="{ ...editorOptions, placeholder: props.placeholder }" />
+          <RichTextEditor
+            ref="editorRef"
+            v-model="content"
+            :name="props.editorName"
+            height="200px"
+            :options="{ ...editorOptions, placeholder: props.placeholder }"
+          />
         </ClientOnly>
         <footer class="comment-submit">
           <span class="ft-fade">{{ props.helperText }}</span>
           <span class="comment-submit__actions">
-            <button type="button" class="article-editor-panel__button" :disabled="props.submitting" @click="emit('close')">取消</button>
-            <button type="button" class="article-editor-panel__button article-editor-panel__button--submit" :disabled="props.submitting" @click="emit('submit')">
+            <button
+              type="button"
+              class="article-editor-panel__button"
+              :disabled="props.submitting"
+              @click="emit('close')"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              class="article-editor-panel__button article-editor-panel__button--submit"
+              :disabled="props.submitting"
+              @click="emit('submit')"
+            >
               {{ props.submitting ? "正在提交..." : props.submitLabel }}
             </button>
           </span>

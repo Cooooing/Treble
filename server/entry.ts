@@ -2,6 +2,7 @@ import { apply, serve } from "@photonjs/express";
 import express from "express";
 import dotenv from "dotenv";
 import { createBbsGateway, ensureCsrfCookie } from "./bbsGateway";
+import { pageStatusMiddleware } from "./pageStatus";
 
 export default await startServer();
 
@@ -25,7 +26,7 @@ async function startServer() {
   app.use(ensureCsrfCookie(secureCookies));
   app.use("/api/bbs", createBbsGateway({ bffUrl: bbsBffUrl, isProduction: secureCookies }));
 
-  await apply(app, []);
+  await apply(app, [pageStatusMiddleware]);
 
   return serve(app, {
     port,

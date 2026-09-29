@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { navigate, reload } from "vike/client/router";
 import { usePageContext } from "vike-vue/usePageContext";
 import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
 import type { CreateCommentReq } from "@bass/bbs-sdk-fetch/models/CreateCommentReq";
@@ -8,17 +9,19 @@ import type { ListCommentRepliesResp } from "@bass/bbs-sdk-fetch/models/ListComm
 import type { ListCommentThreadsResp } from "@bass/bbs-sdk-fetch/models/ListCommentThreadsResp";
 import type { RespCommentListItem } from "@bass/bbs-sdk-fetch/models/RespCommentListItem";
 import type { RespCommentThread } from "@bass/bbs-sdk-fetch/models/RespCommentThread";
-import Avatar from "@/components/Avatar";
-import { message } from "@/components/Message";
-import Icon from "@/components/community/Icon.vue";
-import { currentAccount } from "@/utils/auth/state";
+import Avatar from "@/components/identity/Avatar.vue";
+import { message } from "@/components/feedback/message";
+import Icon from "@/components/ui/Icon.vue";
+import { currentAccount } from "@/services/sessionState";
 import { fromNow } from "@/utils/date";
 import { bbsClient } from "@/utils/sdk";
 import ArticleEditorPanel from "./ArticleEditorPanel.vue";
 
 const props = defineProps<{ article: ArticleDetail; comments: ListCommentThreadsResp }>();
 const pageContext = usePageContext();
-const account = computed(() => typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value);
+const account = computed(() =>
+  typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value,
+);
 const threads = ref(props.comments.rows || []);
 const threadPage = ref(props.comments.page);
 const commentOrder = ref<ListCommentThreadsReqOrderEnum>(ListCommentThreadsReqOrderEnum.COMMENT_ORDER_HOTTEST);
@@ -35,7 +38,7 @@ const total = computed(() => threadPage.value?.total || 0);
 const replyPageSize = 10;
 function openCommentEditor(target?: RespCommentListItem) {
   if (!account.value) {
-    window.location.assign(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
+    void navigate(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
     return;
   }
   replyComment.value = target;
@@ -58,7 +61,7 @@ async function submit() {
   try {
     await bbsClient.comment.create({ createCommentReq: { ...comment.value, content } });
     closeCommentEditor();
-    window.location.reload();
+    await reload();
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "评论提交失败，请稍后重试。");
   } finally {
@@ -128,7 +131,8 @@ function replyTotalPages(thread: RespCommentThread) {
 function replyPageNumbers(totalPages: number, currentPage: number) {
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
   if (currentPage <= 4) return [1, 2, 3, 4, 5, "…", totalPages];
-  if (currentPage >= totalPages - 3) return [1, "…", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  if (currentPage >= totalPages - 3)
+    return [1, "…", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
   return [1, "…", currentPage - 1, currentPage, currentPage + 1, "…", totalPages];
 }
 
@@ -172,33 +176,36 @@ async function loadReplies(parentId: string, page: number) {
 <template>
   <section class="comment-thread-list" :aria-busy="loadingThreads">
     <header class="comment-thread-list__header">
-      <strong>评论 <span>{{ total }}</span></strong>
+      <strong
+        >评论 <span>{{ total }}</span></strong
+      >
       <nav class="comment-sort" aria-label="评论排序">
         <button
           type="button"
           :class="{ 'comment-sort__item--active': commentOrder === 'COMMENT_ORDER_HOTTEST' }"
           :disabled="loadingThreads"
           @click="loadThreads(1, 'COMMENT_ORDER_HOTTEST')"
-        >最热</button>
+        >
+          最热
+        </button>
         <i aria-hidden="true" />
         <button
           type="button"
           :class="{ 'comment-sort__item--active': commentOrder === 'COMMENT_ORDER_NEWEST' }"
           :disabled="loadingThreads"
           @click="loadThreads(1, 'COMMENT_ORDER_NEWEST')"
-        >最新</button>
+        >
+          最新
+        </button>
       </nav>
-      <a class="comment-thread-list__to-footer" href="#article-footer" aria-label="跳至页面底部"><Icon name="down" /></a>
+      <a class="comment-thread-list__to-footer" href="#article-footer" aria-label="跳至页面底部"
+        ><Icon name="down"
+      /></a>
     </header>
 
     <div class="comment__reply">
       <div v-if="account" class="fn-flex">
-        <Avatar
-          class="avatar"
-          :url="account.profile?.avatarUrl"
-          :name="account.profile?.name"
-          :size="48"
-        />
+        <Avatar class="avatar" :url="account.profile?.avatarUrl" :name="account.profile?.name" :size="48" />
         <button type="button" class="reply__text fn-flex-1" @click="openCommentEditor()">请输入回帖内容...</button>
       </div>
       <button v-else type="button" class="reply__text fn-flex-1" @click="openCommentEditor()">登录参与讨论...</button>
@@ -224,9 +231,7 @@ async function loadReplies(parentId: string, page: number) {
                     <button type="button" @click="reactToComment('thank', thread.root.id)">
                       <Icon name="heart" /> {{ thread.root.thankCount || 0 }}
                     </button>
-                    <button type="button" @click="openCommentEditor(thread.root)">
-                      <Icon name="reply" /> 回复
-                    </button>
+                    <button type="button" @click="openCommentEditor(thread.root)"><Icon name="reply" /> 回复</button>
                   </span>
                 </footer>
               </div>
@@ -238,7 +243,9 @@ async function loadReplies(parentId: string, page: number) {
                   <Avatar :url="reply.user?.avatarUrl" :name="reply.user?.name" :size="24" />
                   <div class="fn-flex-1">
                     <div class="comment-thread__reply-content">
-                      <span class="comment-thread__user">{{ reply.user?.nickname || reply.user?.name || "匿名用户" }}</span>
+                      <span class="comment-thread__user">{{
+                        reply.user?.nickname || reply.user?.name || "匿名用户"
+                      }}</span>
                       <span v-if="reply.replyUser && reply.replyId !== thread.root.id" class="comment-thread__target">
                         回复 {{ reply.replyUser.nickname || reply.replyUser.name || "匿名用户" }}：
                       </span>
@@ -247,8 +254,12 @@ async function loadReplies(parentId: string, page: number) {
                     <footer class="comment-thread__action">
                       <span>{{ reply.createdAt ? fromNow(reply.createdAt) : "刚刚" }}</span>
                       <span class="comment-thread__action-buttons">
-                        <button type="button" @click="reactToComment('like', reply.id)"><Icon name="thumbs-up" /> {{ reply.likeCount || 0 }}</button>
-                        <button type="button" @click="reactToComment('thank', reply.id)"><Icon name="heart" /> {{ reply.thankCount || 0 }}</button>
+                        <button type="button" @click="reactToComment('like', reply.id)">
+                          <Icon name="thumbs-up" /> {{ reply.likeCount || 0 }}
+                        </button>
+                        <button type="button" @click="reactToComment('thank', reply.id)">
+                          <Icon name="heart" /> {{ reply.thankCount || 0 }}
+                        </button>
                         <button type="button" @click="openCommentEditor(reply)"><Icon name="reply" /> 回复</button>
                       </span>
                     </footer>
@@ -263,36 +274,58 @@ async function loadReplies(parentId: string, page: number) {
                     class="comment-thread__toggle"
                     :disabled="loadingReplyParentId === thread.root.id"
                     @click="revealReplies(thread)"
-                  >点击查看</button>
+                  >
+                    点击查看
+                  </button>
                 </template>
                 <template v-else>
-                  <nav v-if="replyTotalPages(thread) > 1" class="comment-thread__pager" :aria-label="`评论 ${thread.root.id} 的回复分页`">
+                  <nav
+                    v-if="replyTotalPages(thread) > 1"
+                    class="comment-thread__pager"
+                    :aria-label="`评论 ${thread.root.id} 的回复分页`"
+                  >
                     <span>共 {{ replyTotalPages(thread) }} 页</span>
                     <button
                       v-if="(replyPages[thread.root.id]?.page?.page || 1) > 1"
                       type="button"
                       :disabled="loadingReplyParentId === thread.root.id"
                       @click="loadReplies(thread.root.id, (replyPages[thread.root.id]?.page?.page || 1) - 1)"
-                    >上一页</button>
-                    <template v-for="(item, index) in replyPageNumbers(replyTotalPages(thread), replyPages[thread.root.id]?.page?.page || 1)" :key="`${item}-${index}`">
+                    >
+                      上一页
+                    </button>
+                    <template
+                      v-for="(item, index) in replyPageNumbers(
+                        replyTotalPages(thread),
+                        replyPages[thread.root.id]?.page?.page || 1,
+                      )"
+                      :key="`${item}-${index}`"
+                    >
                       <span v-if="item === '…'" aria-hidden="true">…</span>
                       <button
                         v-else
                         type="button"
-                        :class="{ 'comment-thread__page--current': item === (replyPages[thread.root.id]?.page?.page || 1) }"
+                        :class="{
+                          'comment-thread__page--current': item === (replyPages[thread.root.id]?.page?.page || 1),
+                        }"
                         :aria-current="item === (replyPages[thread.root.id]?.page?.page || 1) ? 'page' : undefined"
                         :disabled="loadingReplyParentId === thread.root.id"
                         @click="loadReplies(thread.root.id, item)"
-                      >{{ item }}</button>
+                      >
+                        {{ item }}
+                      </button>
                     </template>
                     <button
                       v-if="(replyPages[thread.root.id]?.page?.page || 1) < replyTotalPages(thread)"
                       type="button"
                       :disabled="loadingReplyParentId === thread.root.id"
                       @click="loadReplies(thread.root.id, (replyPages[thread.root.id]?.page?.page || 1) + 1)"
-                    >下一页</button>
+                    >
+                      下一页
+                    </button>
                   </nav>
-                  <button type="button" class="comment-thread__toggle" @click="collapseReplies(thread.root.id)">收起</button>
+                  <button type="button" class="comment-thread__toggle" @click="collapseReplies(thread.root.id)">
+                    收起
+                  </button>
                 </template>
               </div>
             </section>
@@ -300,9 +333,21 @@ async function loadReplies(parentId: string, page: number) {
         </li>
       </ul>
       <nav v-if="total > (threadPage?.size || 20)" class="comment-root-pager" aria-label="顶层评论分页">
-        <button type="button" :disabled="(threadPage?.page || 1) <= 1 || loadingThreads" @click="loadThreads((threadPage?.page || 1) - 1)">上一页</button>
+        <button
+          type="button"
+          :disabled="(threadPage?.page || 1) <= 1 || loadingThreads"
+          @click="loadThreads((threadPage?.page || 1) - 1)"
+        >
+          上一页
+        </button>
         <span>{{ threadPage?.page || 1 }}</span>
-        <button type="button" :disabled="(threadPage?.page || 1) * (threadPage?.size || 20) >= total || loadingThreads" @click="loadThreads((threadPage?.page || 1) + 1)">下一页</button>
+        <button
+          type="button"
+          :disabled="(threadPage?.page || 1) * (threadPage?.size || 20) >= total || loadingThreads"
+          @click="loadThreads((threadPage?.page || 1) + 1)"
+        >
+          下一页
+        </button>
       </nav>
     </div>
     <p v-else-if="!loadingThreads" class="comment-thread-list__empty">还没有回复，来抢沙发吧。</p>
@@ -311,7 +356,11 @@ async function loadReplies(parentId: string, page: number) {
       ref="editorPanelRef"
       v-model="comment.content"
       :open="editorOpen"
-      :title="replyComment ? `回复 ${replyComment.user?.nickname || replyComment.user?.name || '用户'}` : article.title || '发表评论'"
+      :title="
+        replyComment
+          ? `回复 ${replyComment.user?.nickname || replyComment.user?.name || '用户'}`
+          : article.title || '发表评论'
+      "
       aria-label="发布回复"
       editor-name="comment"
       placeholder="友善地留下一个评论吧 :)"

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, toRefs } from "vue";
 import { useData } from "vike-vue/useData";
-import ArticleCard from "@/components/ArticleCard";
-import { message } from "@/components/Message";
+import ArticleListPanel from "@/components/article/ArticleListPanel.vue";
+import { message } from "@/components/feedback/message";
 import { Data } from "./+data";
 
 const { recents, hots, contentError } = toRefs(useData<Data>());
@@ -15,8 +15,8 @@ onMounted(() => {
   <div class="main index">
     <div class="wrapper">
       <section class="index-main">
-        <ArticleCard :articles="recents" compact title="最新" more="/recent" />
-        <ArticleCard :articles="hots" compact title="最热" more="/hot" />
+        <ArticleListPanel :articles="recents" compact title="最新" more="/recent" />
+        <ArticleListPanel :articles="hots" compact title="最热" more="/hot" />
       </section>
     </div>
   </div>

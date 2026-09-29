@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { useData } from "vike-vue/useData";
 import { toRefs } from "vue";
-import ArticleCard from "@/components/ArticleCard";
-import ContentSidebar from "@/components/ContentSidebar.vue";
+import ArticleListPanel from "@/components/article/ArticleListPanel.vue";
+import ContentSidebar from "@/components/layout/ContentSidebar.vue";
+import AppLink from "@/components/ui/AppLink.vue";
+import ErrorState from "@/components/feedback/ErrorState.vue";
 import { Data } from "./+data";
 
 const { articles, tag, tags, domains } = toRefs(useData<Data>());
 </script>
 
 <template>
-  <div class="main" v-if="tag">
+  <ErrorState
+    v-if="!tag"
+    :title="pageStatus === 404 ? '标签未找到' : '标签暂时无法打开'"
+    :message="error || '标签暂时无法访问。'"
+  />
+  <div v-else class="main">
     <div class="wrapper">
       <section class="content">
         <section class="module taxonomy-page__intro">
@@ -22,13 +29,15 @@ const { articles, tag, tags, domains } = toRefs(useData<Data>());
                 aria-hidden="true"
               ></span>
               <div>
-                <h1><a rel="tag" :href="`/tag/${encodeURIComponent(tag.name || '')}`">{{ tag.name }}</a></h1>
+                <h1>
+                  <AppLink rel="tag" :href="`/tag/${encodeURIComponent(tag.name || '')}`">{{ tag.name }}</AppLink>
+                </h1>
                 <p class="ft-fade">{{ tag.description || "暂无描述" }}</p>
               </div>
             </div>
           </div>
         </section>
-        <ArticleCard :articles="articles" />
+        <ArticleListPanel :articles="articles" />
       </section>
       <ContentSidebar :tags="tags" :domains="domains" />
     </div>

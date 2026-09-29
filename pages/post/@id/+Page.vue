@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { useData } from "vike-vue/useData";
-import { message } from "@/components/Message";
+import { message } from "@/components/feedback/message";
 import type { Data } from "./+data";
 import ArticleForm from "@/pages/article/ArticleForm.vue";
+import ErrorState from "@/components/feedback/ErrorState.vue";
 
 const data = useData<Data>();
 
@@ -14,5 +15,9 @@ onMounted(() => {
 
 <template>
   <ArticleForm v-if="data.article" :key="data.article.id" :article="data.article" />
-  <div v-else class="main"><div class="wrapper"></div></div>
+  <ErrorState
+    v-else
+    :title="data.pageStatus === 404 ? '草稿未找到' : '草稿暂时无法打开'"
+    :message="data.error || '草稿暂时无法访问。'"
+  />
 </template>

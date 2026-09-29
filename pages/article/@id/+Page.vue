@@ -1,33 +1,40 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
+import { navigate } from "vike/client/router";
 import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostscript";
 import { useData } from "vike-vue/useData";
 import { usePageContext } from "vike-vue/usePageContext";
-import { message } from "@/components/Message";
+import { message } from "@/components/feedback/message";
 import { Data } from "./+data";
-import MdRender from "@/components/MdRender";
+import MarkdownRenderer from "@/components/content/MarkdownRenderer.vue";
 import Author from "./Author.vue";
 import Comments from "./Comments.vue";
 import Postscripts from "./Postscripts.vue";
-import Icon from "@/components/community/Icon.vue";
-import ArticleTaxonomy from "@/components/community/ArticleTaxonomy.vue";
-import Avatar from "@/components/Avatar";
-import { currentAccount } from "@/utils/auth/state";
+import Icon from "@/components/ui/Icon.vue";
+import ArticleTaxonomy from "@/components/article/ArticleTaxonomy.vue";
+import Avatar from "@/components/identity/Avatar.vue";
+import AppLink from "@/components/ui/AppLink.vue";
+import ErrorState from "@/components/feedback/ErrorState.vue";
+import { currentAccount } from "@/services/sessionState";
 import { bbsClient } from "@/utils/sdk";
 
 const data = useData<Data>();
 const pageContext = usePageContext();
-const account = computed(() => typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value);
+const account = computed(() =>
+  typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value,
+);
 const articleState = ref(data.article);
 const postscripts = ref<ArticlePostscript[]>(data.postscripts || data.article?.postscripts || []);
 const postscriptEditorOpen = ref(false);
 const actionPending = ref<"like" | "thank" | "collect">();
 const articleHeadings = ref<Array<{ id: string; level: number; text: string }>>([]);
-const canAddPostscript = computed(() => Boolean(
-  account.value?.profile?.id
-  && articleState.value?.createdBy
-  && account.value.profile.id === articleState.value.createdBy,
-));
+const canAddPostscript = computed(() =>
+  Boolean(
+    account.value?.profile?.id &&
+      articleState.value?.createdBy &&
+      account.value.profile.id === articleState.value.createdBy,
+  ),
+);
 
 watch(
   () => data.article,
@@ -45,14 +52,17 @@ function addPostscript(postscript: ArticlePostscript) {
 }
 
 function loginForArticleAction() {
-  window.location.assign(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
+  void navigate(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
 }
 
 function scrollToHeading(id: string) {
   const heading = document.getElementById(id);
   if (!heading) return;
   const navigationHeight = 58;
-  window.scrollTo({ top: window.scrollY + heading.getBoundingClientRect().top - navigationHeight - 16, behavior: "smooth" });
+  window.scrollTo({
+    top: window.scrollY + heading.getBoundingClientRect().top - navigationHeight - 16,
+    behavior: "smooth",
+  });
   window.history.replaceState(null, "", `#${encodeURIComponent(id)}`);
 }
 
@@ -124,7 +134,7 @@ onMounted(() => {
           <div class="wrapper">
             <h1 id="article-title" class="article-title">{{ articleState.title }}</h1>
             <div v-if="articleState.statement" class="article-statement">{{ articleState.statement }}</div>
-            <MdRender
+            <MarkdownRenderer
               :key="data.article?.id"
               class="vditor-reset article-content"
               :md="articleState.content || ''"
@@ -146,15 +156,15 @@ onMounted(() => {
         />
         <section v-if="canAddPostscript" class="article-author-actions" aria-label="作者操作">
           <div class="wrapper">
-              <button type="button" @click="postscriptEditorOpen = true">添加附言</button>
+            <button type="button" @click="postscriptEditorOpen = true">添加附言</button>
           </div>
         </section>
         <div class="article-tail">
           <div class="wrapper">
-              <Author
-                :article="articleState"
-                :reply-count="data.comments.page?.total || data.comments.rows?.length || 0"
-              />
+            <Author
+              :article="articleState"
+              :reply-count="data.comments.page?.total || data.comments.rows?.length || 0"
+            />
           </div>
         </div>
         <main class="main article-discussion">
@@ -171,10 +181,12 @@ onMounted(() => {
             <div class="module-panel">
               <ul class="module-list article-footer__list">
                 <li v-for="item in data.latest || []" :key="item.id">
-                  <a :href="`/article/${item.id}`"
+                  <AppLink :href="`/article/${item.id}`"
                     ><Avatar :url="item.authorUser?.avatarUrl" :name="item.authorUser?.name" :size="20"
-                  /></a>
-                  <a class="title fn-ellipsis" :href="`/article/${item.id}`">{{ item.title || "未命名文章" }}</a>
+                  /></AppLink>
+                  <AppLink class="title fn-ellipsis" :href="`/article/${item.id}`">{{
+                    item.title || "未命名文章"
+                  }}</AppLink>
                 </li>
               </ul>
             </div>
@@ -184,10 +196,12 @@ onMounted(() => {
             <div class="module-panel">
               <ul class="module-list article-footer__list">
                 <li v-for="item in data.hottest || []" :key="item.id">
-                  <a :href="`/article/${item.id}`"
+                  <AppLink :href="`/article/${item.id}`"
                     ><Avatar :url="item.authorUser?.avatarUrl" :name="item.authorUser?.name" :size="20"
-                  /></a>
-                  <a class="title fn-ellipsis" :href="`/article/${item.id}`">{{ item.title || "未命名文章" }}</a>
+                  /></AppLink>
+                  <AppLink class="title fn-ellipsis" :href="`/article/${item.id}`">{{
+                    item.title || "未命名文章"
+                  }}</AppLink>
                 </li>
               </ul>
             </div>
@@ -237,13 +251,9 @@ onMounted(() => {
       </aside>
     </div>
   </div>
-  <div v-else class="main">
-    <div class="wrapper">
-      <section class="content module">
-        <div class="module-panel">
-          <a class="btn" href="/recent">返回最新文章</a>
-        </div>
-      </section>
-    </div>
-  </div>
+  <ErrorState
+    v-else
+    :title="data.pageStatus === 404 ? '文章未找到' : '文章暂时无法打开'"
+    :message="data.error || '文章暂时无法访问。'"
+  />
 </template>
