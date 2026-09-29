@@ -168,7 +168,7 @@ async function save(publish: boolean): Promise<string | undefined> {
   try {
     saveLocalDraft(false);
     const draft = await saveArticleDraft(cleanedForm(), articleId.value);
-    const id = draft.article?.id;
+    const id = draft.articleId;
     if (!id) throw new Error("保存草稿后未返回文章标识。");
     articleId.value = id;
     const tagIds = await synchronizeArticleTags(id, savedTagIds.value, tagNames.value, availableTags.value);
