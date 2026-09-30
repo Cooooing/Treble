@@ -16,6 +16,9 @@ importers:
       cropperjs:
         specifier: 1.6.2
         version: 1.6.2
+      dayjs:
+        specifier: ^1.11.19
+        version: 1.11.23
       dotenv:
         specifier: ^17.2.3
         version: 17.4.2
@@ -56,9 +59,6 @@ importers:
       "@vitejs/plugin-vue":
         specifier: ^6.0.1
         version: 6.0.1(vite@7.2.2(@types/node@24.13.6)(jiti@2.6.1)(less@4.9.1(supports-color@7.2.0))(lightningcss@1.30.2)(terser@5.51.2))(vue@3.5.24(typescript@5.9.3))
-      dayjs:
-        specifier: ^1.11.19
-        version: 1.11.23
       eslint:
         specifier: ^10.11.0
         version: 10.11.0(jiti@2.6.1)(supports-color@7.2.0)
