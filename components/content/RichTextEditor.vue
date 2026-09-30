@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { defaultTheme, isDarkTheme, type Theme } from "@/utils/theme";
-import Vditor, { type IOptions } from "vditor";
+import type Vditor from "vditor";
+import type { IOptions } from "vditor";
 import "vditor/dist/index.css";
 
 let sequence = 0;
@@ -31,6 +32,7 @@ const vditorRef = ref<HTMLDivElement>();
 const editorReady = ref(false);
 const theme = ref<Theme>(defaultTheme);
 const editorId = props.id || `editor-${++sequence}`;
+let disposed = false;
 
 function syncTheme(nextTheme: Theme) {
   theme.value = nextTheme;
@@ -43,12 +45,18 @@ function handleThemeChange(event: Event) {
   syncTheme((event as CustomEvent<Theme>).detail);
 }
 
-onMounted(() => {
+onMounted(async () => {
   theme.value = document.documentElement.dataset.theme === "dark" ? "dark" : defaultTheme;
   window.addEventListener("treble-theme-change", handleThemeChange);
 
+  // Vditor accesses browser globals as soon as its module is evaluated. The
+  // editor is client-only, but its parent participates in article SSR, so load
+  // Vditor only after Vue has mounted in a browser.
+  const VditorConstructor = (await import("vditor")).default;
+  if (disposed || !vditorRef.value) return;
+
   const { after, cache, input, preview, resize, ...options } = props.options || {};
-  vditor.value = new Vditor(vditorRef.value!, {
+  vditor.value = new VditorConstructor(vditorRef.value, {
     outline: { enable: false, position: "left" },
     typewriterMode: false,
     cache: {
@@ -89,6 +97,7 @@ watch(
 );
 
 onUnmounted(() => {
+  disposed = true;
   window.removeEventListener("treble-theme-change", handleThemeChange);
   vditor.value?.destroy();
   vditor.value = undefined;

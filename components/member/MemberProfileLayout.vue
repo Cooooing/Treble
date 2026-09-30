@@ -50,7 +50,7 @@ const location = () =>
             </h1>
             <p v-if="profile.account?.name" class="member-profile__name">{{ profile.account.name }}</p>
             <span
-              v-if="profile.account?.mbti && profile.account.mbti !== 'MBTI_UNSPECIFIED'"
+              v-if="profile.account?.mbti"
               class="member-profile__mbti"
               >{{ profile.account.mbti }}</span
             >

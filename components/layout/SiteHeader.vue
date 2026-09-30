@@ -27,7 +27,10 @@ const account = computed(() => {
 });
 
 function syncClientAccount() {
-  setCurrentAccount(pageContext.user);
+  // A rendering failure can yield an error page without its original page
+  // context. Do not turn that missing context into a client-side logout: only
+  // replace the cached account after the server has actually supplied one.
+  if (pageContext.user) setCurrentAccount(pageContext.user);
 }
 
 function closeWhenClickingOutside(event: PointerEvent) {
@@ -77,8 +80,7 @@ watch(
   () => pageContext.user,
   (nextAccount) => {
     if (typeof window === "undefined") return;
-    setCurrentAccount(nextAccount);
-    if (!nextAccount) unreadCount.value = 0;
+    if (nextAccount) setCurrentAccount(nextAccount);
   },
 );
 

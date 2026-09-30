@@ -14,6 +14,9 @@ importers:
       '@universal-middleware/core':
         specifier: ^0.4.13
         version: 0.4.13(@types/express@5.0.6)(srvx@0.12.8)
+      cropperjs:
+        specifier: 1.6.2
+        version: 1.6.2
       dotenv:
         specifier: ^17.2.3
         version: 17.4.2
@@ -1133,6 +1136,9 @@ packages:
   copy-anything@3.0.5:
     resolution: {integrity: sha512-yCEafptTtb4bk7GLEQoM8KVJpxAfdBJYaXyzQEgQQQgYrZiDp8SJmGKlYza6CYjEDNstAdNdKA3UuoULlEbS6w==}
     engines: {node: '>=12.13'}
+
+  cropperjs@1.6.2:
+    resolution: {integrity: sha512-nhymn9GdnV3CqiEHJVai54TULFAE3VshJTXSqSJKa8yXAKyBKDWdhHarnlIPrshJ0WMFTGuFvG02YjLXfPiuOA==}
 
   csstype@3.2.1:
     resolution: {integrity: sha512-98XGutrXoh75MlgLihlNxAGbUuFQc7l1cqcnEZlLNKc0UrVdPndgmaDmYTDDh929VS/eqTZV0rozmhu2qqT1/g==}
@@ -2775,6 +2781,8 @@ snapshots:
     dependencies:
       is-what: 4.1.16
     optional: true
+
+  cropperjs@1.6.2: {}
 
   csstype@3.2.1: {}
 

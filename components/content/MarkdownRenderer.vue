@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
 import { defaultTheme, isDarkTheme, type Theme } from "@/utils/theme";
-import Vditor from "vditor";
 import "vditor/dist/index.css";
 
 const props = defineProps<{
@@ -13,10 +12,11 @@ const emit = defineEmits<{
 }>();
 const render = ref(true);
 const contentRef = ref<HTMLDivElement>();
+let vditor: typeof import("vditor").default | undefined;
 
 function mdRender(theme: Theme) {
-  if (!contentRef.value) return;
-  Vditor.preview(contentRef.value, props.md, {
+  if (!contentRef.value || !vditor) return;
+  vditor.preview(contentRef.value, props.md, {
     mode: isDarkTheme(theme) ? "dark" : "light",
     hljs: {
       style: isDarkTheme(theme) ? "github-dark" : "github",
@@ -51,10 +51,13 @@ function handleThemeChange(event: Event) {
   mdRender((event as CustomEvent<Theme>).detail);
 }
 
-onMounted(() => {
+onMounted(async () => {
   const theme = ref<Theme>(defaultTheme);
   if (props.md && contentRef.value) {
     theme.value = document.documentElement.dataset.theme === "dark" ? "dark" : defaultTheme;
+    // Vditor writes to browser globals during module evaluation. Loading it only
+    // after mount keeps the rendered HTML available to SSR and Vite's server runtime.
+    vditor = (await import("vditor")).default;
     mdRender(theme.value);
     window.addEventListener("treble-theme-change", handleThemeChange);
   }

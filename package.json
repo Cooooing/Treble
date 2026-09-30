@@ -8,6 +8,7 @@
   "dependencies": {
     "@photonjs/express": "0.1.6",
     "@universal-middleware/core": "^0.4.13",
+    "cropperjs": "1.6.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "redis": "^4.7.1",

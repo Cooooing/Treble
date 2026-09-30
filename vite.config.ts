@@ -46,7 +46,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
     // Browser and SSR rendering libraries are emitted into dist/server instead of
     // duplicated in the runtime image's node_modules.
     ssr: {
-      noExternal: ["dayjs", "lottie-web", "vditor"],
+      noExternal: ["lottie-web", "vditor"],
     },
 
     plugins: [
