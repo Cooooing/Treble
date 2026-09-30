@@ -73,10 +73,28 @@ pnpm dev
 ## 验证与构建
 
 ```sh
-pnpm exec tsc --noEmit
+pnpm format:check
+pnpm lint
+pnpm typecheck
 pnpm build
 pnpm preview
 ```
+
+日常编辑可运行 `pnpm format` 自动格式化，或运行 `pnpm lint:fix` 修复 ESLint
+能够安全自动修复的问题。项目根目录的 `.editorconfig` 提供跨编辑器的一致缩进、
+换行和字符集约定。
+
+### IntelliJ IDEA
+
+使用 IDEA 原生的 Vue formatter 格式化 `.vue` 文件：在 **Settings → Tools → Actions
+on Save** 启用 **Reformat code**，并在 **Settings → Editor → Code Style → Vue** 按项目
+`.editorconfig` 的 2 空格缩进设置。Prettier 在本项目中刻意忽略 `.vue`，因为它会将
+包含长动态属性和插槽内容的组件调用拆成不易阅读的布局；它仍负责 TypeScript、JavaScript、
+JSON、CSS 和 Markdown。
+
+在 **Settings → Languages & Frameworks → JavaScript → Code Quality Tools → ESLint**
+选择 **Automatic ESLint configuration**，并在 Actions on Save 启用 **Run eslint --fix**。
+IDEA 的 ESLint 集成会使用项目的 `eslint.config.js`，无需个人 `.idea` 配置入库。
 
 开发环境在浏览器 Network 中应能看到 `/api/bbs/v1/...` 请求和
 `X-Treble-Proxy-Request-ID`，可用同一请求 ID 在 Treble 与 Bass 日志中关联排查。
