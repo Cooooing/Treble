@@ -10,12 +10,14 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: master-ci
+  group: treble-service-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # Treble produces one SSR image, so a matrix would add scheduling overhead
+  # without unlocking parallel work.
   treble:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Treble
@@ -51,7 +53,8 @@ jobs:
         working-directory: treble
         run: pnpm build
 
-      # The GitHub Actions cache shortens Docker rebuilds without being shipped.
+      # The production dependency layer reaches the runtime image, so the
+      # minimal cache remains useful without retaining discarded build layers.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -81,4 +84,4 @@ jobs:
             registry.cn-hangzhou.aliyuncs.com/docker-cooooing/treble:latest
             ghcr.io/cooooing/treble:latest
           cache-from: type=gha,scope=treble-image
-          cache-to: type=gha,mode=max,scope=treble-image
+          cache-to: type=gha,mode=min,scope=treble-image
