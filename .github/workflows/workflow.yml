@@ -72,8 +72,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish image
+      # Registry token endpoints occasionally reset long-lived TLS connections.
+      # Retrying the same content-addressed Buildx export is safe: both targets
+      # receive the same immutable image layers and the same latest tag.
+      - name: Build and publish image (attempt 1)
+        id: publish_first
         uses: docker/build-push-action@v7
+        continue-on-error: true
         with:
           context: ./treble
           file: ./treble/Dockerfile
@@ -85,3 +90,56 @@ jobs:
             ghcr.io/cooooing/treble:latest
           cache-from: type=gha,scope=treble-image
           cache-to: type=gha,mode=min,scope=treble-image
+
+      - name: Wait before image publication retry
+        if: always() && steps.publish_first.outcome == 'failure'
+        run: sleep 15
+
+      - name: Build and publish image (attempt 2)
+        id: publish_second
+        if: always() && steps.publish_first.outcome == 'failure'
+        uses: docker/build-push-action@v7
+        continue-on-error: true
+        with:
+          context: ./treble
+          file: ./treble/Dockerfile
+          push: true
+          provenance: false
+          tags: |
+            registry.cn-hangzhou.aliyuncs.com/docker-cooooing/treble:latest
+            ghcr.io/cooooing/treble:latest
+          cache-from: type=gha,scope=treble-image
+          cache-to: type=gha,mode=min,scope=treble-image
+
+      - name: Wait before final image publication retry
+        if: always() && steps.publish_second.outcome == 'failure'
+        run: sleep 30
+
+      - name: Build and publish image (attempt 3)
+        id: publish_third
+        if: always() && steps.publish_second.outcome == 'failure'
+        uses: docker/build-push-action@v7
+        continue-on-error: true
+        with:
+          context: ./treble
+          file: ./treble/Dockerfile
+          push: true
+          provenance: false
+          tags: |
+            registry.cn-hangzhou.aliyuncs.com/docker-cooooing/treble:latest
+            ghcr.io/cooooing/treble:latest
+          cache-from: type=gha,scope=treble-image
+          cache-to: type=gha,mode=min,scope=treble-image
+
+      - name: Verify image publication
+        if: always()
+        env:
+          FIRST_ATTEMPT: ${{ steps.publish_first.outcome }}
+          SECOND_ATTEMPT: ${{ steps.publish_second.outcome }}
+          THIRD_ATTEMPT: ${{ steps.publish_third.outcome }}
+        run: |
+          if [[ "$FIRST_ATTEMPT" == "success" || "$SECOND_ATTEMPT" == "success" || "$THIRD_ATTEMPT" == "success" ]]; then
+            exit 0
+          fi
+          echo "Image publication failed after three attempts." >&2
+          exit 1
