@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import Cropper from "cropperjs";
 import "cropperjs/dist/cropper.css";
-import { computed, nextTick, onBeforeUnmount, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
-const props = defineProps<{ purpose: "avatar" | "background" }>();
+const props = defineProps<{ purpose: "avatar" | "background"; uploading?: boolean }>();
 const emit = defineEmits<{ ready: [value: { content: Uint8Array; fileName: string; mimeType: string }] }>();
 
 const input = ref<HTMLInputElement>();
@@ -15,13 +15,24 @@ const file = ref<File>();
 const sourceURL = ref("");
 const cropper = ref<Cropper>();
 const error = ref("");
+const preparingUpload = ref(false);
 const isGIF = computed(() => file.value?.type === "image/gif");
+const busy = computed(() => preparingUpload.value || props.uploading);
 const ratio = computed(() => (props.purpose === "avatar" ? 1 : 3));
 const output = computed(() =>
   props.purpose === "avatar" ? { width: 512, height: 512 } : { width: 1500, height: 500 },
 );
 const outputLabel = computed(() => `${output.value.width} × ${output.value.height}`);
 const label = computed(() => (props.purpose === "avatar" ? "头像" : "背景图"));
+
+// Keep the feedback continuous from the click that starts canvas/GIF
+// processing through the parent-owned upload and binding retry.
+watch(
+  () => props.uploading,
+  (uploading) => {
+    if (!uploading) preparingUpload.value = false;
+  },
+);
 
 function destroyCropper() {
   cropper.value?.destroy();
@@ -82,6 +93,7 @@ async function choose(event: Event) {
 }
 
 function openPicker() {
+  if (busy.value) return;
   input.value?.click();
 }
 
@@ -105,31 +117,52 @@ function move(event: KeyboardEvent) {
 }
 
 async function crop() {
-  if (!file.value) return;
-  if (isGIF.value) {
-    // Canvas serializes a GIF to its first frame. Upload its original bytes to retain animation.
+  if (!file.value || busy.value) return;
+  preparingUpload.value = true;
+  error.value = "";
+  try {
+    if (isGIF.value) {
+      // Canvas serializes a GIF to its first frame. Upload its original bytes to retain animation.
+      emit("ready", {
+        content: new Uint8Array(await file.value.arrayBuffer()),
+        fileName: file.value.name,
+        mimeType: "image/gif",
+      });
+      return;
+    }
+    const canvas = cropper.value?.getCroppedCanvas({ width: output.value.width, height: output.value.height });
+    if (!canvas) {
+      error.value = "无法裁切该图片，请重新选择。";
+      return;
+    }
+    const blob = await exportWebPWithinLimit(canvas);
+    if (!blob) {
+      error.value = "裁切后的图片无法压缩到 2 MiB 以内，请缩小裁切区域后重试。";
+      return;
+    }
     emit("ready", {
-      content: new Uint8Array(await file.value.arrayBuffer()),
-      fileName: file.value.name,
-      mimeType: "image/gif",
+      content: new Uint8Array(await blob.arrayBuffer()),
+      fileName: `${props.purpose}.webp`,
+      mimeType: "image/webp",
     });
-    return;
+  } catch {
+    error.value = "图片处理失败，请重新选择。";
+  } finally {
+    // Once the parent starts the actual request, its uploading prop keeps the
+    // same feedback visible. Local work that failed clears immediately.
+    if (!props.uploading) preparingUpload.value = false;
   }
-  const canvas = cropper.value?.getCroppedCanvas({ width: output.value.width, height: output.value.height });
-  if (!canvas) {
-    error.value = "无法裁切该图片，请重新选择。";
-    return;
+}
+
+// Source files below 2 MiB may become larger after canvas expands them to the
+// fixed profile dimensions. Lower WebP quality in bounded steps before asking
+// the browser to upload, so the policy's exact size limit is never surprising.
+async function exportWebPWithinLimit(canvas: HTMLCanvasElement) {
+  for (let quality = 0.9; quality >= 0.5; quality -= 0.1) {
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+    if (blob && blob.size <= 2 * 1024 * 1024) return blob;
   }
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.9));
-  if (!blob) {
-    error.value = "无法生成裁切后的图片，请重新选择。";
-    return;
-  }
-  emit("ready", {
-    content: new Uint8Array(await blob.arrayBuffer()),
-    fileName: `${props.purpose}.webp`,
-    mimeType: "image/webp",
-  });
+  return null;
 }
 
 onBeforeUnmount(clearSelection);
@@ -139,7 +172,7 @@ onBeforeUnmount(clearSelection);
   <section :class="`cropper--${purpose}`" class="cropper">
     <input ref="input" accept="image/jpeg,image/png,image/webp,image/gif" type="file" @change="choose" />
     <div class="cropper__topline">
-      <button type="button" @click="openPicker">选择{{ label }}</button>
+      <button :disabled="busy" type="button" @click="openPicker">选择{{ label }}</button>
       <p v-if="purpose === 'avatar'" class="cropper__notice">禁止使用任何涉嫌非法或者敏感图片作为头像</p>
       <p v-else class="cropper__notice">禁止上传任何涉嫌非法或敏感内容的背景图。</p>
     </div>
@@ -167,11 +200,12 @@ onBeforeUnmount(clearSelection);
         <button aria-label="放大图片" type="button" @click="zoom(0.1)">+</button>
       </div>
       <div class="cropper__actions">
-        <button type="button" @click="openPicker">重选</button>
-        <button class="green" type="button" @click="crop">确认上传</button>
+        <button :disabled="busy" type="button" @click="openPicker">重选</button>
+        <button :disabled="busy" class="green" type="button" @click="crop">确认上传</button>
       </div>
     </template>
 
+    <p v-if="busy" class="cropper__progress" role="status">正在上传...</p>
     <p v-if="error" class="cropper__error" role="alert">{{ error }}</p>
     <p class="cropper__help">
       JPEG、PNG、WebP 或 GIF，最大 2 MiB；静态图裁切后为 {{ outputLabel }}，GIF 将直接上传以保留动画。
@@ -204,6 +238,7 @@ onBeforeUnmount(clearSelection);
 }
 .cropper__notice,
 .cropper__help,
+.cropper__progress,
 .cropper__error {
   margin: 0;
   font-size: 13px;
@@ -217,6 +252,9 @@ onBeforeUnmount(clearSelection);
 }
 .cropper__error {
   color: #b94646;
+}
+.cropper__progress {
+  color: var(--text-gray-color);
 }
 .cropper__editor {
   display: flex;

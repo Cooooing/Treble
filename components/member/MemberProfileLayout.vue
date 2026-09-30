@@ -58,10 +58,10 @@ const location = () =>
             </p>
             <p v-if="location()" class="member-profile__line"><span>位置</span>{{ location() }}</p>
             <p v-if="profile.account?.createdAt" class="member-profile__line">
-              <span>加入</span>{{ fromNow(profile.account.createdAt) }}
+              <span>加入时间</span>{{ fromNow(profile.account.createdAt) }}
             </p>
             <p v-if="profile.lastSuccessLoginAt" class="member-profile__line">
-              <span>登录</span>{{ fromNow(profile.lastSuccessLoginAt) }}
+              <span>最后登录</span>{{ fromNow(profile.lastSuccessLoginAt) }}
             </p>
           </div>
           <div

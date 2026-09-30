@@ -8,7 +8,7 @@ import ProfileImageCropper from "@/components/profile/ProfileImageCropper.vue";
 import { message } from "@/components/feedback/message";
 import { logout } from "@/services/auth";
 import { currentAccount, setCurrentAccount } from "@/services/sessionState";
-import { bbsClient } from "@/utils/sdk";
+import { ApiError, bbsClient } from "@/utils/sdk";
 
 const pageContext = usePageContext();
 const section = computed(() => pageContext.urlPathname.split("/")[2] || "profile");
@@ -25,6 +25,7 @@ const privacy = reactive({
 });
 const location = reactive({ country: "", province: "", city: "" });
 const backgroundUrl = ref("");
+const uploadingPurpose = ref<"avatar" | "background">();
 const password = reactive({ old: "", next: "", confirmation: "" });
 const email = reactive({ value: "", code: "" });
 const phone = reactive({ value: "", code: "" });
@@ -126,21 +127,77 @@ async function upload(
   purpose: "avatar" | "background",
   value: { content: Uint8Array; fileName: string; mimeType: string },
 ) {
+  if (uploadingPurpose.value) return;
+  uploadingPurpose.value = purpose;
   try {
-    const result = await bbsClient.account.uploadProfileImage({
-      uploadProfileImageAccountReq: {
-        purpose: purpose === "avatar" ? "PROFILE_IMAGE_PURPOSE_AVATAR" : "PROFILE_IMAGE_PURPOSE_BACKGROUND",
-        fileName: value.fileName,
+    const hash = await sha256(value.content);
+    const profileImagePurpose =
+      purpose === "avatar" ? "PROFILE_IMAGE_PURPOSE_AVATAR" : "PROFILE_IMAGE_PURPOSE_BACKGROUND";
+    const prepared = await bbsClient.account.prepareProfileImageUpload({
+      prepareProfileImageUploadAccountReq: {
+        purpose: profileImagePurpose,
+        hash,
         mimeType: value.mimeType,
-        content: value.content,
+        size: value.content.byteLength.toString(),
       },
     });
+    // assetId is optional: its absence means the browser must perform the
+    // direct MinIO POST before the completed asset can be bound.
+    if (prepared.assetId == null) {
+      await postToObjectStorage(prepared.uploadUrl, prepared.formFields, value);
+    }
+    const result = await completeProfileImageUpload(profileImagePurpose, hash);
     if (currentAccount.value) setCurrentAccount({ ...currentAccount.value, profile: result.profile });
     if (purpose === "background") backgroundUrl.value = result.imageUrl || "";
     message.success("图片已更新。");
   } catch (error) {
     message.error(error instanceof Error ? error.message : "图片上传失败。");
+  } finally {
+    uploadingPurpose.value = undefined;
   }
+}
+
+async function sha256(content: Uint8Array) {
+  const digest = await crypto.subtle.digest("SHA-256", content.slice().buffer);
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+async function postToObjectStorage(
+  uploadUrl: string | undefined,
+  fields: Record<string, string> | undefined,
+  value: { content: Uint8Array; fileName: string; mimeType: string },
+) {
+  if (!uploadUrl || !fields) throw new Error("上传凭证无效，请重试。");
+  const form = new FormData();
+  for (const [name, fieldValue] of Object.entries(fields)) form.append(name, fieldValue);
+  form.append("file", new Blob([value.content.slice().buffer], { type: value.mimeType }), value.fileName);
+  const response = await fetch(uploadUrl, { method: "POST", body: form });
+  if (!response.ok) throw new Error("图片直传失败，请重试。");
+}
+
+async function completeProfileImageUpload(purpose: string, hash: string) {
+  // MinIO event delivery is asynchronous. Poll only the precise not-found
+  // state; validation, authorization and network failures surface at once.
+  let lastError: unknown;
+  const deadline = Date.now() + 30_000;
+  let attempt = 0;
+  while (Date.now() < deadline) {
+    try {
+      return await bbsClient.account.completeProfileImageUpload({
+        completeProfileImageUploadAccountReq: { purpose, hash },
+      });
+    } catch (error) {
+      lastError = error;
+      // Only the asset-not-found response represents the asynchronous MinIO
+      // callback race. Validation, permission and network failures should be
+      // reported immediately instead of being disguised as a delayed upload.
+      if (!(error instanceof ApiError) || error.status !== 404) throw error;
+      const delay = Math.min(250 * 2 ** attempt, 2_000);
+      attempt += 1;
+      await new Promise((resolve) => window.setTimeout(resolve, delay));
+    }
+  }
+  throw lastError || new Error("图片处理超时，请稍后重试。");
 }
 async function updatePassword() {
   if (!validPassword()) return message.warning("密码需 6–64 位可见 ASCII 字符，且含字母和数字。");
@@ -291,7 +348,7 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
                   <p>当前头像</p>
                 </div>
                 <div class="settings__image-editor">
-                  <ProfileImageCropper purpose="avatar" @ready="upload('avatar', $event)" />
+                  <ProfileImageCropper :uploading="uploadingPurpose === 'avatar'" purpose="avatar" @ready="upload('avatar', $event)" />
                 </div>
               </div>
             </section>
@@ -306,7 +363,7 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
               </div>
               <p class="settings__image-caption">当前背景图预览</p>
               <div class="settings__image-editor">
-                <ProfileImageCropper purpose="background" @ready="upload('background', $event)" />
+                <ProfileImageCropper :uploading="uploadingPurpose === 'background'" purpose="background" @ready="upload('background', $event)" />
               </div>
             </section>
             <button :disabled="Boolean(mbtiError || urlError)" class="green fn-right" @click="saveProfile">保存</button>
