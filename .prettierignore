@@ -4,8 +4,3 @@ dist/
 *.log
 *.tsbuildinfo
 .gitnexus/
-
-# IDEA's Vue formatter preserves readable component markup more naturally than
-# Prettier's fixed template printer. Prettier still formats scripts, styles,
-# JSON, and Markdown throughout the project.
-**/*.vue

@@ -2,8 +2,9 @@
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { defaultTheme, isDarkTheme, type Theme } from "@/utils/theme";
 import type Vditor from "vditor";
-import type { IOptions } from "vditor";
 import "vditor/dist/index.css";
+
+type IOptions = import("vditor").IOptions;
 
 let sequence = 0;
 
@@ -123,10 +124,10 @@ defineExpose({
 </script>
 
 <template>
-  <section class="editor-shell" :aria-busy="!editorReady" :inert="editorReady ? undefined : ''">
+  <section :aria-busy="!editorReady" :inert="editorReady ? undefined : ''" class="editor-shell">
     <div :id="editorId" ref="vditorRef" :style="{ height, width }" />
-    <div v-if="!editorReady" class="editor-shell__loading" role="status" aria-live="polite">
-      <span class="editor-shell__spinner" aria-hidden="true" />
+    <div v-if="!editorReady" aria-live="polite" class="editor-shell__loading" role="status">
+      <span aria-hidden="true" class="editor-shell__spinner" />
       正在加载编辑器...
     </div>
   </section>

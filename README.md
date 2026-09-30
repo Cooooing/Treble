@@ -17,18 +17,18 @@ Bass access/refresh token，负责注入 `Authorization`、刷新 token、CSRF �
 
 ## 目录
 
-| 目录          | 职责                                                                       |
-| ------------- | -------------------------------------------------------------------------- |
-| `pages/`      | Vike 文件路由、页面数据加载、SSR 用户恢复与私有页守卫。                    |
-| `layouts/`    | 唯一全局页面壳：顶栏、内容区和页脚。                                       |
-| `components/` | 可复用 Vue 视图组件；不承载 BFF 协议或会话逻辑。                           |
-| `services/`   | 按认证、内容、评论、社区划分的薄业务组合层；入参与返回值来自 SDK。         |
-| `utils/sdk/`  | 唯一的生成 SDK 客户端、同源代理 URL、BFF envelope 和错误处理中间件。       |
-| `utils/auth/` | 浏览器当前账户的非敏感 UI 状态。                                           |
-| `server/`     | Express/Photon 入口、BBS 网关与 Redis sid 会话。                           |
-| `assets/`     | 唯一的前端资源目录：主题 CSS、图片和图标精灵均由 Vite 构建并带版本指纹。   |
-| `build/`      | Vite 插件与依赖预构建配置。                                                 |
-| `types/`      | Vue 与全局 TypeScript 声明。                                                |
+| 目录          | 职责                                                                     |
+| ------------- | ------------------------------------------------------------------------ |
+| `pages/`      | Vike 文件路由、页面数据加载、SSR 用户恢复与私有页守卫。                  |
+| `layouts/`    | 唯一全局页面壳：顶栏、内容区和页脚。                                     |
+| `components/` | 可复用 Vue 视图组件；不承载 BFF 协议或会话逻辑。                         |
+| `services/`   | 按认证、内容、评论、社区划分的薄业务组合层；入参与返回值来自 SDK。       |
+| `utils/sdk/`  | 唯一的生成 SDK 客户端、同源代理 URL、BFF envelope 和错误处理中间件。     |
+| `utils/auth/` | 浏览器当前账户的非敏感 UI 状态。                                         |
+| `server/`     | Express/Photon 入口、BBS 网关与 Redis sid 会话。                         |
+| `assets/`     | 唯一的前端资源目录：主题 CSS、图片和图标精灵均由 Vite 构建并带版本指纹。 |
+| `build/`      | Vite 插件与依赖预构建配置。                                              |
+| `types/`      | Vue 与全局 TypeScript 声明。                                             |
 
 `dist/`、`node_modules/`、`.gitnexus/`、IDE 配置、agent 上下文和本机 `.env`
 都不是源码，必须保持未跟踪。
@@ -84,17 +84,19 @@ pnpm preview
 能够安全自动修复的问题。项目根目录的 `.editorconfig` 提供跨编辑器的一致缩进、
 换行和字符集约定。
 
-### IntelliJ IDEA
+### 编辑器统一格式化
 
-使用 IDEA 原生的 Vue formatter 格式化 `.vue` 文件：在 **Settings → Tools → Actions
-on Save** 启用 **Reformat code**，并在 **Settings → Editor → Code Style → Vue** 按项目
-`.editorconfig` 的 2 空格缩进设置。Prettier 在本项目中刻意忽略 `.vue`，因为它会将
-包含长动态属性和插槽内容的组件调用拆成不易阅读的布局；它仍负责 TypeScript、JavaScript、
-JSON、CSS 和 Markdown。
+项目中的 `prettier.config.js` 是所有文件（包括 `.vue`）的唯一 formatter 配置，确保 IDEA
+和 VS Code 的结果完全一致。Prettier 的 Vue 模板换行规则不可按单个标签微调；不要改用 IDE
+原生 formatter，否则会重新引入团队格式差异。
 
-在 **Settings → Languages & Frameworks → JavaScript → Code Quality Tools → ESLint**
-选择 **Automatic ESLint configuration**，并在 Actions on Save 启用 **Run eslint --fix**。
-IDEA 的 ESLint 集成会使用项目的 `eslint.config.js`，无需个人 `.idea` 配置入库。
+VS Code 会读取提交的 `.vscode/settings.json`；安装推荐的 Prettier、ESLint 与 Volar 扩展后，
+保存即格式化并运行 ESLint 自动修复。
+
+IDEA 中在 **Settings → Languages & Frameworks → JavaScript → Prettier** 选择
+**Automatic Prettier configuration**，并在 **Settings → Tools → Actions on Save** 启用
+**Run Prettier**。在 ESLint 页面选择 **Automatic ESLint configuration**，再启用
+**Run eslint --fix**。不要启用 IDEA 的 **Reformat code** 作为 Vue formatter。
 
 开发环境在浏览器 Network 中应能看到 `/api/bbs/v1/...` 请求和
 `X-Treble-Proxy-Request-ID`，可用同一请求 ID 在 Treble 与 Bass 日志中关联排查。
