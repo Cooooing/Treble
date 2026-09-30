@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from "vue";
+import { sha256 as sha256Fallback } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import { navigate } from "vike/client/router";
 import { usePageContext } from "vike-vue/usePageContext";
 import AppLink from "@/components/ui/AppLink.vue";
@@ -158,8 +160,11 @@ async function upload(
 }
 
 async function sha256(content: Uint8Array) {
-  const digest = await crypto.subtle.digest("SHA-256", content.slice().buffer);
-  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, "0")).join("");
+  // Web Crypto is only exposed in secure contexts. The pure-JS fallback keeps
+  // direct uploads usable in an HTTP development or test environment.
+  if (!globalThis.crypto?.subtle) return bytesToHex(sha256Fallback(content));
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", content.slice().buffer);
+  return bytesToHex(new Uint8Array(digest));
 }
 
 async function postToObjectStorage(
@@ -348,7 +353,11 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
                   <p>当前头像</p>
                 </div>
                 <div class="settings__image-editor">
-                  <ProfileImageCropper :uploading="uploadingPurpose === 'avatar'" purpose="avatar" @ready="upload('avatar', $event)" />
+                  <ProfileImageCropper
+                    :uploading="uploadingPurpose === 'avatar'"
+                    purpose="avatar"
+                    @ready="upload('avatar', $event)"
+                  />
                 </div>
               </div>
             </section>
@@ -363,7 +372,11 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
               </div>
               <p class="settings__image-caption">当前背景图预览</p>
               <div class="settings__image-editor">
-                <ProfileImageCropper :uploading="uploadingPurpose === 'background'" purpose="background" @ready="upload('background', $event)" />
+                <ProfileImageCropper
+                  :uploading="uploadingPurpose === 'background'"
+                  purpose="background"
+                  @ready="upload('background', $event)"
+                />
               </div>
             </section>
             <button :disabled="Boolean(mbtiError || urlError)" class="green fn-right" @click="saveProfile">保存</button>
