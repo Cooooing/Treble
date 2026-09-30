@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { navigate } from "vike/client/router";
 
 const props = defineProps<{ href: string }>();

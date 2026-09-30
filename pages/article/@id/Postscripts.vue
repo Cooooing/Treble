@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, ref } from "vue";
 import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostscript";
 import { message } from "@/components/feedback/message";
@@ -58,7 +58,7 @@ async function submit() {
 </script>
 
 <template>
-  <section v-if="orderedPostscripts.length" class="article-postscripts" aria-label="文章附言">
+  <section v-if="orderedPostscripts.length" aria-label="文章附言" class="article-postscripts">
     <ol class="article-postscripts__list">
       <li v-for="(postscript, index) in orderedPostscripts" :key="postscript.id">
         <header>
@@ -74,12 +74,12 @@ async function submit() {
     ref="editorPanelRef"
     v-model="content"
     :open="editorOpen"
-    title="添加附言"
+    :submitting="submitting"
     aria-label="添加附言"
     editor-name="postscript"
     placeholder="补充文章内容..."
     submit-label="添加附言"
-    :submitting="submitting"
+    title="添加附言"
     @close="closeEditor"
     @submit="submit"
   />

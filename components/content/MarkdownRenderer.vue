@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onMounted, onUnmounted, ref } from "vue";
 import { defaultTheme, isDarkTheme, type Theme } from "@/utils/theme";
 import "vditor/dist/index.css";
@@ -66,6 +66,6 @@ onMounted(async () => {
 onUnmounted(() => window.removeEventListener("treble-theme-change", handleThemeChange));
 </script>
 <template>
-  <div v-bind="$attrs" v-show="render && props.html" v-html="props.html"></div>
-  <div v-bind="$attrs" v-if="md" v-show="!render" ref="contentRef"></div>
+  <div v-show="render && props.html" v-bind="$attrs" v-html="props.html"></div>
+  <div v-if="md" v-show="!render" ref="contentRef" v-bind="$attrs"></div>
 </template>

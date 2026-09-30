@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onBeforeUnmount, reactive, ref } from "vue";
 import { navigate } from "vike/client/router";
 import type { RegisterReq } from "@bass/bbs-sdk-fetch/models/RegisterReq";
@@ -176,125 +176,125 @@ onBeforeUnmount(() => {
           <h2 class="verify__title">加入摸鱼派</h2>
           <p class="verify__subtitle">创建账号，和鱼油们一起摸鱼</p>
           <template v-if="step === 1">
-            <div class="input-field" :class="{ 'input-field--invalid': fieldErrors.name }">
+            <div :class="{ 'input-field--invalid': fieldErrors.name }" class="input-field">
               <div class="input-wrap">
                 <Icon name="userrole" /><label class="sr-only" for="register-name">用户名</label
                 ><input
                   id="register-name"
                   v-model="account.name"
-                  type="text"
-                  name="username"
-                  autocomplete="username"
-                  aria-label="用户名"
-                  placeholder="用户名（4–32 位）"
-                  :disabled="loading"
                   :aria-invalid="Boolean(fieldErrors.name)"
-                  @blur="checkNameAvailability"
+                  :disabled="loading"
+                  aria-label="用户名"
+                  autocomplete="username"
+                  name="username"
+                  placeholder="用户名（4–32 位）"
                   required
+                  type="text"
+                  @blur="checkNameAvailability"
                 />
               </div>
               <p v-if="fieldErrors.name" class="field-error" role="alert">{{ fieldErrors.name }}</p>
             </div>
-            <div class="input-field" :class="{ 'input-field--invalid': fieldErrors.email }">
+            <div :class="{ 'input-field--invalid': fieldErrors.email }" class="input-field">
               <div class="input-wrap">
                 <Icon name="email" /><label class="sr-only" for="register-email">邮箱</label
                 ><input
                   id="register-email"
                   v-model="account.email"
-                  type="email"
-                  name="email"
-                  autocomplete="email"
-                  aria-label="邮箱"
-                  placeholder="邮箱"
-                  :disabled="loading"
                   :aria-invalid="Boolean(fieldErrors.email)"
-                  @blur="checkEmailAvailability"
+                  :disabled="loading"
+                  aria-label="邮箱"
+                  autocomplete="email"
+                  name="email"
+                  placeholder="邮箱"
                   required
+                  type="email"
+                  @blur="checkEmailAvailability"
                 />
               </div>
               <p v-if="fieldErrors.email" class="field-error" role="alert">{{ fieldErrors.email }}</p>
             </div>
-            <div class="input-field" :class="{ 'input-field--invalid': fieldErrors.password }">
+            <div :class="{ 'input-field--invalid': fieldErrors.password }" class="input-field">
               <div class="input-wrap">
                 <Icon name="locked" /><label class="sr-only" for="register-password">密码</label
                 ><input
                   id="register-password"
                   v-model="account.password"
-                  type="password"
-                  name="new-password"
-                  autocomplete="new-password"
-                  aria-label="密码"
-                  placeholder="密码（6–64 位）"
-                  minlength="6"
-                  maxlength="64"
-                  :disabled="loading"
                   :aria-invalid="Boolean(fieldErrors.password)"
-                  @blur="validateField('password')"
+                  :disabled="loading"
+                  aria-label="密码"
+                  autocomplete="new-password"
+                  maxlength="64"
+                  minlength="6"
+                  name="new-password"
+                  placeholder="密码（6–64 位）"
                   required
+                  type="password"
+                  @blur="validateField('password')"
                 />
               </div>
               <p v-if="fieldErrors.password" class="field-error" role="alert">{{ fieldErrors.password }}</p>
             </div>
-            <div class="input-field" :class="{ 'input-field--invalid': fieldErrors.confirmation }">
+            <div :class="{ 'input-field--invalid': fieldErrors.confirmation }" class="input-field">
               <div class="input-wrap">
                 <Icon name="locked" /><label class="sr-only" for="register-confirmation">确认密码</label
                 ><input
                   id="register-confirmation"
                   v-model="account.confirmation"
-                  type="password"
-                  autocomplete="new-password"
-                  aria-label="确认密码"
-                  placeholder="再次输入密码"
-                  minlength="6"
-                  maxlength="64"
-                  :disabled="loading"
                   :aria-invalid="Boolean(fieldErrors.confirmation)"
-                  @blur="validateField('confirmation')"
+                  :disabled="loading"
+                  aria-label="确认密码"
+                  autocomplete="new-password"
+                  maxlength="64"
+                  minlength="6"
+                  placeholder="再次输入密码"
                   required
+                  type="password"
+                  @blur="validateField('confirmation')"
                 />
               </div>
               <p v-if="fieldErrors.confirmation" class="field-error" role="alert">{{ fieldErrors.confirmation }}</p>
             </div>
-            <button class="verify__action verify__action--primary" type="submit" :disabled="loading">
+            <button :disabled="loading" class="verify__action verify__action--primary" type="submit">
               {{ loading ? "正在发送..." : "发送邮箱验证码" }}
             </button>
           </template>
           <template v-else>
             <p class="tip">验证码已发送至 {{ account.email }}，请查收邮件。</p>
-            <div class="input-field" :class="{ 'input-field--invalid': fieldErrors.code }">
+            <div :class="{ 'input-field--invalid': fieldErrors.code }" class="input-field">
               <div class="input-wrap">
                 <Icon name="email" /><label class="sr-only" for="register-otp">邮箱验证码</label
                 ><input
                   id="register-otp"
                   v-model="verificationCode"
-                  type="text"
-                  inputmode="text"
-                  autocomplete="one-time-code"
-                  aria-label="邮箱验证码"
-                  placeholder="6 位验证码"
-                  :disabled="loading"
                   :aria-invalid="Boolean(fieldErrors.code)"
-                  @blur="validateField('code')"
+                  :disabled="loading"
+                  aria-label="邮箱验证码"
+                  autocomplete="one-time-code"
+                  inputmode="text"
+                  placeholder="6 位验证码"
                   required
+                  type="text"
+                  @blur="validateField('code')"
                 />
               </div>
               <p v-if="fieldErrors.code" class="field-error" role="alert">{{ fieldErrors.code }}</p>
             </div>
-            <button class="verify__action verify__action--primary" type="submit" :disabled="loading">
+            <button :disabled="loading" class="verify__action verify__action--primary" type="submit">
               {{ loading ? "正在注册..." : "完成注册" }}
             </button>
             <button
+              :disabled="loading"
               class="verify__action verify__action--secondary"
               type="button"
-              :disabled="loading"
               @click="step = 1"
             >
               返回修改资料
             </button>
             <button
+              :disabled="loading || resendAfter > 0"
               class="verify__action verify__action--secondary"
               type="button"
-              :disabled="loading || resendAfter > 0"
               @click="sendOtp"
             >
               {{ resendAfter > 0 ? `${resendAfter} 秒后可重发` : "重新发送验证码" }}
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
           </template>
         </form>
       </div>
-      <aside class="intro community-welcome vditor-reset" aria-labelledby="community-welcome-title">
+      <aside aria-labelledby="community-welcome-title" class="intro community-welcome vditor-reset">
         <h2 id="community-welcome-title">🐟 鱼油，欢迎来到摸鱼派！</h2>
         <p>如果你也是奋斗在一线、热爱工作的苦逼青年，期待与众多鱼油聚集起来，那就加入友好的摸鱼派社区吧！❤️</p>
         <p>

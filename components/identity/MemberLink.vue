@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import Avatar from "@/components/identity/Avatar.vue";
 
 const props = defineProps<{
@@ -13,10 +13,10 @@ const props = defineProps<{
     <slot v-if="$slots.default" :username="username" />
     <Avatar
       v-else-if="props.avatar !== undefined || props.size"
-      :url="avatar"
       :name="username"
       :size="size || 24"
       :square="square"
+      :url="avatar"
     />
     <span v-else>{{ username }}</span>
   </span>

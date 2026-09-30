@@ -1,9 +1,10 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { toRefs } from "vue";
 import { useData } from "vike-vue/useData";
 import AppLink from "@/components/ui/AppLink.vue";
 import MemberProfileLayout from "@/components/member/MemberProfileLayout.vue";
 import { fromNow } from "@/utils/date";
+
 const { profile, rows } = toRefs(useData<any>());
 </script>
 <template>

@@ -1,6 +1,5 @@
-<script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { isVNode } from "vue";
+<script lang="ts" setup>
+import { computed, isVNode, onBeforeUnmount, onMounted, ref } from "vue";
 import type { MessageInternalOptions, MessageType } from "./message.types";
 
 const props = withDefaults(defineProps<MessageInternalOptions>(), {
@@ -76,22 +75,22 @@ defineExpose({ close });
   <Transition name="app-message-fade" @after-leave="handleAfterLeave">
     <div
       v-show="visible"
+      aria-atomic="true"
+      aria-live="polite"
       class="site-message-item"
       role="status"
-      aria-live="polite"
-      aria-atomic="true"
+      @click="props.onClick"
       @mouseenter="stopTimer"
       @mouseleave="startTimer"
-      @click="props.onClick"
     >
-      <div class="site-message" :class="toastClass">
-        <svg class="site-message__icon" viewBox="0 0 24 24" aria-hidden="true"><path :d="iconPath" /></svg>
+      <div :class="toastClass" class="site-message">
+        <svg aria-hidden="true" class="site-message__icon" viewBox="0 0 24 24"><path :d="iconPath" /></svg>
         <span class="site-message__content">
-          <component v-if="isRenderFn" :is="props.message" />
+          <component :is="props.message" v-if="isRenderFn" />
           <template v-else>{{ props.message }}</template>
         </span>
-        <button v-if="showClose" class="site-message__close" type="button" aria-label="关闭消息" @click.stop="close">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+        <button v-if="showClose" aria-label="关闭消息" class="site-message__close" type="button" @click.stop="close">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
             <path d="m7.4 6 4.6 4.6L16.6 6 18 7.4 13.4 12l4.6 4.6-1.4 1.4-4.6-4.6L7.4 18 6 16.6l4.6-4.6L6 7.4 7.4 6Z" />
           </svg>
         </button>

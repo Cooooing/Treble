@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
 import AppLink from "@/components/ui/AppLink.vue";
 import { fromNow } from "@/utils/date";
@@ -30,14 +30,14 @@ function formatCount(value: number | undefined): string {
       <li v-for="article in articles" :key="article.id">
         <div class="member-article-list__head">
           <h2>
-            <AppLink class="ft-a-title" :href="`/article/${article.id}`">{{ article.title || "未命名文章" }}</AppLink>
+            <AppLink :href="`/article/${article.id}`" class="ft-a-title">{{ article.title || "未命名文章" }}</AppLink>
           </h2>
           <div class="member-article-list__stats ft-fade">
-            <AppLink class="ft-fade" :href="`/article/${article.id}#comments`"
+            <AppLink :href="`/article/${article.id}#comments`" class="ft-fade"
               >{{ formatCount(article.replyCount) }} 条回复</AppLink
             >
             <span> · </span>
-            <AppLink class="ft-fade" :href="`/article/${article.id}`"
+            <AppLink :href="`/article/${article.id}`" class="ft-fade"
               >{{ formatCount(article.viewCount) }} 次浏览</AppLink
             >
           </div>

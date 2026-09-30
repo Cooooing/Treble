@@ -34,9 +34,12 @@ function pendingServerArticleDraftRestore() {
   try {
     const intent: unknown = JSON.parse(window.sessionStorage.getItem(restoreIntentKey) || "null");
     if (
-      typeof intent !== "object" || intent === null ||
-      typeof intent.articleId !== "string" || typeof intent.type !== "string"
-    ) return undefined;
+      typeof intent !== "object" ||
+      intent === null ||
+      typeof intent.articleId !== "string" ||
+      typeof intent.type !== "string"
+    )
+      return undefined;
     return intent as ServerArticleDraftRestoreIntent;
   } catch {
     return undefined;
@@ -48,12 +51,19 @@ function loadDraft(type: ReqArticleTypeEnum) {
   try {
     const draft: unknown = JSON.parse(window.localStorage.getItem(storageKey(type)) || "null");
     if (
-      typeof draft !== "object" || draft === null ||
-      typeof draft.id !== "string" || typeof draft.updatedAt !== "string" ||
-      typeof draft.savedToServer !== "boolean" || !Array.isArray(draft.tagNames) ||
-      typeof draft.article !== "object" || draft.article === null ||
-      typeof draft.article.title !== "string" || typeof draft.article.content !== "string" || typeof draft.article.type !== "string"
-    ) return undefined;
+      typeof draft !== "object" ||
+      draft === null ||
+      typeof draft.id !== "string" ||
+      typeof draft.updatedAt !== "string" ||
+      typeof draft.savedToServer !== "boolean" ||
+      !Array.isArray(draft.tagNames) ||
+      typeof draft.article !== "object" ||
+      draft.article === null ||
+      typeof draft.article.title !== "string" ||
+      typeof draft.article.content !== "string" ||
+      typeof draft.article.type !== "string"
+    )
+      return undefined;
     return draft as LocalArticleDraft;
   } catch {
     return undefined;
@@ -75,7 +85,10 @@ export function hasUnsavedLocalArticleDraft(type: ReqArticleTypeEnum) {
 
 export function markServerArticleDraftRestore(articleId: string, type: ReqArticleTypeEnum) {
   if (!canUseSessionStorage()) return;
-  window.sessionStorage.setItem(restoreIntentKey, JSON.stringify({ articleId, type } satisfies ServerArticleDraftRestoreIntent));
+  window.sessionStorage.setItem(
+    restoreIntentKey,
+    JSON.stringify({ articleId, type } satisfies ServerArticleDraftRestoreIntent),
+  );
 }
 
 export function hasPendingServerArticleDraftRestore(type: ReqArticleTypeEnum) {

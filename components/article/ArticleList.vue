@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
 import Avatar from "@/components/identity/Avatar.vue";
 import AppLink from "@/components/ui/AppLink.vue";
@@ -26,31 +26,31 @@ function formatCount(value: number | undefined): string {
 </script>
 
 <template>
-  <div class="article-list list" :class="{ 'article-list--compact': compact }">
+  <div :class="{ 'article-list--compact': compact }" class="article-list list">
     <ul>
       <li v-for="article in articles" :key="article.id">
         <template v-if="compact">
           <div class="article-list__compact-row">
             <AppLink
-              :href="`/article/${article.id}`"
               :aria-label="`${article.authorUser?.nickname || article.authorUser?.name || '用户'}的头像`"
+              :href="`/article/${article.id}`"
             >
               <Avatar
-                class="avatar-small slogan"
-                :url="article.authorUser?.avatarUrl"
                 :name="article.authorUser?.name"
                 :size="32"
+                :url="article.authorUser?.avatarUrl"
+                class="avatar-small slogan"
               />
             </AppLink>
             <div class="article-list__compact-details fn-flex-1">
-              <AppLink class="title fn-ellipsis" :href="`/article/${article.id}`">{{
+              <AppLink :href="`/article/${article.id}`" class="title fn-ellipsis">{{
                 article.title || "未命名文章"
               }}</AppLink>
             </div>
             <AppLink
-              class="article-list__reply-link"
-              :href="`/article/${article.id}#comments`"
               :aria-label="`${article.replyCount || 0} 条回复`"
+              :href="`/article/${article.id}#comments`"
+              class="article-list__reply-link"
             >
               <span class="count ft-gray ft-smaller">{{ formatCount(article.replyCount) }}</span>
             </AppLink>
@@ -65,15 +65,17 @@ function formatCount(value: number | undefined): string {
                 :tags="article.tags"
               />
               <h2>
-                <AppLink class="ft-a-title" :href="`/article/${article.id}`">{{ article.title || "未命名文章" }}</AppLink>
+                <AppLink :href="`/article/${article.id}`" class="ft-a-title">{{
+                  article.title || "未命名文章"
+                }}</AppLink>
               </h2>
             </div>
             <div class="article-list__stats ft-fade">
-              <AppLink class="ft-fade" :href="`/article/${article.id}#comments`"
+              <AppLink :href="`/article/${article.id}#comments`" class="ft-fade"
                 >{{ formatCount(article.replyCount) }} 条回复</AppLink
               >
               <span> · </span>
-              <AppLink class="ft-fade" :href="`/article/${article.id}`"
+              <AppLink :href="`/article/${article.id}`" class="ft-fade"
                 >{{ formatCount(article.viewCount) }} 次浏览</AppLink
               >
             </div>
@@ -85,7 +87,7 @@ function formatCount(value: number | undefined): string {
                   :href="article.authorUser?.name ? `/member/${article.authorUser.name}` : '/'"
                   class="article-list__author"
                 >
-                  <Avatar :url="article.authorUser?.avatarUrl" :name="article.authorUser?.name" :size="40" square />
+                  <Avatar :name="article.authorUser?.name" :size="40" :url="article.authorUser?.avatarUrl" square />
                 </AppLink>
                 <div class="article-list__author-line ft-smaller ft-fade">
                   <p>
@@ -103,22 +105,22 @@ function formatCount(value: number | undefined): string {
                   <p v-else>{{ article.publishedAt ? `${fromNow(article.publishedAt)} 发布` : "刚刚发布" }}</p>
                 </div>
               </div>
-              <AppLink v-if="article.content" class="abstract" :href="`/article/${article.id}`">{{
+              <AppLink v-if="article.content" :href="`/article/${article.id}`" class="abstract">{{
                 article.content
               }}</AppLink>
             </div>
             <AppLink
               v-if="article.coverImageUrl"
-              class="abstract-img"
               :href="`/article/${article.id}`"
               :style="{ backgroundImage: `url(${article.coverImageUrl})` }"
               aria-label="查看文章"
+              class="abstract-img"
             ></AppLink>
           </div>
           <span
-            class="heat"
             :style="{ width: `${Math.min(100, Math.max(2, (article.replyCount || 0) * 3))}px` }"
             aria-hidden="true"
+            class="heat"
           ></span>
         </template>
       </li>

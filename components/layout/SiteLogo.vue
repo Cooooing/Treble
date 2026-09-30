@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import logoAnimationUrl from "@/assets/site/logo-animation.js?url";
 
@@ -46,7 +46,7 @@ onBeforeUnmount(() => animation?.destroy());
 </script>
 
 <template>
-  <span ref="container" class="site-logo" aria-hidden="true" />
+  <span ref="container" aria-hidden="true" class="site-logo" />
 </template>
 
 <style scoped>

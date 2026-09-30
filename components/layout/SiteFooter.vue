@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import AppLink from "@/components/ui/AppLink.vue";
 </script>
 

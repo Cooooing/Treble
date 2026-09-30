@@ -1,9 +1,10 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { toRefs } from "vue";
 import { useData } from "vike-vue/useData";
 import AppLink from "@/components/ui/AppLink.vue";
 import Avatar from "@/components/identity/Avatar.vue";
 import MemberProfileLayout from "@/components/member/MemberProfileLayout.vue";
+
 const { profile, rows } = toRefs(useData<any>());
 </script>
 <template>
@@ -11,7 +12,7 @@ const { profile, rows } = toRefs(useData<any>());
     <p v-if="!rows.length" class="member-empty">暂无粉丝。</p>
     <div v-else class="member-list">
       <AppLink v-for="row in rows" :key="row.account?.id" :href="`/member/${row.account?.name}`" class="member-row">
-        <Avatar :url="row.account?.avatarUrl" :name="row.account?.name" :size="48" />
+        <Avatar :name="row.account?.name" :size="48" :url="row.account?.avatarUrl" />
         <span
           ><b>{{ row.account?.nickname || row.account?.name }}</b
           ><small v-if="row.account?.nickname">{{ row.account?.name }}</small

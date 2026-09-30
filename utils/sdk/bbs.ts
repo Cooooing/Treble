@@ -35,16 +35,17 @@ function throughBbsProxy<T extends BaseAPI>(service: T): T {
 
 function deferBbsService<T extends BaseAPI>(loadService: () => Promise<T>): T {
   let servicePromise: Promise<T> | undefined;
-  const getService = () => servicePromise ??= loadService();
+  const getService = () => (servicePromise ??= loadService());
 
   return new Proxy({} as T, {
     get(_target, property) {
       if (property === "then") return undefined;
-      return (...args: unknown[]) => getService().then((service) => {
-        const member = service[property as keyof T];
-        if (typeof member !== "function") return member;
-        return member.apply(service, args);
-      });
+      return (...args: unknown[]) =>
+        getService().then((service) => {
+          const member = service[property as keyof T];
+          if (typeof member !== "function") return member;
+          return member.apply(service, args);
+        });
     },
   });
 }

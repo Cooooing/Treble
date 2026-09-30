@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { navigate } from "vike/client/router";
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
@@ -148,19 +148,19 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <Transition name="draft-inbox">
       <div v-if="isOpen" class="draft-inbox" @keydown="handleKeydown">
-        <div class="draft-inbox__backdrop" aria-hidden="true" @click="close" />
+        <div aria-hidden="true" class="draft-inbox__backdrop" @click="close" />
         <section
           ref="dialog"
+          aria-labelledby="draftInboxTitle"
+          aria-modal="true"
           class="draft-inbox__dialog"
           role="dialog"
-          aria-modal="true"
-          aria-labelledby="draftInboxTitle"
         >
           <header class="draft-inbox__header">
             <div>
               <h2 id="draftInboxTitle">草稿箱</h2>
             </div>
-            <button ref="closeButton" class="draft-inbox__close" type="button" aria-label="关闭草稿箱" @click="close">
+            <button ref="closeButton" aria-label="关闭草稿箱" class="draft-inbox__close" type="button" @click="close">
               ×
             </button>
           </header>
@@ -175,23 +175,25 @@ onBeforeUnmount(() => {
               <div class="draft-inbox__actions">
                 <div class="draft-inbox__action-buttons">
                   <button
+                    :disabled="Boolean(deletingId)"
                     class="draft-inbox__action"
                     type="button"
-                    :disabled="Boolean(deletingId)"
                     @click="restore(draft)"
                   >
                     {{ pendingRestore === draft.id ? "确认恢复" : "恢复" }}
                   </button>
                   <button
+                    :disabled="Boolean(deletingId)"
                     class="draft-inbox__action draft-inbox__action--danger"
                     type="button"
-                    :disabled="Boolean(deletingId)"
                     @click="deleteDraft(draft)"
                   >
                     {{ deletingId === draft.id ? "正在删除..." : pendingDeletion === draft.id ? "确认删除" : "删除" }}
                   </button>
                 </div>
-                <small v-if="scheduledAt(draft)" class="draft-inbox__scheduled">将于 {{ scheduledAt(draft) }} 发布</small>
+                <small v-if="scheduledAt(draft)" class="draft-inbox__scheduled"
+                  >将于 {{ scheduledAt(draft) }} 发布</small
+                >
               </div>
             </article>
           </div>

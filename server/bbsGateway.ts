@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "node:http";
-import { getSessionRepository, type TrebleSession, SessionStoreError } from "./session";
+import { getSessionRepository, SessionStoreError, type TrebleSession } from "./session";
 
 const sessionCookieName = "treble.sid";
 const csrfCookieName = "treble.csrf";
@@ -15,11 +15,13 @@ type GatewayRequest = IncomingMessage & { originalUrl?: string };
 type GatewayOptions = { bffUrl: string; isProduction: boolean };
 
 function parseCookies(header: string | undefined) {
-  return new Map((header || "").split(";").flatMap((entry) => {
-    const separator = entry.indexOf("=");
-    if (separator <= 0) return [];
-    return [[entry.slice(0, separator).trim(), decodeURIComponent(entry.slice(separator + 1).trim())] as const];
-  }));
+  return new Map(
+    (header || "").split(";").flatMap((entry) => {
+      const separator = entry.indexOf("=");
+      if (separator <= 0) return [];
+      return [[entry.slice(0, separator).trim(), decodeURIComponent(entry.slice(separator + 1).trim())] as const];
+    }),
+  );
 }
 
 function appendCookie(res: ServerResponse, value: string) {
@@ -34,7 +36,10 @@ function cookieAttributes(isProduction: boolean) {
 
 function setSessionCookie(res: ServerResponse, sid: string, expiresAt: string, isProduction: boolean) {
   const maxAge = Math.max(0, Math.floor((Date.parse(expiresAt) - Date.now()) / 1000));
-  appendCookie(res, `${sessionCookieName}=${encodeURIComponent(sid)}; Max-Age=${maxAge}; HttpOnly; Priority=High${cookieAttributes(isProduction)}`);
+  appendCookie(
+    res,
+    `${sessionCookieName}=${encodeURIComponent(sid)}; Max-Age=${maxAge}; HttpOnly; Priority=High${cookieAttributes(isProduction)}`,
+  );
 }
 
 function clearSessionCookie(res: ServerResponse, isProduction: boolean) {
@@ -50,7 +55,10 @@ export function ensureCsrfCookie(isProduction: boolean) {
     const cookies = parseCookies(req.headers.cookie);
     if (!cookies.has(csrfCookieName)) {
       const token = randomBytes(32).toString("base64url");
-      appendCookie(res, `${csrfCookieName}=${encodeURIComponent(token)}; Priority=High${cookieAttributes(isProduction)}`);
+      appendCookie(
+        res,
+        `${csrfCookieName}=${encodeURIComponent(token)}; Priority=High${cookieAttributes(isProduction)}`,
+      );
     }
     next?.();
   };
@@ -99,7 +107,13 @@ function bffRequestUrl(bffUrl: string, requestUrl: string | undefined) {
 function forwardHeaders(headers: IncomingHttpHeaders, accessToken: string | undefined, requestIdValue: string) {
   const forwarded = new Headers();
   for (const [name, value] of Object.entries(headers)) {
-    if (!value || ["host", "connection", "content-length", "cookie", "authorization", "x-treble-csrf", "x-request-id"].includes(name.toLowerCase())) continue;
+    if (
+      !value ||
+      ["host", "connection", "content-length", "cookie", "authorization", "x-treble-csrf", "x-request-id"].includes(
+        name.toLowerCase(),
+      )
+    )
+      continue;
     forwarded.set(name, Array.isArray(value) ? value.join(",") : value);
   }
   forwarded.set("x-request-id", requestIdValue);
@@ -107,7 +121,13 @@ function forwardHeaders(headers: IncomingHttpHeaders, accessToken: string | unde
   return forwarded;
 }
 
-async function callBff(options: GatewayOptions, req: GatewayRequest, body: Buffer, accessToken: string | undefined, requestIdValue: string) {
+async function callBff(
+  options: GatewayOptions,
+  req: GatewayRequest,
+  body: Buffer,
+  accessToken: string | undefined,
+  requestIdValue: string,
+) {
   return fetch(bffRequestUrl(options.bffUrl, req.url), {
     method: req.method,
     headers: forwardHeaders(req.headers, accessToken, requestIdValue),
@@ -118,7 +138,12 @@ async function callBff(options: GatewayOptions, req: GatewayRequest, body: Buffe
 
 function isSuccessfulEnvelope(value: unknown): value is { code: number; msg?: string; data: Record<string, unknown> } {
   const code = value && typeof value === "object" ? (value as { code?: number }).code : undefined;
-  return Boolean((code === 0 || code === 200) && value && typeof value === "object" && typeof (value as { data?: unknown }).data === "object");
+  return Boolean(
+    (code === 0 || code === 200) &&
+      value &&
+      typeof value === "object" &&
+      typeof (value as { data?: unknown }).data === "object",
+  );
 }
 
 function sessionFromLogin(data: Record<string, unknown>): Omit<TrebleSession, "version"> | undefined {
@@ -127,8 +152,16 @@ function sessionFromLogin(data: Record<string, unknown>): Omit<TrebleSession, "v
   const accessTokenExpiresAt = data.access_token_expires_at;
   const refreshTokenExpiresAt = data.refresh_token_expires_at;
   const sessionExpiresAt = data.session_expires_at;
-  if ([accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt, sessionExpiresAt].some((value) => typeof value !== "string")) return undefined;
-  return { accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt, sessionExpiresAt } as Omit<TrebleSession, "version">;
+  if (
+    [accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt, sessionExpiresAt].some(
+      (value) => typeof value !== "string",
+    )
+  )
+    return undefined;
+  return { accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt, sessionExpiresAt } as Omit<
+    TrebleSession,
+    "version"
+  >;
 }
 
 function sessionFromRefresh(data: Record<string, unknown>, previous: TrebleSession): TrebleSession | undefined {
@@ -136,7 +169,12 @@ function sessionFromRefresh(data: Record<string, unknown>, previous: TrebleSessi
   return updated ? { ...updated, version: previous.version + 1 } : undefined;
 }
 
-export async function refreshSession(options: GatewayOptions, sid: string, previous: TrebleSession, requestIdValue: string) {
+export async function refreshSession(
+  options: GatewayOptions,
+  sid: string,
+  previous: TrebleSession,
+  requestIdValue: string,
+) {
   const existing = refreshPromises.get(sid);
   if (existing) return existing;
   const refresh = (async () => {
@@ -264,7 +302,11 @@ export function createBbsGateway(options: GatewayOptions) {
     if (path === loginPath && response.ok) {
       const raw = await response.text();
       let envelope: unknown;
-      try { envelope = JSON.parse(raw); } catch { return sendJson(res, 502, "BBS 登录响应格式错误"); }
+      try {
+        envelope = JSON.parse(raw);
+      } catch {
+        return sendJson(res, 502, "BBS 登录响应格式错误");
+      }
       if (!isSuccessfulEnvelope(envelope)) {
         res.statusCode = response.status;
         res.setHeader("content-type", "application/json; charset=utf-8");
@@ -281,7 +323,9 @@ export function createBbsGateway(options: GatewayOptions) {
       }
       res.statusCode = response.status;
       res.setHeader("content-type", "application/json; charset=utf-8");
-      return res.end(JSON.stringify({ code: envelope.code, msg: envelope.msg, data: { account: envelope.data.account } }));
+      return res.end(
+        JSON.stringify({ code: envelope.code, msg: envelope.msg, data: { account: envelope.data.account } }),
+      );
     }
 
     if (sid && !session) {

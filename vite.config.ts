@@ -2,7 +2,7 @@ import { ConfigEnv, defineConfig, loadEnv, UserConfig } from "vite";
 import path from "path";
 import { wrapperEnv } from "./build/utils";
 import { createVitePlugins } from "./build/vite/plugin";
-import { include, exclude } from "./build/vite/optimizer";
+import { exclude, include } from "./build/vite/optimizer";
 import { createBbsGateway, ensureCsrfCookie } from "./server/bbsGateway";
 
 export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {

@@ -23,13 +23,24 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
       return { articles: [], tags: [], domains: [], error: "你访问的标签不存在或已被删除。", pageStatus: 404 };
     }
     const [articles, tags, domains] = await Promise.all([
-      bbsClient.article.list({ listArticlesReq: { query: { tagId: tag.id, publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" }, page: { page: 1, size: 15 } } }),
+      bbsClient.article.list({
+        listArticlesReq: {
+          query: { tagId: tag.id, publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
+          page: { page: 1, size: 15 },
+        },
+      }),
       bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 100 } } }),
       bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 100 } } }),
     ]);
     return { tag, articles: articles.rows || [], tags: tags.rows || [], domains: domains.rows || [] };
   } catch (cause) {
     setPageStatus(pageContext, 500);
-    return { articles: [], tags: [], domains: [], error: cause instanceof Error ? cause.message : "标签暂时无法加载。", pageStatus: 500 };
+    return {
+      articles: [],
+      tags: [],
+      domains: [],
+      error: cause instanceof Error ? cause.message : "标签暂时无法加载。",
+      pageStatus: 500,
+    };
   }
 }

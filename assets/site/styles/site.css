@@ -13,8 +13,23 @@ html {
 }
 
 /* Keep every text-like control on the same Rhythm focus and hover rhythm. */
-.form :is(input[type="text"], input[type="email"], input[type="url"], input[type="password"], input[type="number"], input[type="date"], input[type="datetime"], input[type="datetime-local"], select, textarea) {
-  transition: border-color 100ms linear, box-shadow 100ms linear, color 100ms linear;
+.form
+  :is(
+    input[type="text"],
+    input[type="email"],
+    input[type="url"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    input[type="datetime"],
+    input[type="datetime-local"],
+    select,
+    textarea
+  ) {
+  transition:
+    border-color 100ms linear,
+    box-shadow 100ms linear,
+    color 100ms linear;
 }
 
 /* The legacy base selector omitted email and URL fields. */
@@ -23,22 +38,34 @@ html {
   width: 100%;
   padding: 7px 8px;
   border: 1px solid #e0e0e0;
-  border-radius: .3rem;
+  border-radius: 0.3rem;
   line-height: 17px;
 }
 
 .form :is(input[type="email"], input[type="url"]):not([readonly]):not([disabled]):hover {
-  border-color: rgba(25, 140, 255, .5);
+  border-color: rgba(25, 140, 255, 0.5);
 }
 
 .form :is(input[type="email"], input[type="url"]):focus {
   color: #198cff;
-  border-color: rgba(25, 140, 255, .5) !important;
-  box-shadow: 0 0 0 .1rem rgba(25, 140, 255, .2);
+  border-color: rgba(25, 140, 255, 0.5) !important;
+  box-shadow: 0 0 0 0.1rem rgba(25, 140, 255, 0.2);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .form :is(input[type="text"], input[type="email"], input[type="url"], input[type="password"], input[type="number"], input[type="date"], input[type="datetime"], input[type="datetime-local"], select, textarea) {
+  .form
+    :is(
+      input[type="text"],
+      input[type="email"],
+      input[type="url"],
+      input[type="password"],
+      input[type="number"],
+      input[type="date"],
+      input[type="datetime"],
+      input[type="datetime-local"],
+      select,
+      textarea
+    ) {
     transition: none;
   }
 }

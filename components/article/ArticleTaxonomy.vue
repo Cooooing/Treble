@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { ArticleDomain } from "@bass/bbs-sdk-fetch/models/ArticleDomain";
 import type { ArticleTag } from "@bass/bbs-sdk-fetch/models/ArticleTag";
 import AppLink from "@/components/ui/AppLink.vue";
@@ -22,24 +22,24 @@ withDefaults(
 <template>
   <nav
     v-if="domains.length || tags.length"
-    class="article-taxonomy"
     :class="{ 'article-taxonomy--compact': compact, 'article-taxonomy--inline': inline }"
     aria-label="文章分类"
+    class="article-taxonomy"
   >
     <AppLink
       v-for="domain in domains"
       :key="domain.id"
-      class="article-taxonomy__domain"
       :href="`/domain/${domain.code || domain.id}`"
+      class="article-taxonomy__domain"
     >
       {{ domain.name }}
     </AppLink>
     <AppLink
       v-for="tag in tags"
       :key="tag.id"
-      rel="tag"
-      class="article-taxonomy__tag"
       :href="`/tag/${encodeURIComponent(tag.name || tag.code || String(tag.id))}`"
+      class="article-taxonomy__tag"
+      rel="tag"
     >
       {{ tag.name }}
     </AppLink>

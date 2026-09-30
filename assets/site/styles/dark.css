@@ -11,9 +11,11 @@ html[data-theme="dark"] body {
 html[data-theme="dark"] a {
   color: #79b8ff;
 }
+
 html[data-theme="dark"] a:hover {
   color: #b3d7ff;
 }
+
 html[data-theme="dark"] .ft-gray,
 html[data-theme="dark"] .ft-fade,
 html[data-theme="dark"] .ft-smaller {
@@ -128,6 +130,7 @@ html[data-theme="dark"] input::placeholder,
 html[data-theme="dark"] textarea::placeholder {
   color: #8b949e;
 }
+
 html[data-theme="dark"] .verify .form input[type="text"],
 html[data-theme="dark"] .verify .form input[type="password"],
 html[data-theme="dark"] .verify .form input[type="email"] {
@@ -151,6 +154,7 @@ html[data-theme="dark"] .verify .input-wrap input:focus {
   transform: none;
   animation: none;
 }
+
 html[data-theme="dark"] input:focus,
 html[data-theme="dark"] textarea:focus,
 html[data-theme="dark"] select:focus {
@@ -171,12 +175,14 @@ html[data-theme="dark"] button:focus-visible,
 html[data-theme="dark"] .btn:focus-visible {
   background-color: #444d56;
 }
+
 html[data-theme="dark"] button.green,
 html[data-theme="dark"] .btn.green {
   background-color: #2ea043;
   border-color: #2ea043;
   color: #fff;
 }
+
 html[data-theme="dark"] button.green:hover,
 html[data-theme="dark"] .btn.green:hover {
   background-color: #3fb950;
@@ -185,6 +191,7 @@ html[data-theme="dark"] .btn.green:hover {
 html[data-theme="dark"] .person-list {
   border-color: #1f252b;
 }
+
 html[data-theme="dark"] .person-list a,
 html[data-theme="dark"] .person-list button {
   color: #d1d5da;
@@ -195,22 +202,26 @@ html[data-theme="dark"] .vditor-reset blockquote {
   border-left-color: #586069;
   color: #aeb8c2;
 }
+
 html[data-theme="dark"] .article-content code,
 html[data-theme="dark"] .vditor-reset code {
   background-color: #1f252b;
   color: #f0f6fc;
 }
+
 html[data-theme="dark"] .article-content pre,
 html[data-theme="dark"] .vditor-reset pre {
   background-color: #1f252b;
   border-color: #1f252b;
 }
+
 html[data-theme="dark"] .article-content table th,
 html[data-theme="dark"] .article-content table td,
 html[data-theme="dark"] .vditor-reset table th,
 html[data-theme="dark"] .vditor-reset table td {
   border-color: #586069;
 }
+
 html[data-theme="dark"] .article-content table tr:nth-child(2n),
 html[data-theme="dark"] .vditor-reset table tr:nth-child(2n) {
   background-color: #24292e;
@@ -219,12 +230,15 @@ html[data-theme="dark"] .vditor-reset table tr:nth-child(2n) {
 html[data-theme="dark"] .footer {
   border-top-color: #1f252b;
 }
+
 html[data-theme="dark"] .footer-nav a {
   border-color: #586069;
 }
+
 html[data-theme="dark"] .slogan {
   color: #d1d5da;
 }
+
 html[data-theme="dark"] .avatar,
 html[data-theme="dark"] .avatar-small {
   background-color: #444d56;

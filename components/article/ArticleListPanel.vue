@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
 import ArticleList from "@/components/article/ArticleList.vue";
 import ContentPanel from "@/components/layout/ContentPanel.vue";
@@ -18,7 +18,7 @@ withDefaults(
 </script>
 
 <template>
-  <ContentPanel :title="title" :more-href="more">
+  <ContentPanel :more-href="more" :title="title">
     <ArticleList v-if="articles.length" :articles="articles" :compact="compact" />
     <EmptyState v-else />
   </ContentPanel>

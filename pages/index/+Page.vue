@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onMounted, toRefs } from "vue";
 import { useData } from "vike-vue/useData";
 import ArticleListPanel from "@/components/article/ArticleListPanel.vue";
@@ -15,8 +15,8 @@ onMounted(() => {
   <div class="main index">
     <div class="wrapper">
       <section class="index-main">
-        <ArticleListPanel :articles="recents" compact title="最新" more="/recent" />
-        <ArticleListPanel :articles="hots" compact title="最热" more="/hot" />
+        <ArticleListPanel :articles="recents" compact more="/recent" title="最新" />
+        <ArticleListPanel :articles="hots" compact more="/hot" title="最热" />
       </section>
     </div>
   </div>

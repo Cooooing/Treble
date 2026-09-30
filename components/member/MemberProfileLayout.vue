@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import AppLink from "@/components/ui/AppLink.vue";
 import Avatar from "@/components/identity/Avatar.vue";
 import { fromNow } from "@/utils/date";
@@ -23,13 +23,13 @@ const location = () =>
     <div class="wrapper member-page__wrapper">
       <main class="content member-page__content">
         <section class="module member-page__module">
-          <nav class="member-tabs" aria-label="个人主页栏目">
+          <nav aria-label="个人主页栏目" class="member-tabs">
             <AppLink
               v-for="tab in tabs"
               :key="tab.key"
-              :href="href(tab.suffix)"
-              :class="{ current: active === tab.key }"
               :aria-current="active === tab.key ? 'page' : undefined"
+              :class="{ current: active === tab.key }"
+              :href="href(tab.suffix)"
               >{{ tab.label }}</AppLink
             >
           </nav>
@@ -39,26 +39,22 @@ const location = () =>
       <aside class="side member-profile">
         <section class="module member-profile__card">
           <div
-            class="member-profile__cover"
             :style="profile.backgroundUrl ? { backgroundImage: `url(${profile.backgroundUrl})` } : undefined"
             aria-hidden="true"
+            class="member-profile__cover"
           />
           <div class="member-profile__identity">
-            <Avatar :url="profile.account?.avatarUrl" :name="profile.account?.name" :size="120" />
+            <Avatar :name="profile.account?.name" :size="120" :url="profile.account?.avatarUrl" />
             <h1 v-if="profile.account?.nickname || profile.account?.name">
               {{ profile.account?.nickname || profile.account?.name }}
             </h1>
             <p v-if="profile.account?.name" class="member-profile__name">{{ profile.account.name }}</p>
-            <span
-              v-if="profile.account?.mbti"
-              class="member-profile__mbti"
-              >{{ profile.account.mbti }}</span
-            >
+            <span v-if="profile.account?.mbti" class="member-profile__mbti">{{ profile.account.mbti }}</span>
           </div>
           <div class="member-profile__details">
             <p v-if="profile.account?.introduction" class="member-profile__intro">{{ profile.account.introduction }}</p>
             <p v-if="profile.account?.url" class="member-profile__line">
-              <a :href="profile.account.url" target="_blank" rel="noopener noreferrer">{{ profile.account.url }}</a>
+              <a :href="profile.account.url" rel="noopener noreferrer" target="_blank">{{ profile.account.url }}</a>
             </p>
             <p v-if="location()" class="member-profile__line"><span>位置</span>{{ location() }}</p>
             <p v-if="profile.account?.createdAt" class="member-profile__line">

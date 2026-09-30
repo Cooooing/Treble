@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useData } from "vike-vue/useData";
 import { toRefs } from "vue";
 import ArticleListPanel from "@/components/article/ArticleListPanel.vue";
@@ -13,8 +13,8 @@ const { articles, tag, tags, domains } = toRefs(useData<Data>());
 <template>
   <ErrorState
     v-if="!tag"
-    :title="pageStatus === 404 ? '标签未找到' : '标签暂时无法打开'"
     :message="error || '标签暂时无法访问。'"
+    :title="pageStatus === 404 ? '标签未找到' : '标签暂时无法打开'"
   />
   <div v-else class="main">
     <div class="wrapper">
@@ -24,13 +24,13 @@ const { articles, tag, tags, domains } = toRefs(useData<Data>());
             <div class="taxonomy-page__identity">
               <span
                 v-if="tag.icon"
-                class="avatar taxonomy-page__icon"
                 :style="{ backgroundImage: `url(${tag.icon.startsWith('/v1/') ? `/api/bbs${tag.icon}` : tag.icon})` }"
                 aria-hidden="true"
+                class="avatar taxonomy-page__icon"
               ></span>
               <div>
                 <h1>
-                  <AppLink rel="tag" :href="`/tag/${encodeURIComponent(tag.name || '')}`">{{ tag.name }}</AppLink>
+                  <AppLink :href="`/tag/${encodeURIComponent(tag.name || '')}`" rel="tag">{{ tag.name }}</AppLink>
                 </h1>
                 <p class="ft-fade">{{ tag.description || "暂无描述" }}</p>
               </div>
@@ -39,7 +39,7 @@ const { articles, tag, tags, domains } = toRefs(useData<Data>());
         </section>
         <ArticleListPanel :articles="articles" />
       </section>
-      <ContentSidebar :tags="tags" :domains="domains" />
+      <ContentSidebar :domains="domains" :tags="tags" />
     </div>
   </div>
 </template>

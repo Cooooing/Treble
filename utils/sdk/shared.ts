@@ -47,21 +47,19 @@ export function toBffUrl(url: string, proxyPath: string, bffUrl: string) {
   return new URL(bffPath.replace(/^\//, ""), `${bffUrl.replace(/\/$/, "")}/`).toString();
 }
 
-export function createSdkFetch(options: {
-  proxyPath: string;
-}): FetchAPI {
+export function createSdkFetch(options: { proxyPath: string }): FetchAPI {
   return async (input, init) => {
-    const url = typeof input === "string"
-      ? input
-      : input instanceof URL
-        ? input.toString()
-        : input.url;
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
 
     if (import.meta.env.SSR) {
       const { bffUrl } = await import("./server");
       const pageContext = getPageContext({ asyncHook: true });
       const cookie = pageContext?.headers?.cookie;
-      const sid = cookie?.split(";").map((part) => part.trim()).find((part) => part.startsWith("treble.sid="))?.slice("treble.sid=".length);
+      const sid = cookie
+        ?.split(";")
+        .map((part) => part.trim())
+        .find((part) => part.startsWith("treble.sid="))
+        ?.slice("treble.sid=".length);
       const requestId = pageContext?.headers?.["x-request-id"] || crypto.randomUUID();
       const headers = new Headers(init?.headers);
       headers.set("x-request-id", requestId);
@@ -69,7 +67,11 @@ export function createSdkFetch(options: {
       if (sid) {
         const { getUsableSession, refreshSession } = await import("../../server/bbsGateway");
         const decodedSid = decodeURIComponent(sid);
-        const session = await getUsableSession({ bffUrl, isProduction: process.env.NODE_ENV === "production" }, decodedSid, requestId);
+        const session = await getUsableSession(
+          { bffUrl, isProduction: process.env.NODE_ENV === "production" },
+          decodedSid,
+          requestId,
+        );
         if (session) {
           const responseHeaders = pageContext?.headersResponse;
           responseHeaders?.set("cache-control", "private, no-store");
@@ -81,7 +83,12 @@ export function createSdkFetch(options: {
             signal: AbortSignal.timeout(bffRequestTimeoutMs),
           });
           if (response.status !== 401) return response;
-          const refreshed = await refreshSession({ bffUrl, isProduction: process.env.NODE_ENV === "production" }, decodedSid, session, requestId);
+          const refreshed = await refreshSession(
+            { bffUrl, isProduction: process.env.NODE_ENV === "production" },
+            decodedSid,
+            session,
+            requestId,
+          );
           if (refreshed) {
             headers.set("authorization", `Bearer ${refreshed.accessToken}`);
             response = await fetch(toBffUrl(url, options.proxyPath, bffUrl), {
@@ -104,7 +111,11 @@ export function createSdkFetch(options: {
     const headers = new Headers(init?.headers);
     headers.set("x-request-id", browserRequestId());
     if (init?.method && !["GET", "HEAD", "OPTIONS"].includes(init.method.toUpperCase())) {
-      const csrf = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("treble.csrf="))?.slice("treble.csrf=".length);
+      const csrf = document.cookie
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) => part.startsWith("treble.csrf="))
+        ?.slice("treble.csrf=".length);
       if (csrf) headers.set("x-treble-csrf", decodeURIComponent(csrf));
     }
     return fetch(proxyUrl, { ...init, headers });
@@ -147,11 +158,7 @@ export const businessResponseMiddleware: Middleware = {
   post: async ({ response }) => normalizeBusinessResponse(response),
 };
 
-export function createSdkConfiguration(options: {
-  basePath: string;
-  fetchApi: FetchAPI;
-  middleware?: Middleware[];
-}) {
+export function createSdkConfiguration(options: { basePath: string; fetchApi: FetchAPI; middleware?: Middleware[] }) {
   return new Configuration({
     basePath: options.basePath,
     fetchApi: options.fetchApi,

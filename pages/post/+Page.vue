@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { ReqArticleTypeEnum } from "@bass/bbs-sdk-fetch/models/ReqArticle";
 import { computed } from "vue";
 import { usePageContext } from "vike-vue/usePageContext";

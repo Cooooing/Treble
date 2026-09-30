@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useData } from "vike-vue/useData";
 import { toRefs } from "vue";
 import ContentSidebar from "@/components/layout/ContentSidebar.vue";
@@ -13,7 +13,7 @@ const { rows, tags, error } = toRefs(useData<Data>());
 </script>
 
 <template>
-  <ErrorState v-if="error" title="领域暂时无法打开" :message="error" />
+  <ErrorState v-if="error" :message="error" title="领域暂时无法打开" />
   <div v-else class="main">
     <div class="wrapper">
       <section class="content">
@@ -23,7 +23,7 @@ const { rows, tags, error } = toRefs(useData<Data>());
               <li v-for="domain in rows" :key="domain.id" class="taxonomy-list__item">
                 <AppLink :href="`/domain/${domain.code || domain.id}`" class="taxonomy-list__icon-link">
                   <span
-                    class="avatar taxonomy-list__icon"
+                    :aria-label="`${domain.name || '领域'}图标`"
                     :style="
                       domain.icon
                         ? {
@@ -31,12 +31,12 @@ const { rows, tags, error } = toRefs(useData<Data>());
                           }
                         : undefined
                     "
-                    :aria-label="`${domain.name || '领域'}图标`"
+                    class="avatar taxonomy-list__icon"
                   ></span>
                 </AppLink>
                 <div class="fn-flex-1">
                   <h3>
-                    <AppLink class="ft-a-title" :href="`/domain/${domain.code || domain.id}`">{{
+                    <AppLink :href="`/domain/${domain.code || domain.id}`" class="ft-a-title">{{
                       domain.name
                     }}</AppLink>
                   </h3>
@@ -49,7 +49,7 @@ const { rows, tags, error } = toRefs(useData<Data>());
           <EmptyState v-else />
         </ContentPanel>
       </section>
-      <ContentSidebar :tags="tags" :domains="rows" />
+      <ContentSidebar :domains="rows" :tags="tags" />
     </div>
   </div>
 </template>

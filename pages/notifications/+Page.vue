@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onMounted, ref, toRefs, watch } from "vue";
 import { useData } from "vike-vue/useData";
 import type { RespNotification } from "@bass/bbs-sdk-fetch/models/RespNotification";
@@ -44,7 +44,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <ErrorState v-if="error" title="通知暂时无法打开" :message="error" />
+  <ErrorState v-if="error" :message="error" title="通知暂时无法打开" />
   <div v-else class="main notifications-page">
     <div class="wrapper">
       <section class="content module notifications-panel">
@@ -59,10 +59,10 @@ onMounted(() => {
           <li
             v-for="notification in notifications"
             :key="notification.id"
-            class="notifications-list__item"
             :class="{ 'notifications-list__item--read': notification.readAt }"
+            class="notifications-list__item"
           >
-            <span class="notifications-list__marker" aria-hidden="true" />
+            <span aria-hidden="true" class="notifications-list__marker" />
             <article>
               <div class="notifications-list__meta">
                 <strong>{{ notification.title || "系统通知" }}</strong>

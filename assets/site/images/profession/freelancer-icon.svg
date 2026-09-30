@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="自由职业图标">
   <defs>
     <linearGradient id="a" x1="16" y1="12" x2="114" y2="118" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0F766E"/><stop offset="1" stop-color="#2DD4BF"/>
+      <stop stop-color="#0F766E"/>
+      <stop offset="1" stop-color="#2DD4BF"/>
     </linearGradient>
   </defs>
   <rect width="128" height="128" rx="32" fill="url(#a)"/>

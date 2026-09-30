@@ -1,9 +1,10 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
 import Avatar from "@/components/identity/Avatar.vue";
 import MemberLink from "@/components/identity/MemberLink.vue";
 import Icon from "@/components/ui/Icon.vue";
 import { fromNow } from "@/utils/date";
+
 defineProps<{ article: ArticleDetail; replyCount: number }>();
 </script>
 <template>
@@ -11,15 +12,15 @@ defineProps<{ article: ArticleDetail; replyCount: number }>();
     <div>
       <MemberLink :username="article.authorUser?.name || ''"
         ><Avatar
-          class="avatar fn-left"
-          :url="article.authorUser?.avatarUrl"
           :name="article.authorUser?.name"
           :size="48"
+          :url="article.authorUser?.avatarUrl"
+          class="avatar fn-left"
       /></MemberLink>
     </div>
     <div class="fn-flex-1">
       <div id="articleMeta" class="fn-clear">
-        <MemberLink class="article__stats article__stats--a" :username="article.authorUser?.name || ''"
+        <MemberLink :username="article.authorUser?.name || ''" class="article__stats article__stats--a"
           ><span class="article__cnt">{{ article.authorUser?.nickname || article.authorUser?.name || "匿名用户" }}</span
           ><time>{{ article.createdAt ? fromNow(article.createdAt.getTime()) : "刚刚" }}</time></MemberLink
         >

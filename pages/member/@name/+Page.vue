@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { toRefs } from "vue";
 import { useData } from "vike-vue/useData";
 import ErrorState from "@/components/feedback/ErrorState.vue";
@@ -12,7 +12,7 @@ const { profile, articles, error } = toRefs(useData<Data>());
 </script>
 
 <template>
-  <ErrorState v-if="!profile" title="用户未找到" :message="error || '该用户不存在或不可用。'" />
+  <ErrorState v-if="!profile" :message="error || '该用户不存在或不可用。'" title="用户未找到" />
   <MemberProfileLayout v-else :profile="profile" active="articles">
     <p v-if="profile.visibility?.articles === false" class="member-empty">该用户未公开帖子列表。</p>
     <MemberArticleList v-else-if="articles.length" :articles="articles" />

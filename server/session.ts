@@ -29,9 +29,13 @@ function assertSession(value: unknown): asserts value is TrebleSession {
   if (!value || typeof value !== "object") throw new SessionStoreError("会话数据无效");
   const session = value as Partial<TrebleSession>;
   if (
-    !session.accessToken || !session.refreshToken ||
-    !session.accessTokenExpiresAt || !session.refreshTokenExpiresAt || !session.sessionExpiresAt ||
-    typeof session.version !== "number" || sessionTtlSeconds(session as TrebleSession) <= 0
+    !session.accessToken ||
+    !session.refreshToken ||
+    !session.accessTokenExpiresAt ||
+    !session.refreshTokenExpiresAt ||
+    !session.sessionExpiresAt ||
+    typeof session.version !== "number" ||
+    sessionTtlSeconds(session as TrebleSession) <= 0
   ) {
     throw new SessionStoreError("会话数据已过期");
   }
@@ -48,27 +52,6 @@ export class SessionRepository {
       socket: { connectTimeout: 3_000, reconnectStrategy: false },
     });
     this.client.on("error", (error) => console.error("Redis 会话服务错误", error));
-  }
-
-  private async connect() {
-    if (this.client.isOpen) return;
-    this.connection ??= this.client.connect().then(() => undefined).catch((error) => {
-      this.connection = undefined;
-      throw error;
-    });
-    try {
-      await this.connection;
-    } catch {
-      throw new SessionStoreError();
-    }
-  }
-
-  private key(sid: string) {
-    return `treble:session:${sid}`;
-  }
-
-  private lockKey(sid: string) {
-    return `treble:session:refresh-lock:${sid}`;
   }
 
   async create(session: Omit<TrebleSession, "version">) {
@@ -151,6 +134,30 @@ export class SessionRepository {
     } catch {
       throw new SessionStoreError();
     }
+  }
+
+  private async connect() {
+    if (this.client.isOpen) return;
+    this.connection ??= this.client
+      .connect()
+      .then(() => undefined)
+      .catch((error) => {
+        this.connection = undefined;
+        throw error;
+      });
+    try {
+      await this.connection;
+    } catch {
+      throw new SessionStoreError();
+    }
+  }
+
+  private key(sid: string) {
+    return `treble:session:${sid}`;
+  }
+
+  private lockKey(sid: string) {
+    return `treble:session:refresh-lock:${sid}`;
   }
 }
 

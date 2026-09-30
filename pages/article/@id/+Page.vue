@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { navigate } from "vike/client/router";
 import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostscript";
@@ -123,7 +123,7 @@ onMounted(() => {
 <template>
   <div v-if="articleState && data.comments" class="article article-page">
     <div class="article-layout">
-      <aside v-if="articleHeadings.length" id="articleToC" class="module" aria-label="文章目录">
+      <aside v-if="articleHeadings.length" id="articleToC" aria-label="文章目录" class="module">
         <nav class="module-panel article-toc">
           <a
             v-for="heading in articleHeadings"
@@ -142,9 +142,9 @@ onMounted(() => {
             <div v-if="articleState.statement" class="article-statement">{{ articleState.statement }}</div>
             <MarkdownRenderer
               :key="data.article?.id"
-              class="vditor-reset article-content"
-              :md="articleState.content || ''"
               :html="articleState.contentRender"
+              :md="articleState.content || ''"
+              class="vditor-reset article-content"
               @rendered="articleHeadings = $event"
             />
             <section v-if="articleState.hasReward && articleState.rewardContentRender" id="articleRewardContent">
@@ -155,12 +155,12 @@ onMounted(() => {
           </div>
         </div>
         <Postscripts
+          v-model:editor-open="postscriptEditorOpen"
           :article-id="articleState.id || ''"
           :postscripts="postscripts"
-          v-model:editor-open="postscriptEditorOpen"
           @added="addPostscript"
         />
-        <section v-if="canAddPostscript" class="article-author-actions" aria-label="作者操作">
+        <section v-if="canAddPostscript" aria-label="作者操作" class="article-author-actions">
           <div class="wrapper">
             <button type="button" @click="postscriptEditorOpen = true">添加附言</button>
           </div>
@@ -175,24 +175,24 @@ onMounted(() => {
             <section id="comments" class="comments module">
               <Comments
                 :key="articleState.id"
-                :comments="data.comments"
                 :article="articleState"
+                :comments="data.comments"
                 @updated="updateReplyCount"
               />
             </section>
           </div>
         </main>
 
-        <section id="article-footer" class="wrapper article-footer" aria-label="延伸阅读">
+        <section id="article-footer" aria-label="延伸阅读" class="wrapper article-footer">
           <section class="module">
             <header class="module-header"><h2>最新文章</h2></header>
             <div class="module-panel">
               <ul class="module-list article-footer__list">
                 <li v-for="item in data.latest || []" :key="item.id">
                   <AppLink :href="`/article/${item.id}`"
-                    ><Avatar :url="item.authorUser?.avatarUrl" :name="item.authorUser?.name" :size="20"
+                    ><Avatar :name="item.authorUser?.name" :size="20" :url="item.authorUser?.avatarUrl"
                   /></AppLink>
-                  <AppLink class="title fn-ellipsis" :href="`/article/${item.id}`">{{
+                  <AppLink :href="`/article/${item.id}`" class="title fn-ellipsis">{{
                     item.title || "未命名文章"
                   }}</AppLink>
                 </li>
@@ -205,9 +205,9 @@ onMounted(() => {
               <ul class="module-list article-footer__list">
                 <li v-for="item in data.hottest || []" :key="item.id">
                   <AppLink :href="`/article/${item.id}`"
-                    ><Avatar :url="item.authorUser?.avatarUrl" :name="item.authorUser?.name" :size="20"
+                    ><Avatar :name="item.authorUser?.name" :size="20" :url="item.authorUser?.avatarUrl"
                   /></AppLink>
-                  <AppLink class="title fn-ellipsis" :href="`/article/${item.id}`">{{
+                  <AppLink :href="`/article/${item.id}`" class="title fn-ellipsis">{{
                     item.title || "未命名文章"
                   }}</AppLink>
                 </li>
@@ -216,52 +216,52 @@ onMounted(() => {
           </section>
         </section>
       </article>
-      <aside class="share" aria-label="文章互动">
+      <aside aria-label="文章互动" class="share">
         <button
-          class="share__item"
-          type="button"
-          title="点赞"
           :class="{ 'share__button--active': articleState.viewerActionState?.liked }"
           :disabled="actionPending === 'like'"
+          class="share__item"
+          title="点赞"
+          type="button"
           @click="changeArticleAction('like')"
         >
           <Icon name="thumbs-up" /><span class="share__count">{{ articleState.likeCount || 0 }}</span>
         </button>
         <button
-          class="share__item"
-          type="button"
-          title="感谢"
           :class="{ 'share__button--active': articleState.viewerActionState?.thanked }"
           :disabled="actionPending === 'thank'"
+          class="share__item"
+          title="感谢"
+          type="button"
           @click="changeArticleAction('thank')"
         >
           <Icon name="heart" /><span class="share__count">{{ articleState.thankCount || 0 }}</span>
         </button>
         <button
-          class="share__item"
-          type="button"
-          title="收藏"
           :class="{ 'share__button--active': articleState.viewerActionState?.collected }"
           :disabled="actionPending === 'collect'"
+          class="share__item"
+          title="收藏"
+          type="button"
           @click="changeArticleAction('collect')"
         >
           <Icon name="star" /><span class="share__count">{{ articleState.collectCount || 0 }}</span>
         </button>
-        <button class="share__item share__item--unavailable" type="button" title="关注文章暂未开放" disabled>
-          <Icon name="view" /><span class="share__count" aria-hidden="true" />
+        <button class="share__item share__item--unavailable" disabled title="关注文章暂未开放" type="button">
+          <Icon name="view" /><span aria-hidden="true" class="share__count" />
         </button>
-        <button class="share__item" type="button" title="复制文章链接" @click="copyArticleLink">
-          <Icon name="link" /><span class="share__count" aria-hidden="true" />
+        <button class="share__item" title="复制文章链接" type="button" @click="copyArticleLink">
+          <Icon name="link" /><span aria-hidden="true" class="share__count" />
         </button>
-        <a class="share__item" href="#comments" title="参与讨论" aria-label="参与讨论">
-          <Icon name="reply" /><span class="share__count" aria-hidden="true" />
+        <a aria-label="参与讨论" class="share__item" href="#comments" title="参与讨论">
+          <Icon name="reply" /><span aria-hidden="true" class="share__count" />
         </a>
       </aside>
     </div>
   </div>
   <ErrorState
     v-else
-    :title="data.pageStatus === 404 ? '文章未找到' : '文章暂时无法打开'"
     :message="data.error || '文章暂时无法访问。'"
+    :title="data.pageStatus === 404 ? '文章未找到' : '文章暂时无法打开'"
   />
 </template>

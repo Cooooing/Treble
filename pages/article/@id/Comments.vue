@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, ref } from "vue";
 import { navigate } from "vike/client/router";
 import { usePageContext } from "vike-vue/usePageContext";
@@ -176,41 +176,41 @@ async function loadReplies(parentId: string, page: number) {
 </script>
 
 <template>
-  <section class="comment-thread-list" :aria-busy="loadingThreads">
+  <section :aria-busy="loadingThreads" class="comment-thread-list">
     <header class="comment-thread-list__header">
       <strong
         >评论 <span>{{ total }}</span></strong
       >
-      <nav class="comment-sort" aria-label="评论排序">
+      <nav aria-label="评论排序" class="comment-sort">
         <button
-          type="button"
           :class="{ 'comment-sort__item--active': commentOrder === 'COMMENT_ORDER_HOTTEST' }"
           :disabled="loadingThreads"
+          type="button"
           @click="loadThreads(1, 'COMMENT_ORDER_HOTTEST')"
         >
           最热
         </button>
         <i aria-hidden="true" />
         <button
-          type="button"
           :class="{ 'comment-sort__item--active': commentOrder === 'COMMENT_ORDER_NEWEST' }"
           :disabled="loadingThreads"
+          type="button"
           @click="loadThreads(1, 'COMMENT_ORDER_NEWEST')"
         >
           最新
         </button>
       </nav>
-      <a class="comment-thread-list__to-footer" href="#article-footer" aria-label="跳至页面底部"
+      <a aria-label="跳至页面底部" class="comment-thread-list__to-footer" href="#article-footer"
         ><Icon name="down"
       /></a>
     </header>
 
     <div class="comment__reply">
       <div v-if="account" class="fn-flex">
-        <Avatar class="avatar" :url="account.profile?.avatarUrl" :name="account.profile?.name" :size="48" />
-        <button type="button" class="reply__text fn-flex-1" @click="openCommentEditor()">请输入回帖内容...</button>
+        <Avatar :name="account.profile?.name" :size="48" :url="account.profile?.avatarUrl" class="avatar" />
+        <button class="reply__text fn-flex-1" type="button" @click="openCommentEditor()">请输入回帖内容...</button>
       </div>
-      <button v-else type="button" class="reply__text fn-flex-1" @click="openCommentEditor()">登录参与讨论...</button>
+      <button v-else class="reply__text fn-flex-1" type="button" @click="openCommentEditor()">登录参与讨论...</button>
     </div>
 
     <div v-if="threads.length" class="article-comments__list">
@@ -218,7 +218,7 @@ async function loadReplies(parentId: string, page: number) {
         <li v-for="thread in threads" :key="thread.root?.id" class="article-comment comment-thread">
           <template v-if="thread.root">
             <div :id="`comment_${thread.root.id}`" class="comment-thread__root fn-flex">
-              <Avatar :url="thread.root.user?.avatarUrl" :name="thread.root.user?.name" :size="48" />
+              <Avatar :name="thread.root.user?.name" :size="48" :url="thread.root.user?.avatarUrl" />
               <div class="fn-flex-1">
                 <div class="comment-info">
                   <span class="ft-gray">{{ thread.root.user?.nickname || thread.root.user?.name || "匿名用户" }}</span>
@@ -242,7 +242,7 @@ async function loadReplies(parentId: string, page: number) {
             <section v-if="thread.replyCount" class="comment-thread__replies">
               <template v-if="!isRepliesCollapsed(thread.root.id)">
                 <article v-for="reply in displayedReplies(thread)" :key="reply.id" class="comment-thread__reply">
-                  <Avatar :url="reply.user?.avatarUrl" :name="reply.user?.name" :size="24" />
+                  <Avatar :name="reply.user?.name" :size="24" :url="reply.user?.avatarUrl" />
                   <div class="fn-flex-1">
                     <div class="comment-thread__reply-content">
                       <span class="comment-thread__user">{{
@@ -272,9 +272,9 @@ async function loadReplies(parentId: string, page: number) {
                 <template v-if="isRepliesCollapsed(thread.root.id) || !isRepliesFullyExpanded(thread)">
                   <span>共 {{ thread.replyCount }} 条回复，</span>
                   <button
-                    type="button"
-                    class="comment-thread__toggle"
                     :disabled="loadingReplyParentId === thread.root.id"
+                    class="comment-thread__toggle"
+                    type="button"
                     @click="revealReplies(thread)"
                   >
                     点击查看
@@ -283,14 +283,14 @@ async function loadReplies(parentId: string, page: number) {
                 <template v-else>
                   <nav
                     v-if="replyTotalPages(thread) > 1"
-                    class="comment-thread__pager"
                     :aria-label="`评论 ${thread.root.id} 的回复分页`"
+                    class="comment-thread__pager"
                   >
                     <span>共 {{ replyTotalPages(thread) }} 页</span>
                     <button
                       v-if="(replyPages[thread.root.id]?.page?.page || 1) > 1"
-                      type="button"
                       :disabled="loadingReplyParentId === thread.root.id"
+                      type="button"
                       @click="loadReplies(thread.root.id, (replyPages[thread.root.id]?.page?.page || 1) - 1)"
                     >
                       上一页
@@ -305,12 +305,12 @@ async function loadReplies(parentId: string, page: number) {
                       <span v-if="item === '…'" aria-hidden="true">…</span>
                       <button
                         v-else
-                        type="button"
+                        :aria-current="item === (replyPages[thread.root.id]?.page?.page || 1) ? 'page' : undefined"
                         :class="{
                           'comment-thread__page--current': item === (replyPages[thread.root.id]?.page?.page || 1),
                         }"
-                        :aria-current="item === (replyPages[thread.root.id]?.page?.page || 1) ? 'page' : undefined"
                         :disabled="loadingReplyParentId === thread.root.id"
+                        type="button"
                         @click="loadReplies(thread.root.id, item)"
                       >
                         {{ item }}
@@ -318,14 +318,14 @@ async function loadReplies(parentId: string, page: number) {
                     </template>
                     <button
                       v-if="(replyPages[thread.root.id]?.page?.page || 1) < replyTotalPages(thread)"
-                      type="button"
                       :disabled="loadingReplyParentId === thread.root.id"
+                      type="button"
                       @click="loadReplies(thread.root.id, (replyPages[thread.root.id]?.page?.page || 1) + 1)"
                     >
                       下一页
                     </button>
                   </nav>
-                  <button type="button" class="comment-thread__toggle" @click="collapseReplies(thread.root.id)">
+                  <button class="comment-thread__toggle" type="button" @click="collapseReplies(thread.root.id)">
                     收起
                   </button>
                 </template>
@@ -334,18 +334,18 @@ async function loadReplies(parentId: string, page: number) {
           </template>
         </li>
       </ul>
-      <nav v-if="total > (threadPage?.size || 20)" class="comment-root-pager" aria-label="顶层评论分页">
+      <nav v-if="total > (threadPage?.size || 20)" aria-label="顶层评论分页" class="comment-root-pager">
         <button
-          type="button"
           :disabled="(threadPage?.page || 1) <= 1 || loadingThreads"
+          type="button"
           @click="loadThreads((threadPage?.page || 1) - 1)"
         >
           上一页
         </button>
         <span>{{ threadPage?.page || 1 }}</span>
         <button
-          type="button"
           :disabled="(threadPage?.page || 1) * (threadPage?.size || 20) >= total || loadingThreads"
+          type="button"
           @click="loadThreads((threadPage?.page || 1) + 1)"
         >
           下一页
@@ -358,6 +358,7 @@ async function loadReplies(parentId: string, page: number) {
       ref="editorPanelRef"
       v-model="comment.content"
       :open="editorOpen"
+      :submitting="submitting"
       :title="
         replyComment
           ? `回复 ${replyComment.user?.nickname || replyComment.user?.name || '用户'}`
@@ -367,7 +368,6 @@ async function loadReplies(parentId: string, page: number) {
       editor-name="comment"
       placeholder="友善地留下一个评论吧 :)"
       submit-label="提交"
-      :submitting="submitting"
       @close="closeCommentEditor"
       @submit="submit"
     />

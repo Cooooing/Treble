@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from "vue";
 import { navigate } from "vike/client/router";
 import { message } from "@/components/feedback/message";
@@ -39,13 +39,13 @@ async function submit() {
             <input
               id="login-account"
               v-model="account"
-              type="text"
-              name="username"
-              autocomplete="username"
-              aria-label="用户名或邮箱"
-              placeholder="用户名或邮箱"
               :disabled="loading"
+              aria-label="用户名或邮箱"
+              autocomplete="username"
+              name="username"
+              placeholder="用户名或邮箱"
               required
+              type="text"
             />
           </div>
           <div class="input-wrap">
@@ -54,22 +54,22 @@ async function submit() {
             <input
               id="login-password"
               v-model="password"
-              type="password"
-              name="password"
-              autocomplete="current-password"
-              aria-label="密码"
-              placeholder="密码"
               :disabled="loading"
+              aria-label="密码"
+              autocomplete="current-password"
+              name="password"
+              placeholder="密码"
               required
+              type="password"
             />
           </div>
-          <button class="verify__action verify__action--primary" type="submit" :disabled="loading">
+          <button :disabled="loading" class="verify__action verify__action--primary" type="submit">
             {{ loading ? "正在登录..." : "登录" }}
           </button>
           <AppLink class="verify__action verify__action--secondary" href="/register">注册</AppLink>
         </form>
       </div>
-      <aside class="intro community-welcome vditor-reset" aria-labelledby="community-welcome-title">
+      <aside aria-labelledby="community-welcome-title" class="intro community-welcome vditor-reset">
         <h2 id="community-welcome-title">🐟 鱼油，欢迎来到摸鱼派！</h2>
         <p>如果你也是奋斗在一线、热爱工作的苦逼青年，期待与众多鱼油聚集起来，那就加入友好的摸鱼派社区吧！❤️</p>
         <p>

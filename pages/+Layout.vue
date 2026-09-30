@@ -1,7 +1,7 @@
 <template>
   <div class="site-layout">
     <SiteHeader />
-    <main class="bg" id="site-main">
+    <main id="site-main" class="bg">
       <div id="page-container">
         <div id="page-content" class="page-content"><slot /></div>
       </div>

@@ -25,9 +25,9 @@ const errorImage = computed(() => {
 </script>
 
 <template>
-  <section class="error-state" aria-labelledby="error-state-title">
-    <div class="error-state__art" aria-hidden="true">
-      <img :src="errorImage" width="260" height="260" alt="" />
+  <section aria-labelledby="error-state-title" class="error-state">
+    <div aria-hidden="true" class="error-state__art">
+      <img :src="errorImage" alt="" height="260" width="260" />
     </div>
     <h1 id="error-state-title" class="error-state__title">{{ props.title }}</h1>
     <p class="error-state__message">{{ props.message }}</p>

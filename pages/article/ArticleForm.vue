@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
 import type { ReqArticle, ReqArticleTypeEnum } from "@bass/bbs-sdk-fetch/models/ReqArticle";
@@ -10,7 +10,13 @@ import { message } from "@/components/feedback/message";
 import Icon from "@/components/ui/Icon.vue";
 import DraftInbox from "@/components/draft/DraftInbox.vue";
 import ScheduledPublishControl from "@/components/article/ScheduledPublishControl.vue";
-import { cancelArticleSchedule, publishArticle, saveArticleDraft, scheduleArticle, synchronizeArticleTags } from "@/services/content";
+import {
+  cancelArticleSchedule,
+  publishArticle,
+  saveArticleDraft,
+  scheduleArticle,
+  synchronizeArticleTags,
+} from "@/services/content";
 import {
   consumeServerArticleDraftRestore,
   getLocalArticleDraft,
@@ -34,7 +40,9 @@ const form = reactive<ReqArticle>({
 });
 const currentType = articleTypes.find((item) => item.type === type);
 const loading = ref(false);
-const scheduled = ref(Boolean(props.article?.publishedAt && new Date(props.article.publishedAt).getTime() > Date.now()));
+const scheduled = ref(
+  Boolean(props.article?.publishedAt && new Date(props.article.publishedAt).getTime() > Date.now()),
+);
 const rewardOpen = ref(Boolean(props.article?.rewardContent || props.article?.rewardPoints));
 const draftInboxOpen = ref(false);
 const availableTags = ref<RespTag[]>([]);
@@ -272,21 +280,20 @@ onBeforeUnmount(() => {
       <input
         id="articleTitle"
         v-model="form.title"
-        type="text"
-        maxlength="120"
-        autocomplete="off"
-        placeholder="标题"
         :disabled="loading"
+        autocomplete="off"
+        maxlength="120"
+        placeholder="标题"
         required
+        type="text"
       />
 
-      <section class="post-article-content" aria-label="文章内容">
+      <section aria-label="文章内容" class="post-article-content">
         <ClientOnly>
           <RichTextEditor
             id="articleContent"
             v-model="form.content"
             :name="articleId ? `article-${articleId}` : `post-${type}`"
-            height="500px"
             :options="{
               placeholder: currentType?.editorHint,
               outline: { enable: true, position: 'left' },
@@ -294,16 +301,17 @@ onBeforeUnmount(() => {
               preview: { mode: 'both' },
               resize: { enable: true, position: 'bottom' },
             }"
+            height="500px"
           />
         </ClientOnly>
       </section>
 
-      <section class="tags-wrap tag_selection" aria-label="文章标签">
+      <section aria-label="文章标签" class="tags-wrap tag_selection">
         <label class="sr-only" for="articleTags">文章标签</label>
         <div class="tags-input">
           <span v-for="name in tagNames" :key="name" class="tag tag--selected">
             {{ name }}
-            <button type="button" :aria-label="`移除标签 ${name}`" :disabled="loading" @click="removeTag(name)">
+            <button :aria-label="`移除标签 ${name}`" :disabled="loading" type="button" @click="removeTag(name)">
               ×
             </button>
           </span>
@@ -314,22 +322,22 @@ onBeforeUnmount(() => {
             autocomplete="off"
             maxlength="9"
             placeholder="标签（可选，逗号分隔，最多 4 个，每个最长 9 字符）"
-            @focus="tagMenuOpen = true"
-            @click="tagMenuOpen = true"
-            @input="tagMenuOpen = true"
             @blur="tagMenuOpen = false"
+            @click="tagMenuOpen = true"
+            @focus="tagMenuOpen = true"
+            @input="tagMenuOpen = true"
             @keydown="handleTagKeydown"
           />
         </div>
-        <div v-if="tagMenuOpen && matchingTags.length" class="domains-tags" role="listbox" aria-label="标签建议">
+        <div v-if="tagMenuOpen && matchingTags.length" aria-label="标签建议" class="domains-tags" role="listbox">
           <button
             v-for="tag in matchingTags.slice(0, 12)"
             :key="tag.id || tag.name"
-            type="button"
-            class="tag"
             :disabled="loading"
-            @pointerdown.prevent
+            class="tag"
+            type="button"
             @click="selectTagName(tag.name || '')"
+            @pointerdown.prevent
           >
             {{ tag.name }}
           </button>
@@ -342,39 +350,39 @@ onBeforeUnmount(() => {
       <button
         v-if="!rewardOpen"
         id="showReward"
+        :disabled="loading"
         class="fn-ellipsis"
         type="button"
-        :disabled="loading"
         @click="rewardOpen = true"
       >
         打赏区 1. 当设置了打赏积分后，将启用打赏功能 2. 启用打赏需要 20 积分 3. 打赏区的内容只有在浏览者打赏后才对其可见
         &dtrif;
       </button>
-      <section v-if="rewardOpen" class="article-reward-content" aria-label="打赏设置">
+      <section v-if="rewardOpen" aria-label="打赏设置" class="article-reward-content">
         <label class="sr-only" for="articleRewardContent">打赏内容</label>
         <ClientOnly>
           <RichTextEditor
             id="articleRewardContent"
             v-model="form.rewardContent"
             :name="articleId ? `article-reward-${articleId}` : undefined"
-            height="200px"
             :options="{ placeholder: '写下打赏后可见的内容', preview: { mode: 'editor' }, resize: { enable: false } }"
+            height="200px"
           />
         </ClientOnly>
         <label class="sr-only" for="articleRewardPoint">打赏积分</label>
         <input
           id="articleRewardPoint"
           v-model.number="form.rewardPoints"
-          type="number"
-          min="1"
           :disabled="loading"
+          min="1"
           placeholder="打赏积分"
+          type="number"
         />
       </section>
 
       <section class="wrapper post__footer">
         <div class="post__type">
-          <Icon :name="currentType?.icon || 'article'" class="post__info" aria-hidden="true" />
+          <Icon :name="currentType?.icon || 'article'" aria-hidden="true" class="post__info" />
           <span>{{ currentType?.name || "发布文章" }}</span>
           <span class="ft-gray">{{ currentType?.description }}</span>
         </div>
@@ -390,18 +398,23 @@ onBeforeUnmount(() => {
               </select>
             </label>
             <label class="article-anonymous" for="articleCommentable"
-              >允许回帖 <input id="articleCommentable" v-model="form.commentable" type="checkbox" :disabled="loading"
+              >允许回帖 <input id="articleCommentable" v-model="form.commentable" :disabled="loading" type="checkbox"
             /></label>
           </div>
           <div class="article-settings__actions article-post-actions">
-            <button class="article-draft-action" type="button" :disabled="loading" @click="openDraftInbox">
+            <button :disabled="loading" class="article-draft-action" type="button" @click="openDraftInbox">
               草稿箱
             </button>
-            <button class="article-draft-action" type="button" :disabled="loading" @click="save(false)">
+            <button :disabled="loading" class="article-draft-action" type="button" @click="save(false)">
               {{ loading ? "正在保存..." : "存草稿" }}
             </button>
-            <ScheduledPublishControl :disabled="loading" :scheduled="scheduled" @schedule="schedule" @cancel="cancelSchedule" />
-            <button class="green article-publish-action" type="submit" :disabled="loading">
+            <ScheduledPublishControl
+              :disabled="loading"
+              :scheduled="scheduled"
+              @cancel="cancelSchedule"
+              @schedule="schedule"
+            />
+            <button :disabled="loading" class="green article-publish-action" type="submit">
               {{ loading ? "正在发布..." : "发布" }}
             </button>
           </div>

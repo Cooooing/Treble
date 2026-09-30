@@ -1,13 +1,16 @@
 h1 {
   color: inherit;
 }
+
 .symbol-pool {
   display: none;
 }
+
 .vditor-reset,
 html[data-theme="dark"] .vditor-reset {
   color: inherit;
 }
+
 .vditor-reset h1,
 html[data-theme="dark"] .vditor-reset h1,
 .vditor-reset h2,
@@ -25,59 +28,72 @@ html[data-theme="dark"] .vditor-reset h6 {
   margin-bottom: 0.5em;
   position: relative;
 }
+
 .vditor-reset h1,
 html[data-theme="dark"] .vditor-reset h1 {
   font-size: 2em;
 }
+
 .vditor-reset h2,
 html[data-theme="dark"] .vditor-reset h2 {
   font-size: 1.5em;
 }
+
 .vditor-reset h3,
 html[data-theme="dark"] .vditor-reset h3 {
   font-size: 1.17em;
 }
+
 .vditor-reset h4,
 html[data-theme="dark"] .vditor-reset h4 {
   font-size: 1em;
 }
+
 .vditor-reset h5,
 html[data-theme="dark"] .vditor-reset h5 {
   font-size: 0.83em;
 }
+
 .vditor-reset h6,
 html[data-theme="dark"] .vditor-reset h6 {
   font-size: 0.75em;
 }
+
 .vditor-reset p,
 html[data-theme="dark"] .vditor-reset p {
   line-height: 1.8;
   margin-bottom: 1em;
   word-break: break-all;
 }
+
 .vditor-reset code:not(.hljs):not(.highlight-chroma),
 html[data-theme="dark"] .vditor-reset code:not(.hljs):not(.highlight-chroma) {
   padding: 1px 5px;
   border-radius: 5px;
 }
+
 .vditor-reset blockquote,
 html[data-theme="dark"] .vditor-reset blockquote {
   padding-left: 5px;
 }
+
 .vditor-reset .highlight-line,
 html[data-theme="dark"] .vditor-reset .highlight-line {
   padding-left: 20px;
 }
+
 .vditor-reset .vditor-copy + code:not(.hljs):not(.highlight-chroma),
 html[data-theme="dark"] .vditor-reset .vditor-copy + code:not(.hljs):not(.highlight-chroma) {
   padding: 10px;
   padding-left: 20px;
   background-color: var(--color-neutral);
 }
+
 .vditor-reset .vditor-copy + code:not(.hljs):not(.highlight-chroma)::before,
 html[data-theme="dark"] .vditor-reset .vditor-copy + code:not(.hljs):not(.highlight-chroma)::before {
   margin-left: -20px;
 }
+
 .vditor-reset .language-math,
 html[data-theme="dark"] .vditor-reset .language-math,
 .vditor-reset .language-echarts,
@@ -98,11 +114,13 @@ html[data-theme="dark"] .vditor-reset .language-flowchart,
 html[data-theme="dark"] .vditor-reset .language-graphviz {
   margin-bottom: 16px;
 }
+
 .vditor-reset .language-math mjx-container:focus,
 html[data-theme="dark"] .vditor-reset .language-math mjx-container:focus {
   outline: none;
   cursor: context-menu;
 }
+
 .vditor-reset .language-echarts,
 html[data-theme="dark"] .vditor-reset .language-echarts,
 .vditor-reset .language-mindmap,
@@ -110,6 +128,7 @@ html[data-theme="dark"] .vditor-reset .language-mindmap {
   overflow: hidden;
   height: 420px;
 }
+
 .vditor-reset .language-mermaid,
 html[data-theme="dark"] .vditor-reset .language-mermaid,
 .vditor-reset .language-markmap,
@@ -120,56 +139,68 @@ html[data-theme="dark"] .vditor-reset .language-flowchart,
 html[data-theme="dark"] .vditor-reset .language-graphviz {
   text-align: center;
 }
+
 .vditor-reset .language-graphviz parsererror,
 html[data-theme="dark"] .vditor-reset .language-graphviz parsererror {
   overflow: auto;
 }
+
 .vditor-reset svg,
 html[data-theme="dark"] .vditor-reset svg {
   display: inline-block;
 }
+
 .vditor-reset.vditor-reset--anchor,
 html[data-theme="dark"] .vditor-reset.vditor-reset--anchor {
   padding: 0;
 }
+
 .vditor-reset table,
 html[data-theme="dark"] .vditor-reset table {
   margin-bottom: 0;
   display: table;
 }
+
 html[data-theme="dark"] .vditor-reset svg polygon {
   fill: transparent;
 }
+
 html[data-theme="dark"] .vditor-reset svg [stroke="#000000"],
 html[data-theme="dark"] .vditor-reset svg [stroke="#000"],
 html[data-theme="dark"] .vditor-reset svg [stroke="black"] {
   stroke: var(--color-base-content);
 }
+
 html[data-theme="dark"] .vditor-reset svg [fill="#000000"],
 html[data-theme="dark"] .vditor-reset svg [fill="#000"],
 html[data-theme="dark"] .vditor-reset svg [fill="black"] {
   fill: var(--color-base-content);
 }
+
 html[data-theme="dark"] .vditor-reset svg [fill="#ffffff"],
 html[data-theme="dark"] .vditor-reset svg [fill="#fff"],
 html[data-theme="dark"] .vditor-reset svg [fill="white"] {
   fill: var(--color-base-200);
 }
+
 .vditor-copy {
   position: relative;
   z-index: 1;
 }
+
 .vditor-copy textarea {
   position: absolute;
   left: -100000px;
   height: 10px;
 }
+
 .vditor-copy span {
   cursor: pointer;
   position: absolute;
   right: 15px;
   top: 0.5em;
 }
+
 .vditor-copy span svg {
   color: #586069;
   height: 14px;
@@ -177,14 +208,17 @@ html[data-theme="dark"] .vditor-reset svg [fill="white"] {
   display: block;
   fill: currentColor;
 }
+
 .vditor-linenumber.hljs,
 .vditor-linenumber.highlight-chroma {
   padding-left: 3em;
 }
+
 .vditor-linenumber.hljs::before,
 .vditor-linenumber.highlight-chroma::before {
   margin-left: -3em;
 }
+
 .vditor-linenumber .vditor-linenumber__rows {
   position: absolute;
   pointer-events: none;
@@ -194,10 +228,12 @@ html[data-theme="dark"] .vditor-reset svg [fill="white"] {
   user-select: none;
   counter-reset: linenumber;
 }
+
 .vditor-linenumber .vditor-linenumber__rows > span {
   pointer-events: none;
   display: block;
 }
+
 .vditor-linenumber .vditor-linenumber__rows > span::before {
   counter-increment: linenumber;
   content: counter(linenumber);
@@ -206,9 +242,11 @@ html[data-theme="dark"] .vditor-reset svg [fill="white"] {
   padding-right: 1em;
   text-align: right;
 }
+
 .vditor-anchor--left {
   left: -25px;
 }
+
 .vditor-anchor {
   position: absolute;
   top: 0;
@@ -217,15 +255,18 @@ html[data-theme="dark"] .vditor-reset svg [fill="white"] {
   display: inline-flex;
   align-items: center;
 }
+
 .vditor-anchor svg {
   visibility: hidden;
   color: var(--color-primary);
   fill: currentColor;
   vertical-align: middle;
 }
+
 .vditor-anchor:hover svg {
   visibility: visible;
 }
+
 .vditor-speech {
   position: absolute;
   display: none;
@@ -236,10 +277,12 @@ html[data-theme="dark"] .vditor-reset svg [fill="white"] {
   cursor: pointer;
   color: #586069;
 }
+
 .vditor-speech:hover,
 .vditor-speech--current {
   color: #4285f4;
 }
+
 .vditor-speech svg {
   height: 14px;
   width: 14px;
@@ -248,6 +291,7 @@ html[data-theme="dark"] .vditor-reset svg [fill="white"] {
   stroke-width: 0;
   stroke: currentColor;
 }
+
 img[alt="表情"],
 .emoji {
   width: 1em;

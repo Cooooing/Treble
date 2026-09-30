@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { articleTypes } from "@/pages/article";
 import Icon from "@/components/ui/Icon.vue";
 import AppLink from "@/components/ui/AppLink.vue";
@@ -7,9 +7,9 @@ import AppLink from "@/components/ui/AppLink.vue";
 <template>
   <div class="main pre-post-wrap">
     <div>
-      <section class="wrapper pre-post" aria-label="选择发布类型">
+      <section aria-label="选择发布类型" class="wrapper pre-post">
         <article v-for="item in articleTypes" :key="item.type" class="pre-post__item">
-          <AppLink class="pre-post__link" :href="`/post?type=${item.type}`">
+          <AppLink :href="`/post?type=${item.type}`" class="pre-post__link">
             <Icon :name="item.icon" />
             <span>{{ item.name }}</span>
           </AppLink>

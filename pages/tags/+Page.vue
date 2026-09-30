@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useData } from "vike-vue/useData";
 import { toRefs } from "vue";
 import ContentPanel from "@/components/layout/ContentPanel.vue";
@@ -13,7 +13,7 @@ const { rows, domains, error } = toRefs(useData<Data>());
 </script>
 
 <template>
-  <ErrorState v-if="error" title="标签暂时无法打开" :message="error" />
+  <ErrorState v-if="error" :message="error" title="标签暂时无法打开" />
   <div v-else class="main">
     <div class="wrapper">
       <section class="content">
@@ -22,17 +22,17 @@ const { rows, domains, error } = toRefs(useData<Data>());
             <ul>
               <li v-for="tag in rows" :key="tag.id || tag.name" class="taxonomy-list__item">
                 <span
-                  class="avatar taxonomy-list__icon"
                   :style="
                     tag.icon
                       ? { backgroundImage: `url(${tag.icon.startsWith('/v1/') ? `/api/bbs${tag.icon}` : tag.icon})` }
                       : undefined
                   "
                   aria-hidden="true"
+                  class="avatar taxonomy-list__icon"
                 ></span>
                 <div class="fn-flex-1">
                   <h3>
-                    <AppLink class="ft-a-title" :href="`/tag/${encodeURIComponent(tag.name || '')}`">{{
+                    <AppLink :href="`/tag/${encodeURIComponent(tag.name || '')}`" class="ft-a-title">{{
                       tag.name
                     }}</AppLink>
                   </h3>
@@ -45,7 +45,7 @@ const { rows, domains, error } = toRefs(useData<Data>());
           <EmptyState v-else />
         </ContentPanel>
       </section>
-      <ContentSidebar :tags="rows" :domains="domains" />
+      <ContentSidebar :domains="domains" :tags="rows" />
     </div>
   </div>
 </template>

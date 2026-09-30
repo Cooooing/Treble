@@ -10,5 +10,5 @@ if (!abortReason) {
 </script>
 
 <template>
-  <ErrorState :title="is404 ? '页面未找到' : '暂时无法打开'" :message="abortReason" />
+  <ErrorState :message="abortReason" :title="is404 ? '页面未找到' : '暂时无法打开'" />
 </template>

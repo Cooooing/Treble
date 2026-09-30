@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
 const props = defineProps<{
@@ -92,11 +92,18 @@ function setDate(value: Date) {
 }
 
 function daysInMonth(selectedYear: number, selectedMonth: number) {
-  if (selectedMonth === 2) return selectedYear % 4 === 0 && (selectedYear % 100 !== 0 || selectedYear % 400 === 0) ? 29 : 28;
+  if (selectedMonth === 2)
+    return selectedYear % 4 === 0 && (selectedYear % 100 !== 0 || selectedYear % 400 === 0) ? 29 : 28;
   return [4, 6, 9, 11].includes(selectedMonth) ? 30 : 31;
 }
 
-function createLocalDate(selectedYear: number, selectedMonth: number, selectedDay: number, selectedHour: number, selectedMinute: number) {
+function createLocalDate(
+  selectedYear: number,
+  selectedMonth: number,
+  selectedDay: number,
+  selectedHour: number,
+  selectedMinute: number,
+) {
   const value = new Date(0);
   value.setFullYear(selectedYear, selectedMonth - 1, selectedDay);
   value.setHours(selectedHour, selectedMinute, 0, 0);
@@ -192,74 +199,74 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", closeWhenClickOu
   <div ref="root" class="scheduled-publish">
     <button
       v-if="!scheduled"
+      :aria-expanded="open"
+      :disabled="disabled"
+      aria-controls="scheduledPublishPanel"
       class="article-draft-action"
       type="button"
-      :disabled="disabled"
-      :aria-expanded="open"
-      aria-controls="scheduledPublishPanel"
       @click="open ? (open = false) : openPicker()"
     >
       定时发布
     </button>
-    <button v-else class="article-draft-action" type="button" :disabled="disabled" @click="openPicker">修改定时</button>
-    <button v-if="scheduled" class="article-draft-action" type="button" :disabled="disabled" @click="emit('cancel')">
+    <button v-else :disabled="disabled" class="article-draft-action" type="button" @click="openPicker">修改定时</button>
+    <button v-if="scheduled" :disabled="disabled" class="article-draft-action" type="button" @click="emit('cancel')">
       取消定时
     </button>
 
-    <section v-if="open" id="scheduledPublishPanel" class="scheduled-publish__panel" aria-label="设置定时发布时间">
+    <section v-if="open" id="scheduledPublishPanel" aria-label="设置定时发布时间" class="scheduled-publish__panel">
       <div class="scheduled-publish__heading">
         <strong>定时发布</strong>
       </div>
       <p>文章会以当前草稿内容在指定时间公开发布。</p>
-      <div class="scheduled-publish__shortcuts" aria-label="快捷时间">
-        <button type="button" :disabled="disabled" @click="selectShortcut(30)">30 分钟后</button>
-        <button type="button" :disabled="disabled" @click="selectShortcut(60)">1 小时后</button>
-        <button type="button" :disabled="disabled" @click="selectShortcut(24 * 60)">明天此时</button>
+      <div aria-label="快捷时间" class="scheduled-publish__shortcuts">
+        <button :disabled="disabled" type="button" @click="selectShortcut(30)">30 分钟后</button>
+        <button :disabled="disabled" type="button" @click="selectShortcut(60)">1 小时后</button>
+        <button :disabled="disabled" type="button" @click="selectShortcut(24 * 60)">明天此时</button>
       </div>
-      <div class="scheduled-publish__editor" aria-label="编辑定时发布时间">
+      <div aria-label="编辑定时发布时间" class="scheduled-publish__editor">
         <input
-          :value="year"
-          inputmode="numeric"
-          aria-label="年份"
           :disabled="disabled"
-          @input="limitField('year', $event)"
+          :value="year"
+          aria-label="年份"
+          inputmode="numeric"
           @blur="limitField('year', $event)"
+          @input="limitField('year', $event)"
         />
         <span>年</span>
         <input
-          :value="month"
-          inputmode="numeric"
-          aria-label="月份"
           :disabled="disabled"
-          @input="limitField('month', $event)"
+          :value="month"
+          aria-label="月份"
+          inputmode="numeric"
           @blur="limitField('month', $event)"
+          @input="limitField('month', $event)"
         />
         <span>月</span>
         <input
-          :value="day"
-          inputmode="numeric"
-          aria-label="日期"
           :disabled="disabled"
-          @input="limitField('day', $event)"
+          :value="day"
+          aria-label="日期"
+          inputmode="numeric"
           @blur="limitField('day', $event)"
+          @input="limitField('day', $event)"
         />
         <span>日</span>
         <input
-          :value="hour"
-          inputmode="numeric"
-          aria-label="小时"
           :disabled="disabled"
-          @input="limitField('hour', $event)"
+          :value="hour"
+          aria-label="小时"
+          inputmode="numeric"
           @blur="limitField('hour', $event)"
+          @input="limitField('hour', $event)"
         />
         <span>时</span>
         <input
-          :value="minute"
-          inputmode="numeric"
-          aria-label="分钟"
           :disabled="disabled"
-          @input="limitField('minute', $event)"
+          :value="minute"
+          aria-label="分钟"
+          inputmode="numeric"
           @blur="limitField('minute', $event)"
+          @input="limitField('minute', $event)"
         />
         <span>分</span>
       </div>
@@ -268,7 +275,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", closeWhenClickOu
           {{ displayValidationMessage }}
         </p>
         <p v-else-if="selectedText" class="scheduled-publish__summary">将于 {{ selectedText }} 发布</p>
-        <button class="green" type="button" :disabled="disabled || Boolean(validationMessage)" @click="confirm">
+        <button :disabled="disabled || Boolean(validationMessage)" class="green" type="button" @click="confirm">
           确认定时
         </button>
       </div>

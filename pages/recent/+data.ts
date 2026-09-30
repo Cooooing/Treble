@@ -1,12 +1,18 @@
 import { bbsClient } from "@/utils/sdk";
 import type { PageContextServer } from "vike/types";
 import { setPageStatus } from "../pageStatus";
+
 export type Data = Awaited<ReturnType<typeof data>>;
 
 export async function data(pageContext: PageContextServer) {
   try {
     const [articles, tags, domains] = await Promise.all([
-      bbsClient.article.list({ listArticlesReq: { query: { order: "ARTICLE_ORDER_NEWEST", publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" }, page: { page: 1, size: 15 } } }),
+      bbsClient.article.list({
+        listArticlesReq: {
+          query: { order: "ARTICLE_ORDER_NEWEST", publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
+          page: { page: 1, size: 15 },
+        },
+      }),
       bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 12 } } }),
       bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 8 } } }),
     ]);

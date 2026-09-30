@@ -1,5 +1,4 @@
-import { ApiError } from "@/utils/sdk";
-import { bbsClient } from "@/utils/sdk";
+import { ApiError, bbsClient } from "@/utils/sdk";
 import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
 import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostscript";
@@ -21,7 +20,9 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
   try {
     const [article, comments, latest, hottest, postscripts] = await Promise.all([
       bbsClient.article
-        .get({ getArticleReq: { articleId: pageContext.routeParams.id, publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" } })
+        .get({
+          getArticleReq: { articleId: pageContext.routeParams.id, publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
+        })
         .then((response) => response.article),
       bbsClient.comment.listThreads({
         listCommentThreadsReq: {

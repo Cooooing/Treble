@@ -1,10 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" role="img" aria-label="自由职业封面">
   <defs>
     <linearGradient id="a" x1="0" y1="0" x2="1200" y2="480" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#064E4A"/><stop offset=".55" stop-color="#0F766E"/><stop offset="1" stop-color="#5EEAD4"/>
+      <stop stop-color="#064E4A"/>
+      <stop offset=".55" stop-color="#0F766E"/>
+      <stop offset="1" stop-color="#5EEAD4"/>
     </linearGradient>
     <radialGradient id="b" cx="0" cy="0" r="1" gradientTransform="matrix(260 0 0 260 920 150)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#CCFBF1" stop-opacity=".48"/><stop offset="1" stop-color="#CCFBF1" stop-opacity="0"/>
+      <stop stop-color="#CCFBF1" stop-opacity=".48"/>
+      <stop offset="1" stop-color="#CCFBF1" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <rect width="1200" height="480" fill="url(#a)"/>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { navigate } from "vike/client/router";
 import { usePageContext } from "vike-vue/usePageContext";
@@ -93,39 +93,41 @@ watch(
 <template>
   <header class="nav">
     <h1 aria-label="摸鱼派" class="tooltipped tooltipped-s">
-      <AppLink href="/" aria-label="摸鱼派首页"><SiteLogo /></AppLink>
+      <AppLink aria-label="摸鱼派首页" href="/"><SiteLogo /></AppLink>
     </h1>
-    <nav class="nav-tabs" aria-label="主导航">
+    <nav aria-label="主导航" class="nav-tabs">
       <AppLink
         v-for="menu in menus"
         :key="menu.path"
-        :href="menu.path"
-        :class="{ current: pageContext.urlPathname === menu.path }"
         :aria-current="pageContext.urlPathname === menu.path ? 'page' : undefined"
+        :class="{ current: pageContext.urlPathname === menu.path }"
+        :href="menu.path"
         ><Icon :name="menu.icon" /> {{ menu.name }}</AppLink
       >
     </nav>
-    <section class="user-nav" aria-label="账户操作">
+    <section aria-label="账户操作" class="user-nav">
       <button
+        :aria-label="theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'"
         class="theme-toggle"
         type="button"
-        :aria-label="theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'"
         @click="toggleTheme"
       >
         <Icon :name="theme === 'dark' ? 'color-moon' : 'color-sun'" />
       </button>
       <template v-if="account">
-        <AppLink href="/notifications" class="no-msg" aria-label="通知中心"
+        <AppLink aria-label="通知中心" class="no-msg" href="/notifications"
           ><Icon name="notification" />&nbsp;{{ unreadCount }}</AppLink
         >
-        <AppLink href="/pre-post" class="pre-post"><Icon name="addpost" />&nbsp;发帖</AppLink>
+        <AppLink class="pre-post" href="/pre-post"><Icon name="addpost" />&nbsp;发帖</AppLink>
         <details ref="accountMenu" class="account-menu">
-          <summary class="account-menu__trigger" aria-label="打开账户菜单">
-            <Avatar :url="account.profile?.avatarUrl" :name="account.profile?.name" :size="32" />
+          <summary aria-label="打开账户菜单" class="account-menu__trigger">
+            <Avatar :name="account.profile?.name" :size="32" :url="account.profile?.avatarUrl" />
           </summary>
-          <nav id="account-menu-panel" class="person-list show account-menu__panel" aria-label="账户菜单">
+          <nav id="account-menu-panel" aria-label="账户菜单" class="person-list show account-menu__panel">
             <ul>
-              <li><AppLink :href="account.profile?.name ? `/member/${account.profile.name}` : '/home'">个人主页</AppLink></li>
+              <li>
+                <AppLink :href="account.profile?.name ? `/member/${account.profile.name}` : '/home'">个人主页</AppLink>
+              </li>
               <li><AppLink href="/settings">设置</AppLink></li>
               <li><AppLink href="/help">帮助</AppLink></li>
               <li><button type="button" @click="signOut">退出登录</button></li>
@@ -134,8 +136,8 @@ watch(
         </details>
       </template>
       <template v-else>
-        <AppLink href="/login" class="nav-auth-link">登录</AppLink>
-        <AppLink href="/register" class="nav-auth-link">注册</AppLink>
+        <AppLink class="nav-auth-link" href="/login">登录</AppLink>
+        <AppLink class="nav-auth-link" href="/register">注册</AppLink>
       </template>
     </section>
   </header>

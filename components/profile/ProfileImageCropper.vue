@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import Cropper from "cropperjs";
 import "cropperjs/dist/cropper.css";
 import { computed, nextTick, onBeforeUnmount, ref } from "vue";
@@ -136,8 +136,8 @@ onBeforeUnmount(clearSelection);
 </script>
 
 <template>
-  <section class="cropper" :class="`cropper--${purpose}`">
-    <input ref="input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" @change="choose" />
+  <section :class="`cropper--${purpose}`" class="cropper">
+    <input ref="input" accept="image/jpeg,image/png,image/webp,image/gif" type="file" @change="choose" />
     <div class="cropper__topline">
       <button type="button" @click="openPicker">选择{{ label }}</button>
       <p v-if="purpose === 'avatar'" class="cropper__notice">禁止使用任何涉嫌非法或者敏感图片作为头像</p>
@@ -145,14 +145,14 @@ onBeforeUnmount(clearSelection);
     </div>
 
     <template v-if="file">
-      <div v-if="isGIF" class="cropper__gif-preview" :class="{ 'cropper__gif-preview--avatar': purpose === 'avatar' }">
-        <img :src="sourceURL" :alt="`${label}动图预览`" />
+      <div v-if="isGIF" :class="{ 'cropper__gif-preview--avatar': purpose === 'avatar' }" class="cropper__gif-preview">
+        <img :alt="`${label}动图预览`" :src="sourceURL" />
       </div>
       <div v-else class="cropper__editor" @keydown="move">
-        <div class="cropper__viewport" tabindex="0" :aria-label="`拖动以调整${label}裁切区域，方向键可微调`">
-          <img ref="cropImage" :src="sourceURL" :alt="`${label}裁切编辑器`" />
+        <div :aria-label="`拖动以调整${label}裁切区域，方向键可微调`" class="cropper__viewport" tabindex="0">
+          <img ref="cropImage" :alt="`${label}裁切编辑器`" :src="sourceURL" />
         </div>
-        <aside v-if="purpose === 'avatar'" class="cropper__previews" aria-label="头像尺寸预览">
+        <aside v-if="purpose === 'avatar'" aria-label="头像尺寸预览" class="cropper__previews">
           <div ref="preview100" class="cropper__preview cropper__preview--100" />
           <span>100 × 100</span>
           <div ref="preview50" class="cropper__preview cropper__preview--50" />
@@ -161,10 +161,10 @@ onBeforeUnmount(clearSelection);
           <span>30 × 30</span>
         </aside>
       </div>
-      <div v-if="!isGIF" class="cropper__tools" aria-label="裁切缩放控制">
-        <button type="button" aria-label="缩小图片" @click="zoom(-0.1)">−</button>
+      <div v-if="!isGIF" aria-label="裁切缩放控制" class="cropper__tools">
+        <button aria-label="缩小图片" type="button" @click="zoom(-0.1)">−</button>
         <span>拖动图片调整位置，滚轮或按钮缩放</span>
-        <button type="button" aria-label="放大图片" @click="zoom(0.1)">+</button>
+        <button aria-label="放大图片" type="button" @click="zoom(0.1)">+</button>
       </div>
       <div class="cropper__actions">
         <button type="button" @click="openPicker">重选</button>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { IOptions } from "vditor";
 import { ref } from "vue";
 import ClientOnly from "@/components/ui/ClientOnly.vue";
@@ -45,16 +45,16 @@ defineExpose({ clearCache, getValue });
 </script>
 
 <template>
-  <Transition name="comment-editor" :duration="{ enter: 260, leave: 180 }">
+  <Transition :duration="{ enter: 260, leave: 180 }" name="comment-editor">
     <section
       v-if="props.open"
+      :aria-label="props.ariaLabel"
+      aria-modal="true"
       class="editor-panel"
       role="dialog"
-      aria-modal="true"
-      :aria-label="props.ariaLabel"
       @keydown.esc="emit('close')"
     >
-      <button type="button" class="editor-bg" :aria-label="`关闭${props.title}编辑器`" @click="emit('close')" />
+      <button :aria-label="`关闭${props.title}编辑器`" class="editor-bg" type="button" @click="emit('close')" />
       <div class="wrapper">
         <header class="editor-panel__header">
           <strong class="editor-panel__context">
@@ -62,9 +62,9 @@ defineExpose({ clearCache, getValue });
             {{ props.title }}
           </strong>
           <button
-            type="button"
-            class="editor-panel__close"
             :aria-label="`收起${props.title}编辑器`"
+            class="editor-panel__close"
+            type="button"
             @click="emit('close')"
           >
             <Icon name="down" />
@@ -75,25 +75,25 @@ defineExpose({ clearCache, getValue });
             ref="editorRef"
             v-model="content"
             :name="props.editorName"
-            height="200px"
             :options="{ ...editorOptions, placeholder: props.placeholder }"
+            height="200px"
           />
         </ClientOnly>
         <footer class="comment-submit">
           <span class="ft-fade">{{ props.helperText }}</span>
           <span class="comment-submit__actions">
             <button
-              type="button"
-              class="article-editor-panel__button"
               :disabled="props.submitting"
+              class="article-editor-panel__button"
+              type="button"
               @click="emit('close')"
             >
               取消
             </button>
             <button
-              type="button"
-              class="article-editor-panel__button article-editor-panel__button--submit"
               :disabled="props.submitting"
+              class="article-editor-panel__button article-editor-panel__button--submit"
+              type="button"
               @click="emit('submit')"
             >
               {{ props.submitting ? "正在提交..." : props.submitLabel }}

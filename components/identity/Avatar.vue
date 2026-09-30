@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from "vue";
 
 const props = defineProps<{
@@ -28,13 +28,13 @@ const avatarUrl = computed(() => {
 </script>
 <template>
   <span
-    class="avatar"
-    :class="{ 'avatar-square': props.square }"
     :aria-label="name || '用户头像'"
+    :class="{ 'avatar-square': props.square }"
     :style="{
       width: avatarSize,
       height: avatarSize,
       backgroundImage: `url(${avatarUrl})`,
     }"
+    class="avatar"
   />
 </template>

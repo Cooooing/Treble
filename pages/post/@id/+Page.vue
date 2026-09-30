@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onMounted } from "vue";
 import { useData } from "vike-vue/useData";
 import { message } from "@/components/feedback/message";
@@ -17,7 +17,7 @@ onMounted(() => {
   <ArticleForm v-if="data.article" :key="data.article.id" :article="data.article" />
   <ErrorState
     v-else
-    :title="data.pageStatus === 404 ? '草稿未找到' : '草稿暂时无法打开'"
     :message="data.error || '草稿暂时无法访问。'"
+    :title="data.pageStatus === 404 ? '草稿未找到' : '草稿暂时无法打开'"
   />
 </template>

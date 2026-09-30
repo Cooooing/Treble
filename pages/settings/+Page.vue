@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from "vue";
 import { navigate } from "vike/client/router";
 import { usePageContext } from "vike-vue/usePageContext";
@@ -248,9 +248,9 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
             ><input
               id="settings-profile-url"
               v-model="profile.url"
-              type="url"
-              aria-describedby="settings-profile-url-error"
               :aria-invalid="Boolean(urlError)"
+              aria-describedby="settings-profile-url-error"
+              type="url"
               @blur="urlTouched = true"
             />
             <p v-if="urlError" id="settings-profile-url-error" class="settings__field-error" role="status">
@@ -262,30 +262,30 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
             ><input
               id="settings-profile-mbti"
               v-model.trim="mbtiInput"
-              type="text"
+              :aria-invalid="Boolean(mbtiError)"
+              aria-describedby="settings-profile-mbti-hint"
               maxlength="6"
               placeholder="例如 ENTP-A"
-              aria-describedby="settings-profile-mbti-hint"
-              :aria-invalid="Boolean(mbtiError)"
-              @input="mbtiInput = mbtiInput.toUpperCase()"
+              type="text"
               @blur="mbtiTouched = true"
+              @input="mbtiInput = mbtiInput.toUpperCase()"
             />
             <p id="settings-profile-mbti-hint" class="settings__hint">
               正确示例：<b>ENTP ENFP-A ENTP-T ISTJ ISFJ-A ISTJ-T</b><br />如果不知道你的MBTI或者不知道MBTI是什么，请<a
                 href="https://www.16personalities.com/ch"
-                target="_blank"
                 rel="noopener noreferrer"
+                target="_blank"
                 >点击这里</a
               ><span v-if="mbtiError" class="settings__field-error" role="status"> · {{ mbtiError }}</span>
             </p>
-            <section class="settings__images" aria-labelledby="settings-avatar-title">
+            <section aria-labelledby="settings-avatar-title" class="settings__images">
               <h3 id="settings-avatar-title">头像</h3>
               <div class="settings__avatar-editor">
                 <div class="settings__avatar-preview">
                   <Avatar
-                    :url="currentAccount?.profile?.avatarUrl"
                     :name="currentAccount?.profile?.name"
                     :size="140"
+                    :url="currentAccount?.profile?.avatarUrl"
                     square
                   />
                   <p>当前头像</p>
@@ -295,12 +295,12 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
                 </div>
               </div>
             </section>
-            <section class="settings__images" aria-labelledby="settings-background-title">
+            <section aria-labelledby="settings-background-title" class="settings__images">
               <h3 id="settings-background-title">背景图</h3>
               <div
-                class="settings__background-preview"
                 :class="{ 'settings__background-preview--empty': !backgroundUrl }"
                 :style="backgroundUrl ? { backgroundImage: `url(${backgroundUrl})` } : undefined"
+                class="settings__background-preview"
               >
                 <span v-if="!backgroundUrl">暂无背景图</span>
               </div>
@@ -309,7 +309,7 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
                 <ProfileImageCropper purpose="background" @ready="upload('background', $event)" />
               </div>
             </section>
-            <button class="green fn-right" :disabled="Boolean(mbtiError || urlError)" @click="saveProfile">保存</button>
+            <button :disabled="Boolean(mbtiError || urlError)" class="green fn-right" @click="saveProfile">保存</button>
           </div>
         </section>
         <template v-else-if="section === 'account'">
@@ -317,9 +317,9 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
             <header class="module-header"><h2>密码</h2></header>
             <div class="module-panel form">
               <label>当前密码</label
-              ><input v-model="password.old" type="password" autocomplete="current-password" /><label>新密码</label
-              ><input v-model="password.next" type="password" autocomplete="new-password" /><label>确认新密码</label
-              ><input v-model="password.confirmation" type="password" autocomplete="new-password" /><button
+              ><input v-model="password.old" autocomplete="current-password" type="password" /><label>新密码</label
+              ><input v-model="password.next" autocomplete="new-password" type="password" /><label>确认新密码</label
+              ><input v-model="password.confirmation" autocomplete="new-password" type="password" /><button
                 class="green fn-right"
                 @click="updatePassword"
               >
@@ -341,7 +341,7 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
             <header class="module-header"><h2>绑定手机</h2></header>
             <div class="module-panel form">
               <p class="settings__current">当前：{{ mask(currentAccount?.contact?.phone) }}</p>
-              <label>新手机号</label><input v-model="phone.value" type="text" inputmode="numeric" /><label>验证码</label
+              <label>新手机号</label><input v-model="phone.value" inputmode="numeric" type="text" /><label>验证码</label
               ><input v-model="phone.code" type="text" /><button type="button" @click="sendCode('phone')">
                 发送验证码</button
               ><button class="green fn-right" @click="updateContact('phone')">保存</button>
@@ -354,13 +354,13 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
               <button v-if="!totpEnabled && !qrCode" type="button" @click="beginTotp">开始绑定</button
               ><img
                 v-if="qrCode"
-                class="settings__qr"
                 :src="qrCode"
-                width="160"
-                height="160"
                 alt="TOTP 二维码"
+                class="settings__qr"
+                height="160"
+                width="160"
               /><template v-if="totpEnabled || qrCode"
-                ><label>TOTP 验证码</label><input v-model="totpCode" type="text" placeholder="6 位验证码" /><button
+                ><label>TOTP 验证码</label><input v-model="totpCode" placeholder="6 位验证码" type="text" /><button
                   class="green fn-right"
                   @click="toggleTotp"
                 >
@@ -374,9 +374,7 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
           <section class="module">
             <header class="module-header"><h2>隐私</h2></header>
             <div class="module-panel form settings__privacy">
-              <p class="settings__description">
-                控制个人主页中哪些内容可以被其他用户查看。地理位置信息会根据当前 IP 自动定位。
-              </p>
+              <p class="settings__description">我们会尊重和保护你的隐私。</p>
               <div class="settings__privacy-grid">
                 <label v-for="item in privacyItems" :key="item.key" class="settings__switch"
                   ><input v-model="privacy[item.key]" type="checkbox" />{{
@@ -393,7 +391,7 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
           <div class="module-panel form">
             <p>注销后账号无法恢复，所有会话会立即失效。</p>
             <label>当前密码</label><input v-model="password.old" type="password" /><template v-if="totpEnabled"
-              ><label>TOTP 验证码</label><input v-model="totpCode" type="text" placeholder="6 位验证码" /></template
+              ><label>TOTP 验证码</label><input v-model="totpCode" placeholder="6 位验证码" type="text" /></template
             ><button :disabled="deleting" class="fn-right" @click="cancelAccount">
               {{ deleting ? "正在注销…" : "注销账号" }}
             </button>
@@ -403,12 +401,12 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
       <aside class="side">
         <section class="module">
           <div class="module-panel fn-oh">
-            <nav class="home-menu" aria-label="设置菜单">
+            <nav aria-label="设置菜单" class="home-menu">
               <AppLink
                 v-for="item in nav"
                 :key="item.key"
-                :href="item.href"
                 :class="{ current: section === item.key }"
+                :href="item.href"
                 >{{ item.label }}</AppLink
               >
             </nav>

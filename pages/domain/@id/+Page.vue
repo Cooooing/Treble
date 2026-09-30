@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useData } from "vike-vue/useData";
 import { toRefs } from "vue";
 import ArticleListPanel from "@/components/article/ArticleListPanel.vue";
@@ -13,8 +13,8 @@ const { domain, articles, domainTags, sidebarTags, domains } = toRefs(useData<Da
 <template>
   <ErrorState
     v-if="!domain"
-    :title="pageStatus === 404 ? '领域未找到' : '领域暂时无法打开'"
     :message="error || '领域暂时无法访问。'"
+    :title="pageStatus === 404 ? '领域未找到' : '领域暂时无法打开'"
   />
   <div v-else class="main">
     <div class="wrapper">
@@ -24,11 +24,11 @@ const { domain, articles, domainTags, sidebarTags, domains } = toRefs(useData<Da
             <div class="taxonomy-page__identity">
               <span
                 v-if="domain.icon"
-                class="avatar taxonomy-page__icon"
                 :style="{
                   backgroundImage: `url(${domain.icon.startsWith('/v1/') ? `/api/bbs${domain.icon}` : domain.icon})`,
                 }"
                 aria-hidden="true"
+                class="avatar taxonomy-page__icon"
               ></span>
               <div>
                 <h1>
@@ -37,12 +37,12 @@ const { domain, articles, domainTags, sidebarTags, domains } = toRefs(useData<Da
                 <p class="ft-fade">{{ domain.description || "暂无领域描述。" }}</p>
               </div>
             </div>
-            <nav v-if="domainTags.length" class="domain-tags" aria-label="领域标签">
+            <nav v-if="domainTags.length" aria-label="领域标签" class="domain-tags">
               <AppLink
                 v-for="tag in domainTags"
                 :key="tag.id || tag.name"
-                rel="tag"
                 :href="`/tag/${encodeURIComponent(tag.name || '')}`"
+                rel="tag"
                 >{{ tag.name }}</AppLink
               >
             </nav>
@@ -50,7 +50,7 @@ const { domain, articles, domainTags, sidebarTags, domains } = toRefs(useData<Da
         </section>
         <ArticleListPanel :articles="articles" title="领域文章" />
       </section>
-      <ContentSidebar :tags="sidebarTags" :domains="domains" />
+      <ContentSidebar :domains="domains" :tags="sidebarTags" />
     </div>
   </div>
 </template>

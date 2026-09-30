@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onServerPrefetch, ref, watch } from "vue";
 
 const props = defineProps<{ name: string; label?: string }>();
@@ -37,7 +37,7 @@ onServerPrefetch(() => loadIcon(props.name));
 </script>
 
 <template>
-  <svg v-if="content" class="icon" :viewBox="viewBox" aria-hidden="true" focusable="false" v-html="content" />
+  <svg v-if="content" :viewBox="viewBox" aria-hidden="true" class="icon" focusable="false" v-html="content" />
 </template>
 
 <style scoped>
