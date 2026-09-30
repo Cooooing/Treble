@@ -60,13 +60,13 @@ withDefaults(
   display: inline-block;
   margin-right: 8px;
   padding: 0 3px;
-  color: #4285f4;
+  color: var(--color-link);
   text-decoration: none;
 }
 
 .article-taxonomy a:hover,
 .article-taxonomy a:focus-visible {
-  color: #e59230;
+  color: var(--color-accent);
   text-decoration: none;
   outline: 0;
 }
@@ -94,14 +94,5 @@ withDefaults(
 .article-taxonomy--compact a {
   font-size: 11px;
   line-height: 16px;
-}
-
-:global(html[data-theme="dark"]) .article-taxonomy a {
-  color: #79b8ff;
-}
-
-:global(html[data-theme="dark"]) .article-taxonomy a:hover,
-:global(html[data-theme="dark"]) .article-taxonomy a:focus-visible {
-  color: #79b8ff;
 }
 </style>

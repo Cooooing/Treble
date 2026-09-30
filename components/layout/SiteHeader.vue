@@ -176,8 +176,8 @@ watch(
 .account-menu__trigger:hover,
 .account-menu__trigger:focus-visible,
 .account-menu[open] .account-menu__trigger {
-  background: #fff7ec;
-  color: #e59230;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
   outline: none;
 }
 .theme-toggle :deep(svg) {
@@ -226,8 +226,8 @@ watch(
 }
 .account-menu__panel :is(a, button):hover,
 .account-menu__panel :is(a, button):focus-visible {
-  background: rgba(248, 250, 252, 0.9);
-  color: #e59230;
+  background: var(--color-bg-hover);
+  color: var(--color-accent);
   outline: none;
   transform: none !important;
   box-shadow: none !important;
@@ -244,48 +244,21 @@ watch(
   border: 0;
   border-radius: 6px;
   box-sizing: border-box;
-  color: #3b3e43;
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
   text-decoration: none;
 }
 .nav-auth-link:visited {
-  color: #3b3e43;
+  color: var(--color-text);
 }
 .nav-auth-link:hover,
 .nav-auth-link:focus-visible {
-  background: #fff7ec;
-  color: #e59230;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
 }
 .nav-auth-link:focus-visible {
   outline: 0;
-}
-:global(html[data-theme="dark"]) .theme-toggle:hover,
-:global(html[data-theme="dark"]) .theme-toggle:focus-visible,
-:global(html[data-theme="dark"]) .account-menu__trigger:hover,
-:global(html[data-theme="dark"]) .account-menu__trigger:focus-visible,
-:global(html[data-theme="dark"]) .account-menu[open] .account-menu__trigger {
-  background: #444d56;
-  color: #79b8ff;
-}
-:global(html[data-theme="dark"]) .account-menu__panel :is(a, button):hover,
-:global(html[data-theme="dark"]) .account-menu__panel :is(a, button):focus-visible {
-  background: #3a444d;
-  color: #79b8ff;
-}
-:global(html[data-theme="dark"]) .nav-auth-link {
-  color: #d7dde5;
-}
-:global(html[data-theme="dark"]) .nav-auth-link:visited {
-  color: #d7dde5;
-}
-:global(html[data-theme="dark"]) .nav-auth-link:hover,
-:global(html[data-theme="dark"]) .nav-auth-link:focus-visible {
-  background: #444d56;
-  color: #ffb86c;
-}
-:global(html[data-theme="dark"]) .nav-auth-link:focus-visible {
-  outline-color: #ffb86c;
 }
 </style>

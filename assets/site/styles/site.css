@@ -1,3 +1,4 @@
+@import "./theme.css";
 @import "./base.css";
 @import "./index.css";
 @import "./responsive.css";
@@ -37,19 +38,19 @@ html {
   box-sizing: border-box;
   width: 100%;
   padding: 7px 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--color-border-strong);
   border-radius: 0.3rem;
   line-height: 17px;
 }
 
 .form :is(input[type="email"], input[type="url"]):not([readonly]):not([disabled]):hover {
-  border-color: rgba(25, 140, 255, 0.5);
+  border-color: var(--color-focus-ring);
 }
 
 .form :is(input[type="email"], input[type="url"]):focus {
-  color: #198cff;
-  border-color: rgba(25, 140, 255, 0.5) !important;
-  box-shadow: 0 0 0 0.1rem rgba(25, 140, 255, 0.2);
+  color: var(--color-primary);
+  border-color: var(--color-focus-ring) !important;
+  box-shadow: 0 0 0 0.1rem color-mix(in srgb, var(--color-focus-ring), transparent 80%);
 }
 
 @media (prefers-reduced-motion: reduce) {

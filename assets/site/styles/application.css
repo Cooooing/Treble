@@ -718,21 +718,21 @@ html[data-theme="dark"] .post-page .article-post-actions > button.green:focus-vi
 }
 
 html[data-theme="dark"] .bg {
-  background-color: #444d56;
+  background-color: var(--color-bg-canvas);
 }
 
 html[data-theme="dark"] .verify .verify__title,
 html[data-theme="dark"] .verify .community-welcome h2 {
-  color: #f0f6fc;
+  color: var(--color-text-strong);
 }
 
 html[data-theme="dark"] .empty-state,
 html[data-theme="dark"] .empty-state__title {
-  color: #aeb8c2;
+  color: var(--color-text-muted);
 }
 
 html[data-theme="dark"] .empty-state__description {
-  color: #8b949e;
+  color: var(--color-text-subtle);
 }
 
 @media (max-width: 768px) {

@@ -126,7 +126,7 @@ defineExpose({ close });
   border: 1px solid var(--layer-border-color);
   border-radius: 8px;
   background: var(--layer-background-color);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-overlay);
   color: var(--text-color);
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -148,16 +148,16 @@ defineExpose({ close });
   color: var(--message-icon-color);
 }
 .site-message--info {
-  --message-icon-color: #4285f4;
+  --message-icon-color: var(--color-primary);
 }
 .site-message--success {
-  --message-icon-color: #569e3d;
+  --message-icon-color: var(--color-success);
 }
 .site-message--warning {
-  --message-icon-color: #e59230;
+  --message-icon-color: var(--color-warning);
 }
 .site-message--error {
-  --message-icon-color: #d23f31;
+  --message-icon-color: var(--color-danger);
 }
 .site-message--loading .site-message__icon {
   animation: site-message-spin 0.8s linear infinite;
@@ -199,29 +199,6 @@ defineExpose({ close });
   transition:
     opacity 0.14s ease-in,
     transform 0.14s ease-in;
-}
-
-html[data-theme="dark"] .site-message {
-  border-color: #4b5563;
-  background: #2f363d;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
-  color: #dbe4ee;
-}
-
-html[data-theme="dark"] .site-message--info {
-  --message-icon-color: #79b8ff;
-}
-html[data-theme="dark"] .site-message--success {
-  --message-icon-color: #56d364;
-}
-html[data-theme="dark"] .site-message--warning {
-  --message-icon-color: #e3b341;
-}
-html[data-theme="dark"] .site-message--error {
-  --message-icon-color: #ff7b72;
-}
-html[data-theme="dark"] .site-message__close:focus-visible {
-  outline-color: #79b8ff;
 }
 
 @keyframes site-message-spin {

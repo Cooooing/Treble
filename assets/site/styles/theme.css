@@ -1,0 +1,115 @@
+/*
+ * Theme contract
+ *
+ * Components must consume semantic tokens (for example --color-bg-surface or
+ * --color-text-muted), never a palette value or a data-theme selector. The
+ * palette is intentionally private to this file: switching theme therefore
+ * changes every component that follows the contract automatically.
+ */
+:root {
+  color-scheme: light;
+
+  /* Primitive palette: only this file may use these as component colours. */
+  --palette-white: #fff;
+  --palette-slate-50: #f6f8fa;
+  --palette-slate-100: #eef2f6;
+  --palette-slate-200: #d1d5da;
+  --palette-slate-300: #aeb8c2;
+  --palette-slate-500: #616161;
+  --palette-slate-700: #2c2c2c;
+  --palette-slate-900: #000;
+  --palette-blue-500: #4285f4;
+  --palette-blue-600: #286fbb;
+  --palette-orange-500: #e59230;
+  --palette-orange-600: #c9751c;
+  --palette-green-500: #569e3d;
+  --palette-red-500: #d23f31;
+
+  /* Semantic roles used by pages and components. */
+  --color-bg-canvas: #f6f6f6;
+  --color-bg-surface: var(--palette-white);
+  --color-bg-subtle: var(--palette-slate-50);
+  --color-bg-muted: var(--palette-slate-100);
+  --color-bg-hover: #fff7ec;
+  --color-bg-selected: #f0f5ff;
+  --color-text: var(--palette-slate-700);
+  --color-text-strong: var(--palette-slate-900);
+  --color-text-muted: #787777;
+  --color-text-subtle: #878787;
+  --color-text-inverse: var(--palette-white);
+  --color-border: #eee;
+  --color-border-strong: var(--palette-slate-200);
+  --color-link: var(--palette-blue-500);
+  --color-link-hover: var(--palette-blue-600);
+  --color-primary: var(--palette-blue-500);
+  --color-primary-hover: var(--palette-blue-600);
+  --color-accent: var(--palette-orange-500);
+  --color-accent-hover: var(--palette-orange-600);
+  --color-accent-soft: #fff7ec;
+  --color-success: var(--palette-green-500);
+  --color-success-soft: #effaf3;
+  --color-danger: var(--palette-red-500);
+  --color-danger-soft: #fff0f1;
+  --color-warning: var(--palette-orange-500);
+  --color-focus-ring: var(--palette-blue-500);
+  --shadow-surface: 0 3px 12px rgb(27 31 35 / 15%);
+  --shadow-overlay: 0 8px 20px rgb(0 0 0 / 12%);
+
+  /* Deprecated aliases for legacy styles. New code must use the roles above. */
+  --background-color: var(--color-bg-surface);
+  --background-secondary-color: var(--color-bg-subtle);
+  --text-color: var(--color-text-strong);
+  --text-gray-color: var(--color-text-muted);
+  --text-fade-color: var(--color-text-subtle);
+  --layer-color: var(--color-text-muted);
+  --layer-background-color: var(--color-bg-surface);
+  --layer-border-color: var(--color-border);
+  --layer-hover-color: var(--color-text-inverse);
+  --layer-hover-background-color: var(--color-primary);
+  --header-background-color: #3b3e43;
+  --toc-hover-color: var(--color-primary);
+  --tab-current-background-color: var(--header-background-color);
+  --box-shadow: var(--shadow-surface);
+  --dialog-close-color: rgb(255 255 255 / 54%);
+  --input-border-color: var(--color-border-strong);
+  --logo-hover-color: var(--header-background-color);
+  --link-color: var(--color-link);
+  --primary-color: var(--color-primary);
+  --error-color: var(--color-danger);
+  --red-color: var(--color-danger);
+  --accent-color: var(--color-primary);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg-canvas: #20262d;
+  --color-bg-surface: #2f363d;
+  --color-bg-subtle: #24292e;
+  --color-bg-muted: #343d46;
+  --color-bg-hover: #3a444d;
+  --color-bg-selected: #303b47;
+  --color-text: #d1d5da;
+  --color-text-strong: #f0f6fc;
+  --color-text-muted: #aeb8c2;
+  --color-text-subtle: #8b949e;
+  --color-text-inverse: #fff;
+  --color-border: #1f252b;
+  --color-border-strong: #586069;
+  --color-link: #79b8ff;
+  --color-link-hover: #b3d7ff;
+  --color-primary: #79b8ff;
+  --color-primary-hover: #b3d7ff;
+  --color-accent: #ffb86c;
+  --color-accent-hover: #ffd0a1;
+  --color-accent-soft: #3f3529;
+  --color-success: #56d364;
+  --color-success-soft: #203b2a;
+  --color-danger: #ff7b72;
+  --color-danger-soft: #45252a;
+  --color-warning: #e3b341;
+  --color-focus-ring: #79b8ff;
+  --shadow-surface: none;
+  --shadow-overlay: 0 8px 20px rgb(0 0 0 / 32%);
+  --header-background-color: var(--color-bg-surface);
+}
