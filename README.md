@@ -15,6 +15,8 @@ Treble 是 BBS 的 SSR 前端。它只消费相邻 Bass 工作区本地生成的
 Bass access/refresh token，负责注入 `Authorization`、刷新 token、CSRF 与请求 ID。
 页面 SSR 可恢复当前安全账户资料，但不会把 sid 或 token 写入 HTML。
 
+Redis 断开时会以有上限的退避策略自动重连；请求快速返回暂时不可用，不会堆积在离线队列中，也不会因认证服务短暂故障清除浏览器 sid。Redis 采用 AOF 每秒持久化，以保留普通重启前已确认的会话。
+
 ## 目录
 
 | 目录          | 职责                                                                     |

@@ -44,14 +44,28 @@ function assertSession(value: unknown): asserts value is TrebleSession {
 export class SessionRepository {
   private readonly client;
   private connection?: Promise<void>;
+  private reconnecting = false;
 
   constructor(redisUrl: string) {
     this.client = createClient({
       url: redisUrl,
       disableOfflineQueue: true,
-      socket: { connectTimeout: 3_000, reconnectStrategy: false },
+      socket: {
+        connectTimeout: 3_000,
+        reconnectStrategy: (retries) => Math.min(100 * 2 ** retries, 3_000),
+      },
     });
     this.client.on("error", (error) => console.error("Redis 会话服务错误", error));
+    this.client.on("reconnecting", () => {
+      if (this.reconnecting) return;
+      this.reconnecting = true;
+      console.warn("Redis 会话服务已断开，正在重连");
+    });
+    this.client.on("ready", () => {
+      if (!this.reconnecting) return;
+      this.reconnecting = false;
+      console.info("Redis 会话服务已恢复");
+    });
   }
 
   async create(session: Omit<TrebleSession, "version">) {
@@ -149,6 +163,8 @@ export class SessionRepository {
       await this.connection;
     } catch {
       throw new SessionStoreError();
+    } finally {
+      this.connection = undefined;
     }
   }
 

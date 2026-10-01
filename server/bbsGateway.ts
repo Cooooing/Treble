@@ -9,6 +9,7 @@ const loginPath = "/v1/user/auth/login";
 const logoutPath = "/v1/user/auth/logout";
 const refreshBeforeMs = 30_000;
 const bffRequestTimeoutMs = 3_000;
+const maxBffRequestBodyBytes = 1_024 * 1_024;
 const refreshPromises = new Map<string, Promise<TrebleSession | undefined>>();
 
 type GatewayRequest = IncomingMessage & { originalUrl?: string };
@@ -89,9 +90,17 @@ function sendJson(res: ServerResponse, status: number, msg: string, data: object
   res.end(JSON.stringify({ code: status, msg, data }));
 }
 
+class RequestBodyTooLargeError extends Error {}
+
 async function readBody(req: IncomingMessage) {
   const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  let size = 0;
+  for await (const chunk of req) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.length;
+    if (size > maxBffRequestBodyBytes) throw new RequestBodyTooLargeError();
+    chunks.push(buffer);
+  }
   return Buffer.concat(chunks);
 }
 
@@ -193,7 +202,8 @@ export async function refreshSession(
     if (!lock) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       const updated = await repository.get(sid);
-      return updated && updated.version > previous.version ? updated : undefined;
+      if (updated && updated.version > previous.version) return updated;
+      throw new SessionStoreError("会话刷新中，请稍后重试");
     }
     try {
       const latest = await repository.get(sid);
@@ -208,13 +218,15 @@ export async function refreshSession(
           signal: AbortSignal.timeout(bffRequestTimeoutMs),
         });
       } catch {
-        await repository.remove(sid).catch(() => undefined);
-        return undefined;
+        throw new SessionStoreError("认证服务暂时不可用");
       }
       const envelope: unknown = await response.json().catch(() => undefined);
-      if (!response.ok || !isSuccessfulEnvelope(envelope)) {
+      if (response.status === 401) {
         await repository.remove(sid);
         return undefined;
+      }
+      if (!response.ok || !isSuccessfulEnvelope(envelope)) {
+        throw new SessionStoreError("认证服务暂时不可用");
       }
       const updated = sessionFromRefresh(envelope.data, latest);
       if (!updated || !(await repository.save(sid, updated))) return undefined;
@@ -261,7 +273,8 @@ export function createBbsGateway(options: GatewayOptions) {
       let body = Buffer.alloc(0);
       try {
         body = await readBody(req);
-      } catch {
+      } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) return sendJson(res, 413, "请求体过大");
         // 退出本地会话不依赖请求体可读。
       }
 
@@ -283,7 +296,8 @@ export function createBbsGateway(options: GatewayOptions) {
     let body: Buffer;
     try {
       body = await readBody(req);
-    } catch {
+    } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) return sendJson(res, 413, "请求体过大");
       return sendJson(res, 400, "请求体读取失败");
     }
 
@@ -305,7 +319,8 @@ export function createBbsGateway(options: GatewayOptions) {
         if (refreshed) response = await callBff(options, req, body, refreshed.accessToken, id);
         else clearSessionCookie(res, options.isProduction);
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof SessionStoreError) return sendJson(res, 503, error.message);
       return sendJson(res, 502, "BBS 服务暂时不可用");
     }
 
