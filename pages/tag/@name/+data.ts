@@ -1,4 +1,5 @@
 import { bbsClient } from "@/utils/sdk";
+import { pageRequest } from "@/utils/page";
 import type { PageContextServer } from "vike/types";
 import { setPageStatus } from "../../pageStatus";
 
@@ -15,7 +16,7 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
   try {
     const tag = (
       await bbsClient.tag.list({
-        listTagsReq: { query: { name: pageContext.routeParams.name }, page: { page: 1, size: 1 } },
+        listTagsReq: { query: { name: pageContext.routeParams.name }, page: pageRequest(1, 1) },
       })
     ).rows?.[0];
     if (!tag) {
@@ -26,11 +27,11 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
       bbsClient.article.list({
         listArticlesReq: {
           query: { tagId: tag.id, publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
-          page: { page: 1, size: 15 },
+          page: pageRequest(1, 15),
         },
       }),
-      bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 100 } } }),
-      bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 100 } } }),
+      bbsClient.tag.list({ listTagsReq: { page: pageRequest(1, 100) } }),
+      bbsClient.domain.list({ listDomainsReq: { page: pageRequest(1, 100) } }),
     ]);
     return { tag, articles: articles.rows || [], tags: tags.rows || [], domains: domains.rows || [] };
   } catch (cause) {

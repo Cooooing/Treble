@@ -1,5 +1,6 @@
 import type { PageContextServer } from "vike/types";
 import { ApiError, bbsClient } from "@/utils/sdk";
+import { pageRequest } from "@/utils/page";
 import { setPageStatus } from "../../pageStatus";
 
 export async function data(pageContext: PageContextServer) {
@@ -14,7 +15,7 @@ export async function data(pageContext: PageContextServer) {
       const articles = await bbsClient.article.list({
         listArticlesReq: {
           query: { authorId: profile.profile.account?.id, publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
-          page: { page: 1, size: 20 },
+          page: pageRequest(1, 20),
         },
       });
       return { profile: profile.profile, articles: articles.rows || [] };

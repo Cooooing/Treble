@@ -1,12 +1,13 @@
 import type { PageContextServer } from "vike/types";
 import { bbsClient } from "@/utils/sdk";
+import { pageRequest } from "@/utils/page";
 import { setPageStatus } from "../pageStatus";
 
 export type Data = Awaited<ReturnType<typeof data>>;
 
 export async function data(pageContext: PageContextServer) {
   try {
-    return await bbsClient.notification.list({ listNotificationsReq: { page: { page: 1, size: 30 } } });
+    return await bbsClient.notification.list({ listNotificationsReq: { page: pageRequest(1, 30) } });
   } catch (cause) {
     setPageStatus(pageContext, 500);
     return {

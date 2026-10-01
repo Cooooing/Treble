@@ -1,4 +1,5 @@
 import { ApiError, bbsClient } from "@/utils/sdk";
+import { pageRequest } from "@/utils/page";
 import type { ArticleDetail } from "@bass/bbs-sdk-fetch/models/ArticleDetail";
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
 import type { ArticlePostscript } from "@bass/bbs-sdk-fetch/models/ArticlePostscript";
@@ -28,14 +29,14 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
         listCommentThreadsReq: {
           articleId: pageContext.routeParams.id,
           order: "COMMENT_ORDER_HOTTEST",
-          page: { page: 1, size: 20 },
+          page: pageRequest(1, 20),
           replyPreviewLimit: 3,
         },
       }),
       bbsClient.article
         .list({
           listArticlesReq: {
-            page: { page: 1, size: 6 },
+            page: pageRequest(1, 6),
             query: { order: "ARTICLE_ORDER_NEWEST" },
           },
         })
@@ -43,7 +44,7 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
       bbsClient.article
         .list({
           listArticlesReq: {
-            page: { page: 1, size: 6 },
+            page: pageRequest(1, 6),
             query: { order: "ARTICLE_ORDER_HOTTEST" },
           },
         })

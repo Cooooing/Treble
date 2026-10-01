@@ -1,5 +1,6 @@
 import type { PageContextServer } from "vike/types";
 import { bbsClient } from "@/utils/sdk";
+import { pageRequest } from "@/utils/page";
 import { setPageStatus } from "../pageStatus";
 
 export type Data = Awaited<ReturnType<typeof data>>;
@@ -9,7 +10,7 @@ export async function data(pageContext: PageContextServer) {
   const requestedPage = Number.parseInt(url.searchParams.get("page") || "1", 10);
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
   try {
-    return await bbsClient.article.pageViewHistory({ pageArticleViewHistoryReq: { page: { page, size: 20 } } });
+    return await bbsClient.article.pageViewHistory({ pageArticleViewHistoryReq: { page: pageRequest(page, 20) } });
   } catch (cause) {
     setPageStatus(pageContext, 500);
     return {

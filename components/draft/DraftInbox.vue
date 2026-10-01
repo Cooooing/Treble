@@ -14,6 +14,7 @@ import {
 import { currentAccount } from "@/services/sessionState";
 import { bbsClient } from "@/utils/sdk";
 import { formatDateTime } from "@/utils/date";
+import { pageRequest } from "@/utils/page";
 
 const isOpen = defineModel<boolean>({ default: false });
 const drafts = ref<ArticleListItem[]>([]);
@@ -32,7 +33,7 @@ async function refresh() {
   }
   const response = await bbsClient.article.list({
     listArticlesReq: {
-      page: { page: 1, size: 100 },
+      page: pageRequest(1, 100),
       query: { authorId, publishStatus: "ARTICLE_PUBLISH_STATUS_DRAFT" },
     },
   });

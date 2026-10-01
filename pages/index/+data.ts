@@ -1,4 +1,5 @@
 import { bbsClient } from "@/utils/sdk";
+import { pageRequest } from "@/utils/page";
 
 export type Data = Awaited<ReturnType<typeof data>>;
 
@@ -7,13 +8,13 @@ export async function data() {
     bbsClient.article.list({
       listArticlesReq: {
         query: { order: "ARTICLE_ORDER_NEWEST", publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
-        page: { page: 1, size: 15 },
+        page: pageRequest(1, 15),
       },
     }),
     bbsClient.article.list({
       listArticlesReq: {
         query: { order: "ARTICLE_ORDER_HOTTEST", publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
-        page: { page: 1, size: 8 },
+        page: pageRequest(1, 8),
       },
     }),
   ]);

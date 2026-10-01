@@ -14,6 +14,7 @@ import { message } from "@/components/feedback/message";
 import Icon from "@/components/ui/Icon.vue";
 import { currentAccount } from "@/services/sessionState";
 import { fromNow } from "@/utils/date";
+import { pageNumber, pageRequest } from "@/utils/page";
 import { bbsClient } from "@/utils/sdk";
 import ArticleEditorPanel from "./ArticleEditorPanel.vue";
 
@@ -35,7 +36,7 @@ const loadingThreads = ref(false);
 const loadingReplyParentId = ref<string>();
 const editorOpen = ref(false);
 const comment = ref<CreateCommentReq>({ articleId: props.article.id || "", content: "" });
-const total = computed(() => threadPage.value?.total || 0);
+const total = computed(() => pageNumber(threadPage.value?.total, 0));
 const replyPageSize = 10;
 function openCommentEditor(target?: RespCommentListItem) {
   if (!account.value) {
@@ -91,14 +92,14 @@ async function loadThreads(page = 1, order = commentOrder.value) {
       listCommentThreadsReq: {
         articleId: props.article.id,
         order,
-        page: { page, size: 20 },
+        page: pageRequest(page, 20),
         replyPreviewLimit: 3,
       },
     });
     commentOrder.value = order;
     threads.value = response.rows || [];
     threadPage.value = response.page;
-    emit("updated", response.page?.total || 0);
+    emit("updated", pageNumber(response.page?.total, 0));
     replyPages.value = {};
     collapsedReplyParentIds.value = {};
   } catch (cause) {
@@ -126,7 +127,7 @@ function displayedReplies(thread: RespCommentThread) {
 
 function replyTotalPages(thread: RespCommentThread) {
   const parentId = thread.root?.id;
-  const totalReplies = replyPages.value[parentId || ""]?.page?.total || thread.replyCount || 0;
+  const totalReplies = pageNumber(replyPages.value[parentId || ""]?.page?.total, thread.replyCount || 0);
   return Math.max(1, Math.ceil(totalReplies / replyPageSize));
 }
 
@@ -163,7 +164,7 @@ async function loadReplies(parentId: string, page: number) {
         articleId: props.article.id,
         parentId,
         order: "COMMENT_ORDER_OLDEST",
-        page: { page, size: replyPageSize },
+        page: pageRequest(page, replyPageSize),
       },
     });
     replyPages.value = { ...replyPages.value, [parentId]: response };
@@ -288,26 +289,26 @@ async function loadReplies(parentId: string, page: number) {
                   >
                     <span>共 {{ replyTotalPages(thread) }} 页</span>
                     <button
-                      v-if="(replyPages[thread.root.id]?.page?.page || 1) > 1"
+                      v-if="pageNumber(replyPages[thread.root.id]?.page?.page) > 1"
                       :disabled="loadingReplyParentId === thread.root.id"
                       type="button"
-                      @click="loadReplies(thread.root.id, (replyPages[thread.root.id]?.page?.page || 1) - 1)"
+                      @click="loadReplies(thread.root.id, pageNumber(replyPages[thread.root.id]?.page?.page) - 1)"
                     >
                       上一页
                     </button>
                     <template
                       v-for="(item, index) in replyPageNumbers(
                         replyTotalPages(thread),
-                        replyPages[thread.root.id]?.page?.page || 1,
+                        pageNumber(replyPages[thread.root.id]?.page?.page),
                       )"
                       :key="`${item}-${index}`"
                     >
                       <span v-if="item === '...'" aria-hidden="true">...</span>
                       <button
                         v-else
-                        :aria-current="item === (replyPages[thread.root.id]?.page?.page || 1) ? 'page' : undefined"
+                        :aria-current="item === pageNumber(replyPages[thread.root.id]?.page?.page) ? 'page' : undefined"
                         :class="{
-                          'comment-thread__page--current': item === (replyPages[thread.root.id]?.page?.page || 1),
+                          'comment-thread__page--current': item === pageNumber(replyPages[thread.root.id]?.page?.page),
                         }"
                         :disabled="loadingReplyParentId === thread.root.id"
                         type="button"
@@ -317,10 +318,10 @@ async function loadReplies(parentId: string, page: number) {
                       </button>
                     </template>
                     <button
-                      v-if="(replyPages[thread.root.id]?.page?.page || 1) < replyTotalPages(thread)"
+                      v-if="pageNumber(replyPages[thread.root.id]?.page?.page) < replyTotalPages(thread)"
                       :disabled="loadingReplyParentId === thread.root.id"
                       type="button"
-                      @click="loadReplies(thread.root.id, (replyPages[thread.root.id]?.page?.page || 1) + 1)"
+                      @click="loadReplies(thread.root.id, pageNumber(replyPages[thread.root.id]?.page?.page) + 1)"
                     >
                       下一页
                     </button>
@@ -334,19 +335,19 @@ async function loadReplies(parentId: string, page: number) {
           </template>
         </li>
       </ul>
-      <nav v-if="total > (threadPage?.size || 20)" aria-label="顶层评论分页" class="comment-root-pager">
+      <nav v-if="total > pageNumber(threadPage?.size, 20)" aria-label="顶层评论分页" class="comment-root-pager">
         <button
-          :disabled="(threadPage?.page || 1) <= 1 || loadingThreads"
+          :disabled="pageNumber(threadPage?.page) <= 1 || loadingThreads"
           type="button"
-          @click="loadThreads((threadPage?.page || 1) - 1)"
+          @click="loadThreads(pageNumber(threadPage?.page) - 1)"
         >
           上一页
         </button>
-        <span>{{ threadPage?.page || 1 }}</span>
+        <span>{{ pageNumber(threadPage?.page) }}</span>
         <button
-          :disabled="(threadPage?.page || 1) * (threadPage?.size || 20) >= total || loadingThreads"
+          :disabled="pageNumber(threadPage?.page) * pageNumber(threadPage?.size, 20) >= total || loadingThreads"
           type="button"
-          @click="loadThreads((threadPage?.page || 1) + 1)"
+          @click="loadThreads(pageNumber(threadPage?.page) + 1)"
         >
           下一页
         </button>

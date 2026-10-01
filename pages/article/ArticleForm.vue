@@ -26,6 +26,7 @@ import {
 } from "@/services/localDrafts";
 import { articleTypes } from "./index";
 import { bbsClient } from "@/utils/sdk";
+import { pageRequest } from "@/utils/page";
 
 const props = defineProps<{ article?: ArticleDetail; type?: ReqArticleTypeEnum }>();
 const type = (props.article?.type || props.type || "ARTICLE_TYPE_NORMAL") as ReqArticleTypeEnum;
@@ -145,7 +146,7 @@ function cleanedForm(): ReqArticle {
 
 async function loadTags(keepLocalTagNames = false) {
   const [tags, articleTags] = await Promise.all([
-    bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 100 }, query: { status: "TAG_STATUS_ENABLED" } } }),
+    bbsClient.tag.list({ listTagsReq: { page: pageRequest(1, 100), query: { status: "TAG_STATUS_ENABLED" } } }),
     articleId.value
       ? bbsClient.tag.listArticleTags({ listArticleTagsReq: { articleId: articleId.value } })
       : Promise.resolve({ rows: [] as RespTag[] }),

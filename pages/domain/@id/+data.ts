@@ -1,4 +1,5 @@
 import { bbsClient } from "@/utils/sdk";
+import { pageRequest } from "@/utils/page";
 import type { PageContextServer } from "vike/types";
 import { setPageStatus } from "../../pageStatus";
 
@@ -16,7 +17,7 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
   try {
     const domain = (
       await bbsClient.domain.list({
-        listDomainsReq: { query: { code: pageContext.routeParams.id }, page: { page: 1, size: 1 } },
+        listDomainsReq: { query: { code: pageContext.routeParams.id }, page: pageRequest(1, 1) },
       })
     ).rows?.[0];
 
@@ -36,12 +37,12 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
       bbsClient.article.list({
         listArticlesReq: {
           query: { domainId: domain.id, publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
-          page: { page: 1, size: 15 },
+          page: pageRequest(1, 15),
         },
       }),
-      bbsClient.tag.list({ listTagsReq: { query: { domainId: domain.id }, page: { page: 1, size: 100 } } }),
-      bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 100 } } }),
-      bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 100 } } }),
+      bbsClient.tag.list({ listTagsReq: { query: { domainId: domain.id }, page: pageRequest(1, 100) } }),
+      bbsClient.tag.list({ listTagsReq: { page: pageRequest(1, 100) } }),
+      bbsClient.domain.list({ listDomainsReq: { page: pageRequest(1, 100) } }),
     ]);
 
     return {

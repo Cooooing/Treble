@@ -1,4 +1,5 @@
 import { bbsClient } from "@/utils/sdk";
+import { pageRequest } from "@/utils/page";
 import type { PageContextServer } from "vike/types";
 import { setPageStatus } from "../pageStatus";
 
@@ -10,15 +11,15 @@ export async function data(pageContext: PageContextServer) {
       bbsClient.article.list({
         listArticlesReq: {
           query: { order: "ARTICLE_ORDER_NEWEST", publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
-          page: { page: 1, size: 15 },
+          page: pageRequest(1, 15),
         },
       }),
-      bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 12 } } }),
-      bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 8 } } }),
+      bbsClient.tag.list({ listTagsReq: { page: pageRequest(1, 12) } }),
+      bbsClient.domain.list({ listDomainsReq: { page: pageRequest(1, 8) } }),
       bbsClient.moonbreeze.pagePublic({ pagePublicMoonbreezesReq: { size: 5 } }).catch(() => undefined),
       pageContext.user
         ? bbsClient.article
-            .pageViewHistory({ pageArticleViewHistoryReq: { page: { page: 1, size: 5 } } })
+            .pageViewHistory({ pageArticleViewHistoryReq: { page: pageRequest(1, 5) } })
             .catch(() => undefined)
         : Promise.resolve(undefined),
     ]);

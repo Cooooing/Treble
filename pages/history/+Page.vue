@@ -8,6 +8,7 @@ import EmptyState from "@/components/feedback/EmptyState.vue";
 import ContentPanel from "@/components/layout/ContentPanel.vue";
 import AppLink from "@/components/ui/AppLink.vue";
 import ErrorState from "@/components/feedback/ErrorState.vue";
+import { pageNumber } from "@/utils/page";
 import type { Data } from "./+data";
 
 const { rows, page, error } = toRefs(useData<Data>());
@@ -15,8 +16,10 @@ const historyRows = computed(() => (rows.value || []) as ArticleViewHistoryItem[
 const articles = computed(() =>
   historyRows.value.flatMap((row) => (row.article ? [row.article as ArticleListItem] : [])),
 );
-const currentPage = computed(() => page.value?.page || 1);
-const totalPages = computed(() => Math.max(1, Math.ceil((page.value?.total || 0) / (page.value?.size || 20))));
+const currentPage = computed(() => pageNumber(page.value?.page));
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(pageNumber(page.value?.total, 0) / pageNumber(page.value?.size, 20))),
+);
 </script>
 
 <template>
