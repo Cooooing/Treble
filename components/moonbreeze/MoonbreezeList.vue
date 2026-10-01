@@ -55,11 +55,13 @@ async function loadMore() {
           <AppLink :href="`/member/${row.author?.name}`">{{
             row.author?.nickname || row.author?.name || "匿名用户"
           }}</AppLink>
-          <time v-if="row.createdAt" :datetime="row.createdAt.toISOString()">{{ fromNow(row.createdAt) }}</time>
-          <span v-if="row.city" class="moonbreeze-card__city">{{ row.city }}</span>
+          <div v-if="row.createdAt || row.city" class="moonbreeze-card__details">
+            <time v-if="row.createdAt" :datetime="row.createdAt.toISOString()">{{ fromNow(row.createdAt) }}</time>
+            <span v-if="row.city" class="moonbreeze-card__city">{{ row.city }}</span>
+          </div>
         </header>
-        <p class="moonbreeze-card__content">{{ row.content }}</p>
       </div>
+      <p class="moonbreeze-card__content">{{ row.content }}</p>
     </article>
     <div v-if="hasMore" class="moonbreeze-list__more">
       <button :disabled="loading" type="button" @click="loadMore">{{ loading ? "加载中..." : "加载更多" }}</button>
@@ -76,9 +78,10 @@ async function loadMore() {
   box-shadow: var(--shadow-card);
 }
 .moonbreeze-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
   padding: 15px;
   border-bottom: 1px solid var(--layer-border-color);
 }
@@ -86,6 +89,8 @@ async function loadMore() {
   border-bottom: 0;
 }
 .moonbreeze-card__avatar {
+  grid-column: 1;
+  grid-row: 1;
   flex: 0 0 42px;
   width: 42px;
   height: 42px;
@@ -97,15 +102,15 @@ async function loadMore() {
   height: 100%;
 }
 .moonbreeze-card__body {
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
   flex: 1;
 }
 .moonbreeze-card__meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 5px 9px;
-  min-height: 22px;
+  display: grid;
+  gap: 1px;
+  min-height: 42px;
 }
 .moonbreeze-card__meta a {
   color: var(--text-color);
@@ -120,7 +125,13 @@ async function loadMore() {
   color: var(--link-color);
   text-decoration: underline;
 }
-.moonbreeze-card__meta time,
+.moonbreeze-card__details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.moonbreeze-card__details time,
 .moonbreeze-card__city {
   color: var(--text-fade-color);
   font-size: 12px;
@@ -128,10 +139,11 @@ async function loadMore() {
 }
 .moonbreeze-card__city::before {
   content: "·";
-  margin-right: 9px;
+  margin-right: 8px;
 }
 .moonbreeze-card__content {
-  margin: 5px 0 0;
+  grid-column: 1 / -1;
+  margin: 10px 0 0;
   color: var(--text-color);
   font-size: 15px;
   line-height: 25px;
@@ -173,7 +185,8 @@ async function loadMore() {
 }
 @media (max-width: 480px) {
   .moonbreeze-card {
-    gap: 10px;
+    grid-template-columns: 42px minmax(0, 1fr);
+    column-gap: 10px;
     padding: 13px;
   }
 }
