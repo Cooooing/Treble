@@ -592,7 +592,7 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
 .settings__background-preview {
   display: grid;
   place-items: center;
-  aspect-ratio: 3;
+  aspect-ratio: 16 / 9;
   width: 100%;
   margin-bottom: 10px;
   overflow: hidden;

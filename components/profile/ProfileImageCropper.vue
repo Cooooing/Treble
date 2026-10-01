@@ -18,9 +18,11 @@ const error = ref("");
 const preparingUpload = ref(false);
 const isGIF = computed(() => file.value?.type === "image/gif");
 const busy = computed(() => preparingUpload.value || props.uploading);
-const ratio = computed(() => (props.purpose === "avatar" ? 1 : 3));
+// A 16:9 frame is close to Rhythm's member profile background while matching
+// common phone photos and wallpapers, so the card does not crop it again.
+const ratio = computed(() => (props.purpose === "avatar" ? 1 : 16 / 9));
 const output = computed(() =>
-  props.purpose === "avatar" ? { width: 512, height: 512 } : { width: 1500, height: 500 },
+  props.purpose === "avatar" ? { width: 512, height: 512 } : { width: 1440, height: 810 },
 );
 const outputLabel = computed(() => `${output.value.width} × ${output.value.height}`);
 const label = computed(() => (props.purpose === "avatar" ? "头像" : "背景图"));

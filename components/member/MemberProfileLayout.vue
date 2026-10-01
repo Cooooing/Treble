@@ -133,13 +133,14 @@ const location = () =>
   background: var(--layer-background-color);
 }
 .member-profile__cover {
-  height: 60px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   background: linear-gradient(135deg, #d6e6f5 0%, #edf2f7 50%, #f3dfc7 100%);
   background-position: center;
   background-size: cover;
 }
 .member-profile__identity {
-  margin-top: -38px;
+  margin-top: -40px;
   padding: 0 15px 18px;
   text-align: center;
 }
@@ -241,12 +242,6 @@ const location = () =>
     order: -1;
     width: 100%;
     margin: 0 0 12px;
-  }
-  .member-profile__cover {
-    height: 70px;
-  }
-  .member-profile__identity {
-    margin-top: -46px;
   }
   .member-profile__identity :deep(.avatar) {
     width: 92px !important;
