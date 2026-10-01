@@ -104,7 +104,12 @@ function bffRequestUrl(bffUrl: string, requestUrl: string | undefined) {
   return target;
 }
 
-function forwardHeaders(headers: IncomingHttpHeaders, accessToken: string | undefined, requestIdValue: string) {
+function forwardHeaders(
+  headers: IncomingHttpHeaders,
+  remoteAddress: string | undefined,
+  accessToken: string | undefined,
+  requestIdValue: string,
+) {
   const forwarded = new Headers();
   for (const [name, value] of Object.entries(headers)) {
     if (
@@ -116,6 +121,11 @@ function forwardHeaders(headers: IncomingHttpHeaders, accessToken: string | unde
       continue;
     forwarded.set(name, Array.isArray(value) ? value.join(",") : value);
   }
+  // Requests arrive at the BFF from this Node process, so its socket address
+  // cannot identify the browser. Replace any client-supplied forwarding value
+  // with the address observed by Treble before sending the internal request.
+  const clientIP = remoteAddress?.trim().replace(/^::ffff:/i, "");
+  if (clientIP) forwarded.set("x-forwarded-for", clientIP);
   forwarded.set("x-request-id", requestIdValue);
   if (accessToken) forwarded.set("authorization", `Bearer ${accessToken}`);
   return forwarded;
@@ -130,7 +140,7 @@ async function callBff(
 ) {
   return fetch(bffRequestUrl(options.bffUrl, req.url), {
     method: req.method,
-    headers: forwardHeaders(req.headers, accessToken, requestIdValue),
+    headers: forwardHeaders(req.headers, req.socket.remoteAddress, accessToken, requestIdValue),
     body: body.length ? (new Uint8Array(body).buffer as ArrayBuffer) : undefined,
     signal: AbortSignal.timeout(bffRequestTimeoutMs),
   });

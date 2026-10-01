@@ -24,6 +24,7 @@ defineProps<{ article: ArticleDetail; replyCount: number }>();
           ><span class="article__cnt">{{ article.authorUser?.nickname || article.authorUser?.name || "匿名用户" }}</span
           ><time>{{ article.createdAt ? fromNow(article.createdAt.getTime()) : "刚刚" }}</time></MemberLink
         >
+        <span v-if="article.city" class="article__stats">{{ article.city }}</span>
         <span class="article__stats"
           ><span class="article__cnt">{{ article.likeCount || 0 }}</span
           >点赞</span

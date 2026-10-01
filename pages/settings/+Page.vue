@@ -103,15 +103,6 @@ async function load() {
       /* 背景预览不可用不影响其他设置。 */
     }
   }
-  if (section.value === "privacy") await detectLocation();
-}
-async function detectLocation() {
-  try {
-    const result = await bbsClient.location.detectCurrent({ body: {} });
-    Object.assign(location, result.location || {});
-  } catch {
-    /* 保留已有位置；定位异常不阻断设置页。 */
-  }
 }
 async function saveProfile() {
   mbtiTouched.value = true;
