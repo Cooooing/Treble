@@ -6,7 +6,7 @@ export type Data = Awaited<ReturnType<typeof data>>;
 
 export async function data(pageContext: PageContextServer) {
   try {
-    const page = await bbsClient.breezemoon.pageWatching({ pageWatchingBreezemoonsReq: { size: 20 } });
+    const page = await bbsClient.moonbreeze.pageWatching({ pageWatchingMoonbreezesReq: { size: 20 } });
     return { rows: page.rows || [], nextCursor: page.nextCursor };
   } catch (cause) {
     setPageStatus(pageContext, 500);

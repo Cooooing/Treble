@@ -5,11 +5,11 @@ import AppLink from "@/components/ui/AppLink.vue";
 import MemberProfileLayout from "@/components/member/MemberProfileLayout.vue";
 import { fromNow } from "@/utils/date";
 
-const { profile, rows } = toRefs(useData<any>());
+const { profile, rows, private: isPrivate } = toRefs(useData<any>());
 </script>
 <template>
   <MemberProfileLayout v-if="profile" :profile="profile" active="comments">
-    <p v-if="profile.visibility?.comments === false" class="member-empty">该用户未公开回帖列表。</p>
+    <p v-if="isPrivate" class="member-empty">该用户未公开回复列表。</p>
     <p v-else-if="!rows.length" class="member-empty">暂无回帖。</p>
     <div v-else class="member-list">
       <AppLink v-for="row in rows" :key="row.id" :href="`/article/${row.articleId}#comments`" class="comment-row">

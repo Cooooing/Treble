@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import { usePageContext } from "vike-vue/usePageContext";
-import type { Breezemoon } from "@bass/bbs-sdk-fetch/models/Breezemoon";
+import type { Moonbreeze } from "@bass/bbs-sdk-fetch/models/Moonbreeze";
 import AppLink from "@/components/ui/AppLink.vue";
 import { message } from "@/components/feedback/message";
 import { currentAccount } from "@/services/sessionState";
 import { ApiError, bbsClient } from "@/utils/sdk";
 
-const emit = defineEmits<{ created: [row: Breezemoon] }>();
+const emit = defineEmits<{ created: [row: Moonbreeze] }>();
 
 const maxCharacters = 512;
 const pageContext = usePageContext();
@@ -27,7 +27,7 @@ function normalizeInput() {
 
 function validate() {
   if (!normalizedContent.value) return "请输入动态内容。";
-  if (/[\r\n]/.test(content.value)) return "明月清风仅支持单行文本。";
+  if (/[\r\n]/.test(content.value)) return "清风明月仅支持单行文本。";
   if (characterCount.value > maxCharacters) return `内容不能超过 ${maxCharacters} 个字符。`;
   return "";
 }
@@ -46,12 +46,12 @@ async function submit() {
 
   submitting.value = true;
   try {
-    const response = await bbsClient.breezemoon.create({
-      createBreezemoonReq: { content: normalizedContent.value },
+    const response = await bbsClient.moonbreeze.create({
+      createMoonbreezeReq: { content: normalizedContent.value },
     });
-    if (response.breezemoon) emit("created", response.breezemoon);
+    if (response.moonbreeze) emit("created", response.moonbreeze);
     content.value = "";
-    message.success("已发布。", { id: "breezemoon-create" });
+    message.success("已发布。", { id: "moonbreeze-create" });
   } catch (cause) {
     error.value = errorMessage(cause);
   } finally {
@@ -61,15 +61,15 @@ async function submit() {
 </script>
 
 <template>
-  <form v-if="account" aria-label="发布明月清风" class="breezemoon-composer" @submit.prevent="submit">
-    <div class="breezemoon-composer__row">
+  <form v-if="account" aria-label="发布清风明月" class="moonbreeze-composer" @submit.prevent="submit">
+    <div class="moonbreeze-composer__row">
       <input
-        id="breezemoon-content"
+        id="moonbreeze-content"
         v-model="content"
-        :aria-describedby="error ? 'breezemoon-error' : undefined"
+        :aria-describedby="error ? 'moonbreeze-error' : undefined"
         :aria-invalid="Boolean(error)"
         :maxlength="maxCharacters"
-        class="breezemoon-composer__input"
+        class="moonbreeze-composer__input"
         placeholder="此刻想说..."
         type="text"
         @input="normalizeInput"
@@ -78,25 +78,25 @@ async function submit() {
         {{ submitting ? "发布中..." : "发布" }}
       </button>
     </div>
-    <p v-if="error" id="breezemoon-error" class="breezemoon-composer__error" role="alert">{{ error }}</p>
+    <p v-if="error" id="moonbreeze-error" class="moonbreeze-composer__error" role="alert">{{ error }}</p>
   </form>
-  <p v-else class="breezemoon-composer breezemoon-composer--guest">
-    <AppLink href="/login?next=/breezemoons">登录</AppLink> 后即可发布。
+  <p v-else class="moonbreeze-composer moonbreeze-composer--guest">
+    <AppLink href="/login?next=/moonbreezes">登录</AppLink> 后即可发布。
   </p>
 </template>
 
 <style scoped>
-.breezemoon-composer {
+.moonbreeze-composer {
   margin: 0;
 }
 
-.breezemoon-composer__row {
+.moonbreeze-composer__row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.breezemoon-composer__input {
+.moonbreeze-composer__input {
   min-width: 0;
   flex: 1;
   height: 32px;
@@ -111,12 +111,12 @@ async function submit() {
   line-height: 20px;
 }
 
-.breezemoon-composer__input:focus-visible {
+.moonbreeze-composer__input:focus-visible {
   border-color: var(--link-color);
   outline: 2px solid color-mix(in srgb, var(--link-color) 30%, transparent);
   outline-offset: 1px;
 }
-.breezemoon-composer button {
+.moonbreeze-composer button {
   flex: 0 0 auto;
   min-width: 52px;
   height: 32px;
@@ -128,24 +128,24 @@ async function submit() {
   font: inherit;
   font-size: 13px;
 }
-.breezemoon-composer button:hover:not(:disabled),
-.breezemoon-composer button:focus-visible:not(:disabled) {
+.moonbreeze-composer button:hover:not(:disabled),
+.moonbreeze-composer button:focus-visible:not(:disabled) {
   filter: brightness(0.94);
   outline: 2px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
   outline-offset: 2px;
 }
-.breezemoon-composer button:disabled {
+.moonbreeze-composer button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
-.breezemoon-composer__error {
+.moonbreeze-composer__error {
   margin: 6px 0 0;
   color: var(--color-danger);
   font-size: 12px;
   line-height: 18px;
 }
 
-.breezemoon-composer--guest {
+.moonbreeze-composer--guest {
   color: var(--text-gray-color);
   font-size: 13px;
   line-height: 32px;

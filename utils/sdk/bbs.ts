@@ -63,9 +63,9 @@ export const bbsClient = {
     const { AuthService } = await import("@bass/bbs-sdk-fetch/apis/AuthService");
     return throughBbsProxy(new AuthService(bbsConfiguration));
   }),
-  breezemoon: deferBbsService(async () => {
-    const { BreezemoonService } = await import("@bass/bbs-sdk-fetch/apis/BreezemoonService");
-    return throughBbsProxy(new BreezemoonService(bbsConfiguration));
+  moonbreeze: deferBbsService(async () => {
+    const { MoonbreezeService } = await import("@bass/bbs-sdk-fetch/apis/MoonbreezeService");
+    return throughBbsProxy(new MoonbreezeService(bbsConfiguration));
   }),
   checkin: deferBbsService(async () => {
     const { CheckinService } = await import("@bass/bbs-sdk-fetch/apis/CheckinService");

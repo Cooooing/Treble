@@ -19,12 +19,12 @@ const mbtiInput = ref("");
 const mbtiTouched = ref(false);
 const urlTouched = ref(false);
 const privacy = reactive({
-  publicArticles: true,
-  publicComments: true,
-  publicFollowing: true,
-  publicFollowers: true,
+  publicArticleList: true,
+  publicCommentList: true,
+  publicFollowingList: true,
+  publicFollowerList: true,
   publicLocation: true,
-  publicBreezemoons: true,
+  publicMoonbreezeList: true,
 });
 const location = reactive({ country: "", province: "", city: "" });
 const backgroundUrl = ref("");
@@ -43,11 +43,11 @@ const nav = [
   { key: "cancel", href: "/settings/cancel", label: "注销" },
 ];
 const privacyItems = [
-  { key: "publicArticles", label: "公开帖子" },
-  { key: "publicComments", label: "公开回帖" },
-  { key: "publicFollowing", label: "公开关注" },
-  { key: "publicFollowers", label: "公开粉丝" },
-  { key: "publicBreezemoons", label: "公开明月清风" },
+  { key: "publicArticleList", label: "公开帖子列表" },
+  { key: "publicCommentList", label: "公开回复列表" },
+  { key: "publicFollowingList", label: "公开关注列表" },
+  { key: "publicFollowerList", label: "公开粉丝列表" },
+  { key: "publicMoonbreezeList", label: "公开清风明月列表" },
   { key: "publicLocation", label: "公开位置" },
 ] as const;
 const mbtiRe = /^[EI][NS][TF][JP](?:-[AT])?$/;

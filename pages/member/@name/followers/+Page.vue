@@ -5,11 +5,12 @@ import AppLink from "@/components/ui/AppLink.vue";
 import Avatar from "@/components/identity/Avatar.vue";
 import MemberProfileLayout from "@/components/member/MemberProfileLayout.vue";
 
-const { profile, rows } = toRefs(useData<any>());
+const { profile, rows, private: isPrivate } = toRefs(useData<any>());
 </script>
 <template>
   <MemberProfileLayout v-if="profile" :profile="profile" active="followers">
-    <p v-if="!rows.length" class="member-empty">暂无粉丝。</p>
+    <p v-if="isPrivate" class="member-empty">该用户未公开粉丝列表。</p>
+    <p v-else-if="!rows.length" class="member-empty">暂无粉丝。</p>
     <div v-else class="member-list">
       <AppLink v-for="row in rows" :key="row.account?.id" :href="`/member/${row.account?.name}`" class="member-row">
         <Avatar :name="row.account?.name" :size="48" :url="row.account?.avatarUrl" />

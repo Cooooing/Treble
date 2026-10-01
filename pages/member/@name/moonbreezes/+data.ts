@@ -1,5 +1,5 @@
 import type { PageContextServer } from "vike/types";
-import { bbsClient } from "@/utils/sdk";
+import { ApiError, bbsClient } from "@/utils/sdk";
 import { setPageStatus } from "../../../pageStatus";
 
 export type Data = Awaited<ReturnType<typeof data>>;
@@ -12,8 +12,15 @@ export async function data(pageContext: PageContextServer) {
       setPageStatus(pageContext, 404);
       return { profile: undefined, rows: [], error: "该用户不存在。", pageStatus: 404 as const };
     }
-    const page = await bbsClient.breezemoon.pageMember({ pageMemberBreezemoonsReq: { name, size: 20 } });
-    return { profile: profileResponse.profile, rows: page.rows || [], nextCursor: page.nextCursor };
+    try {
+      const page = await bbsClient.moonbreeze.pageMember({ pageMemberMoonbreezesReq: { name, size: 20 } });
+      return { profile: profileResponse.profile, rows: page.rows || [], nextCursor: page.nextCursor };
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 403) {
+        return { profile: profileResponse.profile, rows: [], nextCursor: undefined, private: true };
+      }
+      throw error;
+    }
   } catch (cause) {
     setPageStatus(pageContext, 404);
     return {
