@@ -4,10 +4,14 @@ import Avatar from "@/components/identity/Avatar.vue";
 import { fromNow } from "@/utils/date";
 import type { Profile } from "@bass/bbs-sdk-fetch/models/Profile";
 
-const props = defineProps<{ profile: Profile; active: "articles" | "comments" | "following" | "followers" }>();
+const props = defineProps<{
+  profile: Profile;
+  active: "articles" | "breezemoons" | "comments" | "following" | "followers";
+}>();
 const tabs = [
   { key: "articles", label: "帖子", suffix: "" },
   { key: "comments", label: "回帖", suffix: "/comments" },
+  { key: "breezemoons", label: "明月清风", suffix: "/breezemoons" },
   { key: "following", label: "关注", suffix: "/following" },
   { key: "followers", label: "粉丝", suffix: "/followers" },
 ] as const;

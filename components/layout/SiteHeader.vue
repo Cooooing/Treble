@@ -19,6 +19,7 @@ const unreadCount = ref(0);
 const menus = [
   { name: "最新", path: "/recent", icon: "refresh" },
   { name: "最热", path: "/hot", icon: "fire" },
+  { name: "明月清风", path: "/breezemoons", icon: "breezemoons" },
 ];
 
 const account = computed(() => {

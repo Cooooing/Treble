@@ -6,7 +6,7 @@ export type Data = Awaited<ReturnType<typeof data>>;
 
 export async function data(pageContext: PageContextServer) {
   try {
-    const [articles, tags, domains] = await Promise.all([
+    const [articles, tags, domains, breezemoons] = await Promise.all([
       bbsClient.article.list({
         listArticlesReq: {
           query: { order: "ARTICLE_ORDER_HOTTEST", publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
@@ -15,14 +15,21 @@ export async function data(pageContext: PageContextServer) {
       }),
       bbsClient.tag.list({ listTagsReq: { page: { page: 1, size: 12 } } }),
       bbsClient.domain.list({ listDomainsReq: { page: { page: 1, size: 8 } } }),
+      bbsClient.breezemoon.pagePublic({ pagePublicBreezemoonsReq: { size: 5 } }).catch(() => undefined),
     ]);
-    return { rows: articles.rows || [], tags: tags.rows || [], domains: domains.rows || [] };
+    return {
+      rows: articles.rows || [],
+      tags: tags.rows || [],
+      domains: domains.rows || [],
+      breezemoons: breezemoons?.rows || [],
+    };
   } catch (cause) {
     setPageStatus(pageContext, 500);
     return {
       rows: [],
       tags: [],
       domains: [],
+      breezemoons: [],
       error: cause instanceof Error ? cause.message : "热门文章暂时无法加载。",
       pageStatus: 500 as const,
     };

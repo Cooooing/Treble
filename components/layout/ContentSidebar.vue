@@ -9,6 +9,7 @@ defineProps<{ tags?: RespTag[]; domains?: RespDomain[] }>();
 
 <template>
   <aside class="side">
+    <slot name="before" />
     <ContentPanel more-href="/domains" title="领域">
       <ul v-if="domains?.length" class="module-list community-sidebar__domains">
         <li v-for="domain in domains" :key="domain.id">

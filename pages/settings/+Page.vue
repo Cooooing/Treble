@@ -24,6 +24,7 @@ const privacy = reactive({
   publicFollowing: true,
   publicFollowers: true,
   publicLocation: true,
+  publicBreezemoons: true,
 });
 const location = reactive({ country: "", province: "", city: "" });
 const backgroundUrl = ref("");
@@ -46,6 +47,7 @@ const privacyItems = [
   { key: "publicComments", label: "公开回帖" },
   { key: "publicFollowing", label: "公开关注" },
   { key: "publicFollowers", label: "公开粉丝" },
+  { key: "publicBreezemoons", label: "公开明月清风" },
   { key: "publicLocation", label: "公开位置" },
 ] as const;
 const mbtiRe = /^[EI][NS][TF][JP](?:-[AT])?$/;
@@ -463,7 +465,7 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
             <label>当前密码</label><input v-model="password.old" type="password" /><template v-if="totpEnabled"
               ><label>TOTP 验证码</label><input v-model="totpCode" placeholder="6 位验证码" type="text" /></template
             ><button :disabled="deleting" class="fn-right" @click="cancelAccount">
-              {{ deleting ? "正在注销…" : "注销账号" }}
+              {{ deleting ? "正在注销..." : "注销账号" }}
             </button>
           </div>
         </section>
