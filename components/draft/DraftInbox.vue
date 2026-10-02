@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { navigate } from "vike/client/router";
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
 import type { ReqArticleTypeEnum } from "@bass/bbs-sdk-fetch/models/ReqArticle";
@@ -17,6 +17,7 @@ import { formatDateTime } from "@/utils/date";
 import { pageRequest } from "@/utils/page";
 
 const isOpen = defineModel<boolean>({ default: false });
+const mounted = ref(false);
 const drafts = ref<ArticleListItem[]>([]);
 const deletingId = ref<string>();
 const pendingDeletion = ref<string>();
@@ -140,13 +141,17 @@ watch(isOpen, async (open) => {
   closeButton.value?.focus();
 });
 
+onMounted(() => {
+  mounted.value = true;
+});
+
 onBeforeUnmount(() => {
   if (deletionTimer) window.clearTimeout(deletionTimer);
 });
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport v-if="mounted" to="body">
     <Transition name="draft-inbox">
       <div v-if="isOpen" class="draft-inbox" @keydown="handleKeydown">
         <div aria-hidden="true" class="draft-inbox__backdrop" @click="close" />
