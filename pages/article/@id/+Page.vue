@@ -13,6 +13,7 @@ import Postscripts from "./Postscripts.vue";
 import Icon from "@/components/ui/Icon.vue";
 import ArticleTaxonomy from "@/components/article/ArticleTaxonomy.vue";
 import Avatar from "@/components/identity/Avatar.vue";
+import MemberLink from "@/components/identity/MemberLink.vue";
 import AppLink from "@/components/ui/AppLink.vue";
 import ErrorState from "@/components/feedback/ErrorState.vue";
 import { currentAccount } from "@/services/sessionState";
@@ -189,9 +190,9 @@ onMounted(() => {
             <div class="module-panel">
               <ul class="module-list article-footer__list">
                 <li v-for="item in data.latest || []" :key="item.id">
-                  <AppLink :href="`/article/${item.id}`"
-                    ><Avatar :name="item.authorUser?.name" :size="20" :url="item.authorUser?.avatarUrl"
-                  /></AppLink>
+                  <MemberLink :username="item.authorUser?.name || ''">
+                    <Avatar :name="item.authorUser?.name" :size="20" :url="item.authorUser?.avatarUrl" square />
+                  </MemberLink>
                   <AppLink :href="`/article/${item.id}`" class="title fn-ellipsis">{{
                     item.title || "未命名文章"
                   }}</AppLink>
@@ -204,9 +205,9 @@ onMounted(() => {
             <div class="module-panel">
               <ul class="module-list article-footer__list">
                 <li v-for="item in data.hottest || []" :key="item.id">
-                  <AppLink :href="`/article/${item.id}`"
-                    ><Avatar :name="item.authorUser?.name" :size="20" :url="item.authorUser?.avatarUrl"
-                  /></AppLink>
+                  <MemberLink :username="item.authorUser?.name || ''">
+                    <Avatar :name="item.authorUser?.name" :size="20" :url="item.authorUser?.avatarUrl" square />
+                  </MemberLink>
                   <AppLink :href="`/article/${item.id}`" class="title fn-ellipsis">{{
                     item.title || "未命名文章"
                   }}</AppLink>

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { ArticleListItem } from "@bass/bbs-sdk-fetch/models/ArticleListItem";
 import Avatar from "@/components/identity/Avatar.vue";
+import MemberLink from "@/components/identity/MemberLink.vue";
 import AppLink from "@/components/ui/AppLink.vue";
 import { fromNow } from "@/utils/date";
 import ArticleTaxonomy from "./ArticleTaxonomy.vue";
@@ -31,17 +32,15 @@ function formatCount(value: number | undefined): string {
       <li v-for="article in articles" :key="article.id">
         <template v-if="compact">
           <div class="article-list__compact-row">
-            <AppLink
-              :aria-label="`${article.authorUser?.nickname || article.authorUser?.name || '用户'}的头像`"
-              :href="`/article/${article.id}`"
-            >
+            <MemberLink :username="article.authorUser?.name || ''">
               <Avatar
                 :name="article.authorUser?.name"
                 :size="32"
                 :url="article.authorUser?.avatarUrl"
                 class="avatar-small slogan"
+                square
               />
-            </AppLink>
+            </MemberLink>
             <div class="article-list__compact-details fn-flex-1">
               <AppLink :href="`/article/${article.id}`" class="title fn-ellipsis">{{
                 article.title || "未命名文章"
@@ -83,23 +82,21 @@ function formatCount(value: number | undefined): string {
           <div class="article-list__body">
             <div class="article-list__details">
               <div class="article-list__author-row">
-                <AppLink
-                  :href="article.authorUser?.name ? `/member/${article.authorUser.name}` : '/'"
-                  class="article-list__author"
-                >
+                <MemberLink :username="article.authorUser?.name || ''" class="article-list__author">
                   <Avatar :name="article.authorUser?.name" :size="40" :url="article.authorUser?.avatarUrl" square />
-                </AppLink>
+                </MemberLink>
                 <div class="article-list__author-line ft-smaller ft-fade">
                   <p>
-                    <AppLink
-                      :href="article.authorUser?.name ? `/member/${article.authorUser.name}` : '/'"
-                      class="author"
-                      >{{ article.authorUser?.nickname || article.authorUser?.name || "匿名用户" }}</AppLink
-                    >
+                    <MemberLink :username="article.authorUser?.name || ''" class="author">
+                      {{ article.authorUser?.nickname || article.authorUser?.name || "匿名用户" }}
+                    </MemberLink>
                     <span v-if="article.authorUser?.introduction"> - {{ article.authorUser.introduction }}</span>
                   </p>
                   <p v-if="article.lastReplyUser">
-                    {{ article.lastReplyUser.nickname || article.lastReplyUser.name || "匿名用户" }} 回复于
+                    <MemberLink :username="article.lastReplyUser.name || ''">
+                      {{ article.lastReplyUser.nickname || article.lastReplyUser.name || "匿名用户" }}
+                    </MemberLink>
+                    回复于
                     {{ article.lastReplyAt ? fromNow(article.lastReplyAt) : "刚刚" }}
                   </p>
                   <p v-else>{{ article.publishedAt ? `${fromNow(article.publishedAt)} 发布` : "刚刚发布" }}</p>

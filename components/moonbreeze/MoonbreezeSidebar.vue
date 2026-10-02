@@ -3,6 +3,7 @@ import { ref } from "vue";
 import type { Moonbreeze } from "@bass/bbs-sdk-fetch/models/Moonbreeze";
 import MoonbreezeComposer from "@/components/moonbreeze/MoonbreezeComposer.vue";
 import Avatar from "@/components/identity/Avatar.vue";
+import MemberLink from "@/components/identity/MemberLink.vue";
 import AppLink from "@/components/ui/AppLink.vue";
 
 const props = defineProps<{ rows: Moonbreeze[] }>();
@@ -25,9 +26,9 @@ function created(row: Moonbreeze) {
     <div class="module-panel">
       <ul v-if="recentRows.length" class="moonbreeze-sidebar__rows">
         <li v-for="row in recentRows" :key="row.id">
-          <AppLink :href="`/member/${row.author?.name}`" class="moonbreeze-sidebar__avatar">
+          <MemberLink :username="row.author?.name || ''" class="moonbreeze-sidebar__avatar">
             <Avatar :name="row.author?.name" size="100%" :url="row.author?.avatarUrl" square />
-          </AppLink>
+          </MemberLink>
           <AppLink :href="`/member/${row.author?.name}/moonbreezes`" class="moonbreeze-sidebar__row">
             <span>{{ row.content }}</span>
           </AppLink>

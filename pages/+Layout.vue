@@ -7,12 +7,14 @@
       </div>
     </main>
     <SiteFooter />
+    <UserCardHost />
   </div>
 </template>
 
 <script lang="ts" setup>
 import SiteFooter from "@/components/layout/SiteFooter.vue";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
+import UserCardHost from "@/components/identity/UserCardHost.vue";
 </script>
 
 <style scoped>

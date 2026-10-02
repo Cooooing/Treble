@@ -14,6 +14,7 @@ defineProps<{ article: ArticleDetail; replyCount: number }>();
         ><Avatar
           :name="article.authorUser?.name"
           :size="48"
+          square
           :url="article.authorUser?.avatarUrl"
           class="avatar fn-left"
       /></MemberLink>

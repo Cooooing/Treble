@@ -568,9 +568,13 @@
   background: var(--layer-border-color);
 }
 
-.article-page .comment-thread__root > .avatar {
+.article-page .comment-thread__root > a {
   flex: 0 0 auto;
   margin-right: 10px;
+}
+
+.article-page .comment-thread__root > a .avatar {
+  margin-right: 0;
 }
 
 .article-page .comment-thread__action {

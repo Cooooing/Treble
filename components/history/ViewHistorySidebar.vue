@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { ArticleViewHistoryItem } from "@bass/bbs-sdk-fetch/models/ArticleViewHistoryItem";
 import Avatar from "@/components/identity/Avatar.vue";
+import MemberLink from "@/components/identity/MemberLink.vue";
 import ContentPanel from "@/components/layout/ContentPanel.vue";
 import AppLink from "@/components/ui/AppLink.vue";
 
@@ -10,19 +11,15 @@ function authorName(row: ArticleViewHistoryItem): string {
   return row.article?.authorUser?.nickname || row.article?.authorUser?.name || "用户";
 }
 
-function authorHref(row: ArticleViewHistoryItem): string {
-  const name = row.article?.authorUser?.name;
-  return name ? `/member/${name}` : "/";
-}
 </script>
 
 <template>
   <ContentPanel more-href="/history" title="近期看过">
     <ul v-if="rows.length" class="view-history-sidebar__rows">
       <li v-for="row in rows" :key="row.article?.id">
-        <AppLink :aria-label="`${authorName(row)}的头像`" :href="authorHref(row)" class="view-history-sidebar__avatar">
+        <MemberLink :aria-label="`${authorName(row)}的头像`" :username="row.article?.authorUser?.name || ''" class="view-history-sidebar__avatar">
           <Avatar :name="row.article?.authorUser?.name" :size="36" :url="row.article?.authorUser?.avatarUrl" square />
-        </AppLink>
+        </MemberLink>
         <AppLink
           :href="`/article/${row.article?.id}`"
           :title="row.article?.title || '未命名文章'"

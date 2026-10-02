@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import type { Moonbreeze } from "@bass/bbs-sdk-fetch/models/Moonbreeze";
-import AppLink from "@/components/ui/AppLink.vue";
 import Avatar from "@/components/identity/Avatar.vue";
+import MemberLink from "@/components/identity/MemberLink.vue";
 import { message } from "@/components/feedback/message";
 import { fromNow } from "@/utils/date";
 import { bbsClient } from "@/utils/sdk";
@@ -47,14 +47,14 @@ async function loadMore() {
   <section aria-label="清风明月动态" class="moonbreeze-list">
     <p v-if="!rows.length" class="moonbreeze-list__empty">{{ emptyText || "暂无清风明月。" }}</p>
     <article v-for="row in rows" :key="row.id" class="moonbreeze-card">
-      <AppLink :href="`/member/${row.author?.name}`" class="moonbreeze-card__avatar">
+      <MemberLink :username="row.author?.name || ''" class="moonbreeze-card__avatar">
         <Avatar :name="row.author?.name" size="100%" :url="row.author?.avatarUrl" square />
-      </AppLink>
+      </MemberLink>
       <div class="moonbreeze-card__body">
         <header class="moonbreeze-card__meta">
-          <AppLink :href="`/member/${row.author?.name}`">{{
+          <MemberLink :username="row.author?.name || ''">{{
             row.author?.nickname || row.author?.name || "匿名用户"
-          }}</AppLink>
+          }}</MemberLink>
           <div v-if="row.createdAt || row.city" class="moonbreeze-card__details">
             <time v-if="row.createdAt" :datetime="row.createdAt.toISOString()">{{ fromNow(row.createdAt) }}</time>
             <span v-if="row.city" class="moonbreeze-card__city">{{ row.city }}</span>

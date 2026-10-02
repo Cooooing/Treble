@@ -10,6 +10,7 @@ import type { ListCommentThreadsResp } from "@bass/bbs-sdk-fetch/models/ListComm
 import type { RespCommentListItem } from "@bass/bbs-sdk-fetch/models/RespCommentListItem";
 import type { RespCommentThread } from "@bass/bbs-sdk-fetch/models/RespCommentThread";
 import Avatar from "@/components/identity/Avatar.vue";
+import MemberLink from "@/components/identity/MemberLink.vue";
 import { message } from "@/components/feedback/message";
 import Icon from "@/components/ui/Icon.vue";
 import { currentAccount } from "@/services/sessionState";
@@ -219,10 +220,14 @@ async function loadReplies(parentId: string, page: number) {
         <li v-for="thread in threads" :key="thread.root?.id" class="article-comment comment-thread">
           <template v-if="thread.root">
             <div :id="`comment_${thread.root.id}`" class="comment-thread__root fn-flex">
-              <Avatar :name="thread.root.user?.name" :size="48" :url="thread.root.user?.avatarUrl" />
+              <MemberLink :username="thread.root.user?.name || ''">
+                <Avatar :name="thread.root.user?.name" :size="48" :url="thread.root.user?.avatarUrl" square />
+              </MemberLink>
               <div class="fn-flex-1">
                 <div class="comment-info">
-                  <span class="ft-gray">{{ thread.root.user?.nickname || thread.root.user?.name || "匿名用户" }}</span>
+                  <MemberLink :username="thread.root.user?.name || ''" class="ft-gray">
+                    {{ thread.root.user?.nickname || thread.root.user?.name || "匿名用户" }}
+                  </MemberLink>
                 </div>
                 <section class="vditor-reset comment" v-html="thread.root.contentRender || thread.root.content" />
                 <footer class="comment-thread__action">
@@ -243,14 +248,20 @@ async function loadReplies(parentId: string, page: number) {
             <section v-if="thread.replyCount" class="comment-thread__replies">
               <template v-if="!isRepliesCollapsed(thread.root.id)">
                 <article v-for="reply in displayedReplies(thread)" :key="reply.id" class="comment-thread__reply">
-                  <Avatar :name="reply.user?.name" :size="24" :url="reply.user?.avatarUrl" />
+                  <MemberLink :username="reply.user?.name || ''">
+                    <Avatar :name="reply.user?.name" :size="24" :url="reply.user?.avatarUrl" square />
+                  </MemberLink>
                   <div class="fn-flex-1">
                     <div class="comment-thread__reply-content">
-                      <span class="comment-thread__user">{{
+                      <MemberLink :username="reply.user?.name || ''" class="comment-thread__user">{{
                         reply.user?.nickname || reply.user?.name || "匿名用户"
-                      }}</span>
+                      }}</MemberLink>
                       <span v-if="reply.replyUser && reply.replyId !== thread.root.id" class="comment-thread__target">
-                        回复 {{ reply.replyUser.nickname || reply.replyUser.name || "匿名用户" }}：
+                        回复
+                        <MemberLink :username="reply.replyUser.name || ''">
+                          {{ reply.replyUser.nickname || reply.replyUser.name || "匿名用户" }}
+                        </MemberLink>
+                        ：
                       </span>
                       <span v-html="reply.contentRender || reply.content" />
                     </div>
