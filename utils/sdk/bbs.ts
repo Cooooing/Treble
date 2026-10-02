@@ -1,5 +1,6 @@
 import type { AccountService } from "@bass/bbs-sdk-fetch/apis/AccountService";
 import type { ArticleService } from "@bass/bbs-sdk-fetch/apis/ArticleService";
+import type { ArticleSearchService } from "@bass/bbs-sdk-fetch/apis/ArticleSearchService";
 import type { AuthService } from "@bass/bbs-sdk-fetch/apis/AuthService";
 import type { CheckinService } from "@bass/bbs-sdk-fetch/apis/CheckinService";
 import type { CommentService } from "@bass/bbs-sdk-fetch/apis/CommentService";
@@ -58,6 +59,10 @@ export const bbsClient = {
   article: deferBbsService(async () => {
     const { ArticleService } = await import("@bass/bbs-sdk-fetch/apis/ArticleService");
     return throughBbsProxy(new ArticleService(bbsConfiguration));
+  }),
+  articleSearch: deferBbsService(async () => {
+    const { ArticleSearchService } = await import("@bass/bbs-sdk-fetch/apis/ArticleSearchService");
+    return throughBbsProxy(new ArticleSearchService(bbsConfiguration));
   }),
   auth: deferBbsService(async () => {
     const { AuthService } = await import("@bass/bbs-sdk-fetch/apis/AuthService");

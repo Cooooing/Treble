@@ -8,14 +8,24 @@ import SiteLogo from "@/components/layout/SiteLogo.vue";
 import AppLink from "@/components/ui/AppLink.vue";
 import { message } from "@/components/feedback/message";
 import { logout } from "@/services/auth";
+import {
+  clearSearchHistory,
+  loadSearchHistory,
+  removeSearchHistory,
+  saveSearchHistory,
+} from "@/services/searchHistory";
 import { currentAccount, setCurrentAccount } from "@/services/sessionState";
 import { bbsClient } from "@/utils/sdk";
 import { applyTheme, defaultTheme, getStoredTheme, type Theme } from "@/utils/theme";
 
 const pageContext = usePageContext();
 const accountMenu = ref<HTMLDetailsElement>();
+const searchBox = ref<HTMLElement>();
 const theme = ref<Theme>(defaultTheme);
 const unreadCount = ref(0);
+const searchQuery = ref("");
+const searchHistory = ref<string[]>([]);
+const searchHistoryOpen = ref(false);
 const menus = [
   { name: "最新", path: "/recent", icon: "refresh" },
   { name: "最热", path: "/hot", icon: "fire" },
@@ -36,15 +46,40 @@ function syncClientAccount() {
 
 function closeWhenClickingOutside(event: PointerEvent) {
   if (!accountMenu.value?.contains(event.target as Node)) accountMenu.value?.removeAttribute("open");
+  if (!searchBox.value?.contains(event.target as Node)) searchHistoryOpen.value = false;
 }
 
 function closeOnEscape(event: KeyboardEvent) {
-  if (event.key === "Escape") accountMenu.value?.removeAttribute("open");
+  if (event.key !== "Escape") return;
+  accountMenu.value?.removeAttribute("open");
+  searchHistoryOpen.value = false;
 }
 
 function toggleTheme() {
   theme.value = theme.value === "dark" ? defaultTheme : "dark";
   applyTheme(theme.value);
+}
+
+async function searchArticles() {
+  const query = searchQuery.value.trim();
+  if (!query) return;
+  searchHistory.value = saveSearchHistory(query);
+  searchHistoryOpen.value = false;
+  await navigate(`/search?q=${encodeURIComponent(query)}`);
+}
+
+async function searchFromHistory(query: string) {
+  searchQuery.value = query;
+  await searchArticles();
+}
+
+function removeHistory(query: string) {
+  searchHistory.value = removeSearchHistory(query);
+}
+
+function clearHistory() {
+  clearSearchHistory();
+  searchHistory.value = [];
 }
 
 async function signOut() {
@@ -62,6 +97,7 @@ onMounted(async () => {
   document.addEventListener("pointerdown", closeWhenClickingOutside);
   document.addEventListener("keydown", closeOnEscape);
   theme.value = getStoredTheme();
+  searchHistory.value = loadSearchHistory();
   syncClientAccount();
   if (account.value) {
     try {
@@ -87,7 +123,10 @@ watch(
 
 watch(
   () => pageContext.urlPathname,
-  () => accountMenu.value?.removeAttribute("open"),
+  () => {
+    accountMenu.value?.removeAttribute("open");
+    searchHistoryOpen.value = false;
+  },
 );
 </script>
 
@@ -106,6 +145,41 @@ watch(
         ><Icon :name="menu.icon" /> {{ menu.name }}</AppLink
       >
     </nav>
+    <form ref="searchBox" aria-label="搜索文章" class="nav-search" role="search" @submit.prevent="searchArticles">
+      <label class="fn-none" for="site-search">搜索文章</label>
+      <Icon name="search" />
+      <input
+        id="site-search"
+        v-model="searchQuery"
+        aria-controls="site-search-history"
+        :aria-expanded="searchHistoryOpen"
+        autocomplete="off"
+        maxlength="128"
+        placeholder="搜索文章"
+        type="search"
+        @focus="searchHistoryOpen = true"
+      />
+      <section v-if="searchHistoryOpen" id="site-search-history" aria-label="搜索历史" class="search-history">
+        <header class="search-history__header">
+          <strong>搜索历史</strong>
+          <button v-if="searchHistory.length" type="button" @click="clearHistory">清空</button>
+        </header>
+        <p v-if="!searchHistory.length" class="search-history__empty">暂无搜索历史</p>
+        <ul v-else class="search-history__list">
+          <li v-for="item in searchHistory" :key="item">
+            <button class="search-history__query" type="button" @click="searchFromHistory(item)">{{ item }}</button>
+            <button
+              :aria-label="`删除搜索历史：${item}`"
+              class="search-history__remove"
+              type="button"
+              @click="removeHistory(item)"
+            >
+              ×
+            </button>
+          </li>
+        </ul>
+      </section>
+    </form>
     <section aria-label="账户操作" class="user-nav">
       <button
         :aria-label="theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'"
@@ -148,6 +222,145 @@ watch(
 .account-menu {
   position: relative;
   display: inline-flex;
+}
+.nav-search {
+  position: relative;
+  display: inline-flex;
+  flex: 0 1 220px;
+  align-items: center;
+  min-width: 130px;
+  height: 34px;
+  margin: 0 12px;
+  padding: 0 9px;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 6px;
+  background: var(--background-secondary-color);
+  color: var(--text-fade-color);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+.nav-search:focus-within {
+  border-color: var(--color-accent);
+  background: var(--layer-background-color);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+.nav-search :deep(svg) {
+  width: 15px;
+  height: 15px;
+}
+.nav-search input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  font-size: 13px;
+}
+.search-history {
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 0;
+  z-index: 1003;
+  width: max(300px, 100%);
+  padding: 16px;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 8px;
+  background: var(--layer-background-color);
+  box-shadow: 0 14px 36px rgba(17, 58, 93, 0.17);
+  box-sizing: border-box;
+}
+.search-history__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-color);
+  font-size: 15px;
+}
+.search-history__header button {
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-fade-color);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.search-history__header button:hover,
+.search-history__header button:focus-visible {
+  color: var(--color-accent);
+  outline: none;
+}
+.search-history__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 13px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.search-history__list li {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--background-secondary-color);
+}
+.search-history__query,
+.search-history__remove {
+  border: 0;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  cursor: pointer;
+}
+.search-history__query {
+  min-width: 0;
+  max-width: 210px;
+  padding: 7px 5px 7px 10px;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-history__remove {
+  display: grid;
+  width: 26px;
+  place-items: center;
+  padding: 0;
+  color: var(--text-fade-color);
+  font-size: 18px;
+  line-height: 1;
+}
+.search-history__list li:hover .search-history__remove,
+.search-history__remove:focus-visible {
+  color: var(--color-accent);
+  outline: none;
+}
+.search-history__empty {
+  margin: 13px 0 1px;
+  color: var(--text-fade-color);
+  font-size: 13px;
+}
+@media (max-width: 760px) {
+  .nav-search {
+    flex: 0 1 150px;
+    margin-left: auto;
+    margin-right: 52px;
+  }
+  .search-history {
+    right: 0;
+    left: auto;
+    width: min(360px, calc(100vw - 20px));
+  }
 }
 .theme-toggle,
 .account-menu__trigger {
