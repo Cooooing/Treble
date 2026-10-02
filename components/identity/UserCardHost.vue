@@ -40,6 +40,10 @@ const canFollow = computed(() => {
   const relation = profile.value?.viewerRelation;
   return Boolean(targetID && viewerID && targetID !== viewerID && !relation?.blocking && !relation?.blockedBy);
 });
+const followLabel = computed(() => {
+  if (!profile.value?.viewerRelation?.following) return "关注";
+  return profile.value.viewerRelation.followedBy ? "互相关注" : "已关注";
+});
 
 function ClearTimer(timer: ReturnType<typeof setTimeout> | undefined) {
   if (timer) clearTimeout(timer);
@@ -233,18 +237,30 @@ watch(
                 <AppLink :href="`/member/${profile.account.name}`" class="user-card__name">
                   {{ profile.account.nickname || profile.account.name }}
                 </AppLink>
-                <AppLink :href="`/member/${profile.account.name}`" class="user-card__account">{{ profile.account.name }}</AppLink>
+                <AppLink :href="`/member/${profile.account.name}`" class="user-card__account">{{
+                  profile.account.name
+                }}</AppLink>
               </div>
             </header>
             <div class="user-card__stats">
-              <AppLink :href="`/member/${profile.account.name}/following`">{{ profile.account.followCount || 0 }} 关注</AppLink>
-              <AppLink :href="`/member/${profile.account.name}/followers`">{{ profile.account.followerCount || 0 }} 粉丝</AppLink>
+              <AppLink :href="`/member/${profile.account.name}/following`"
+                >{{ profile.account.followCount || 0 }} 关注</AppLink
+              >
+              <AppLink :href="`/member/${profile.account.name}/followers`"
+                >{{ profile.account.followerCount || 0 }} 粉丝</AppLink
+              >
             </div>
             <p v-if="profile.account.introduction" class="user-card__intro">{{ profile.account.introduction }}</p>
           </div>
           <footer class="user-card__actions">
-            <button v-if="canFollow" :disabled="followPending" class="user-card__follow" type="button" @click="ToggleFollow">
-              {{ profile.viewerRelation?.following ? "取消关注" : "关注" }}
+            <button
+              v-if="canFollow"
+              :disabled="followPending"
+              class="user-card__follow"
+              type="button"
+              @click="ToggleFollow"
+            >
+              {{ followLabel }}
             </button>
             <button class="user-card__message" disabled type="button">私信（暂未开放）</button>
           </footer>
@@ -408,9 +424,9 @@ watch(
   align-items: center;
   justify-content: center;
   padding: 0 11px;
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--color-accent);
   border-radius: 4px;
-  background: var(--color-primary);
+  background: var(--color-accent);
   color: var(--color-text-inverse);
   cursor: pointer;
   font: inherit;
@@ -420,8 +436,8 @@ watch(
 }
 .user-card__follow:hover:not(:disabled),
 .user-card__follow:focus-visible:not(:disabled) {
-  border-color: var(--color-primary-hover);
-  background: var(--color-primary-hover);
+  border-color: var(--color-accent-hover);
+  background: var(--color-accent-hover);
   color: var(--color-text-inverse);
   outline: 0;
 }

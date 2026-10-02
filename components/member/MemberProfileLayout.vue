@@ -1,13 +1,40 @@
 <script lang="ts" setup>
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { usePageContext } from "vike-vue/usePageContext";
 import AppLink from "@/components/ui/AppLink.vue";
 import Avatar from "@/components/identity/Avatar.vue";
+import Icon from "@/components/ui/Icon.vue";
+import { message } from "@/components/feedback/message";
+import { currentAccount } from "@/services/sessionState";
 import { fromNow } from "@/utils/date";
+import { bbsClient } from "@/utils/sdk";
 import type { Profile } from "@bass/bbs-sdk-fetch/models/Profile";
 
 const props = defineProps<{
   profile: Profile;
   active: "articles" | "moonbreezes" | "comments" | "following" | "followers";
 }>();
+const pageContext = usePageContext();
+const actionMenu = ref<HTMLElement>();
+const blockCancelButton = ref<HTMLButtonElement>();
+const actionMenuOpen = ref(false);
+const actionPending = ref(false);
+const blockConfirmOpen = ref(false);
+const following = ref(Boolean(props.profile.viewerRelation?.following));
+const followedBy = ref(Boolean(props.profile.viewerRelation?.followedBy));
+const blocking = ref(Boolean(props.profile.viewerRelation?.blocking));
+const blockedBy = ref(Boolean(props.profile.viewerRelation?.blockedBy));
+const account = computed(() => pageContext.user || currentAccount.value);
+const targetID = computed(() => props.profile.account?.id);
+const viewerID = computed(() => account.value?.profile?.id);
+const canManageRelation = computed(() =>
+  Boolean(targetID.value && viewerID.value && targetID.value !== viewerID.value),
+);
+const canFollow = computed(() => canManageRelation.value && !blocking.value && !blockedBy.value);
+const followLabel = computed(() => {
+  if (!following.value) return "关注";
+  return followedBy.value ? "互相关注" : "已关注";
+});
 const tabs = [
   { key: "articles", label: "帖子", suffix: "" },
   { key: "comments", label: "回帖", suffix: "/comments" },
@@ -20,6 +47,117 @@ const location = () =>
   [props.profile.location?.country, props.profile.location?.province, props.profile.location?.city]
     .filter(Boolean)
     .join(" · ");
+
+function CloseActionMenuWhenClickingOutside(event: PointerEvent) {
+  if (!actionMenu.value?.contains(event.target as Node)) actionMenuOpen.value = false;
+}
+
+function CloseActionMenuOnEscape(event: KeyboardEvent) {
+  if (event.key === "Escape") actionMenuOpen.value = false;
+}
+
+async function RefreshRelationState() {
+  const name = props.profile.account?.name;
+  if (!name || !canManageRelation.value) return;
+  try {
+    const response = await bbsClient.account.getProfile({ getProfileReq: { name } });
+    if (props.profile.account?.name !== name) return;
+    const relation = response.profile?.viewerRelation;
+    following.value = Boolean(relation?.following);
+    followedBy.value = Boolean(relation?.followedBy);
+    blocking.value = Boolean(relation?.blocking);
+    blockedBy.value = Boolean(relation?.blockedBy);
+  } catch {
+    // The server-rendered relationship snapshot remains usable if this
+    // best-effort client refresh cannot complete.
+  }
+}
+
+async function ToggleFollow() {
+  if (!targetID.value || !canFollow.value || actionPending.value) return;
+  actionPending.value = true;
+  try {
+    if (following.value) {
+      await bbsClient.relation.unfollow({ unfollowRelationReq: { targetId: targetID.value } });
+    } else {
+      await bbsClient.relation.follow({ followRelationReq: { targetId: targetID.value } });
+    }
+    following.value = !following.value;
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "关注操作失败，请稍后重试。");
+  } finally {
+    actionPending.value = false;
+  }
+}
+
+async function ToggleBlock() {
+  if (!targetID.value || !canManageRelation.value || actionPending.value) return;
+  blockConfirmOpen.value = true;
+  actionMenuOpen.value = false;
+  await nextTick();
+  blockCancelButton.value?.focus();
+}
+
+function CloseBlockConfirmation() {
+  if (!actionPending.value) blockConfirmOpen.value = false;
+}
+
+async function ConfirmBlock() {
+  if (!targetID.value || !canManageRelation.value || actionPending.value) return;
+  const nextBlocking = !blocking.value;
+  actionPending.value = true;
+  try {
+    if (nextBlocking) {
+      await bbsClient.relation.block({ blockRelationReq: { targetId: targetID.value } });
+      following.value = false;
+    } else {
+      await bbsClient.relation.unblock({ unblockRelationReq: { targetId: targetID.value } });
+    }
+    blocking.value = nextBlocking;
+    actionMenuOpen.value = false;
+    blockConfirmOpen.value = false;
+    message.success(nextBlocking ? "已加入黑名单。" : "已移出黑名单。");
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "黑名单操作失败，请稍后重试。");
+  } finally {
+    actionPending.value = false;
+  }
+}
+
+function NotifyPrivateMessageUnavailable() {
+  message.info("私信功能暂未开放。");
+}
+
+function NotifyReportUnavailable() {
+  actionMenuOpen.value = false;
+  message.info("举报功能暂未开放。");
+}
+
+onMounted(() => {
+  window.addEventListener("pointerdown", CloseActionMenuWhenClickingOutside);
+  window.addEventListener("keydown", CloseActionMenuOnEscape);
+  void RefreshRelationState();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("pointerdown", CloseActionMenuWhenClickingOutside);
+  window.removeEventListener("keydown", CloseActionMenuOnEscape);
+});
+
+watch(
+  () => props.profile,
+  (profile) => {
+    following.value = Boolean(profile.viewerRelation?.following);
+    followedBy.value = Boolean(profile.viewerRelation?.followedBy);
+    blocking.value = Boolean(profile.viewerRelation?.blocking);
+    blockedBy.value = Boolean(profile.viewerRelation?.blockedBy);
+    actionMenuOpen.value = false;
+    blockConfirmOpen.value = false;
+    void RefreshRelationState();
+  },
+);
+
+watch(viewerID, () => void RefreshRelationState());
 </script>
 
 <template>
@@ -55,6 +193,36 @@ const location = () =>
             <p v-if="profile.account?.name" class="member-profile__name">{{ profile.account.name }}</p>
             <span v-if="profile.account?.mbti" class="member-profile__mbti">{{ profile.account.mbti }}</span>
           </div>
+          <div v-if="canManageRelation" class="member-profile__actions">
+            <button
+              v-if="canFollow"
+              :disabled="actionPending || !canFollow"
+              class="member-profile__action member-profile__action--follow"
+              type="button"
+              @click="ToggleFollow"
+            >
+              {{ followLabel }}
+            </button>
+            <button class="member-profile__action" type="button" @click="NotifyPrivateMessageUnavailable">私信</button>
+            <div ref="actionMenu" class="member-profile__action-menu">
+              <button
+                :aria-expanded="actionMenuOpen"
+                aria-controls="member-profile-more-menu"
+                aria-label="更多用户操作"
+                class="member-profile__action member-profile__action--more"
+                type="button"
+                @click="actionMenuOpen = !actionMenuOpen"
+              >
+                <Icon name="more" />
+              </button>
+              <div v-if="actionMenuOpen" id="member-profile-more-menu" class="member-profile__menu" role="menu">
+                <button :disabled="actionPending" role="menuitem" type="button" @click="ToggleBlock">
+                  {{ blocking ? "取消拉黑" : "加入黑名单" }}
+                </button>
+                <button role="menuitem" type="button" @click="NotifyReportUnavailable">举报</button>
+              </div>
+            </div>
+          </div>
           <div class="member-profile__details">
             <p v-if="profile.account?.introduction" class="member-profile__intro">{{ profile.account.introduction }}</p>
             <p v-if="profile.account?.url" class="member-profile__line">
@@ -84,6 +252,41 @@ const location = () =>
       </aside>
     </div>
   </div>
+  <Transition name="member-block-confirm">
+    <section
+      v-if="blockConfirmOpen"
+      aria-labelledby="member-block-confirm-title"
+      aria-modal="true"
+      class="member-block-confirm"
+      role="dialog"
+      @keydown.esc="CloseBlockConfirmation"
+    >
+      <button
+        aria-label="关闭黑名单确认"
+        class="member-block-confirm__backdrop"
+        type="button"
+        @click="CloseBlockConfirmation"
+      />
+      <div class="member-block-confirm__panel">
+        <h2 id="member-block-confirm-title">{{ blocking ? "取消拉黑" : "加入黑名单" }}</h2>
+        <p>
+          {{
+            blocking
+              ? "移出后可再次查看对方的公开内容，但不会恢复之前的关注关系。"
+              : "加入后，双方将无法查看彼此内容或进行互动；此前的双向关注也会解除。"
+          }}
+        </p>
+        <footer>
+          <button ref="blockCancelButton" :disabled="actionPending" type="button" @click="CloseBlockConfirmation">
+            取消
+          </button>
+          <button :disabled="actionPending" class="member-block-confirm__submit" type="button" @click="ConfirmBlock">
+            {{ actionPending ? "正在处理..." : blocking ? "确认取消拉黑" : "确认加入" }}
+          </button>
+        </footer>
+      </div>
+    </section>
+  </Transition>
 </template>
 
 <style scoped>
@@ -173,6 +376,172 @@ const location = () =>
   font-size: 12px;
   line-height: 20px;
 }
+.member-profile__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 15px 16px;
+}
+.member-profile__action {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 19px;
+}
+.member-profile__action--follow,
+.member-profile__action:not(.member-profile__action--more) {
+  flex: 1 1 0;
+}
+.member-profile__action:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+.member-profile__action--follow {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+.member-profile__action--follow:hover:not(:disabled),
+.member-profile__action--follow:focus-visible:not(:disabled) {
+  border-color: var(--color-accent-hover);
+  background: var(--color-accent-hover);
+  color: var(--color-text-inverse);
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  outline-offset: 1px;
+}
+.member-profile__action--more {
+  flex: 0 0 36px;
+  width: 36px;
+  padding: 0 8px;
+}
+.member-profile__action--more :deep(.icon) {
+  width: 16px;
+  height: 16px;
+}
+.member-profile__action-menu {
+  position: relative;
+}
+.member-profile__menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 136px;
+  padding: 4px;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 3px;
+  background: var(--layer-background-color);
+  box-shadow: var(--shadow-overlay);
+}
+.member-profile__menu button {
+  display: block;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-gray-color);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+}
+.member-profile__menu button:hover:not(:disabled),
+.member-profile__menu button:focus-visible:not(:disabled) {
+  background: var(--color-bg-hover);
+  color: var(--color-accent-hover);
+  outline: 0;
+}
+.member-profile__menu button:disabled {
+  cursor: wait;
+  opacity: 0.56;
+}
+.member-block-confirm {
+  position: fixed;
+  z-index: 160;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.member-block-confirm__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgb(0 0 0 / 38%);
+  cursor: default;
+}
+.member-block-confirm__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 360px);
+  padding: 20px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 4px;
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-overlay);
+  box-sizing: border-box;
+}
+.member-block-confirm__panel h2 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
+}
+.member-block-confirm__panel p {
+  margin: 10px 0 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 22px;
+}
+.member-block-confirm__panel footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+.member-block-confirm__panel footer button {
+  min-height: 36px;
+  padding: 0 13px;
+}
+.member-block-confirm__submit {
+  border-color: var(--color-danger) !important;
+  background: var(--color-danger) !important;
+  color: var(--color-text-inverse) !important;
+}
+.member-block-confirm__submit:hover:not(:disabled),
+.member-block-confirm__submit:focus-visible:not(:disabled) {
+  filter: brightness(0.92);
+  outline: 2px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
+  outline-offset: 1px;
+}
+.member-block-confirm-enter-active,
+.member-block-confirm-leave-active {
+  transition: opacity 0.18s ease;
+}
+.member-block-confirm-enter-active .member-block-confirm__panel,
+.member-block-confirm-leave-active .member-block-confirm__panel {
+  transition: transform 0.2s ease;
+}
+.member-block-confirm-enter-from,
+.member-block-confirm-leave-to {
+  opacity: 0;
+}
+.member-block-confirm-enter-from .member-block-confirm__panel,
+.member-block-confirm-leave-to .member-block-confirm__panel {
+  transform: translateY(8px) scale(0.98);
+}
 .member-profile__details {
   margin: 0 15px;
   padding: 0 0 12px;
@@ -249,6 +618,12 @@ const location = () =>
   }
   .member-page__content {
     width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .member-block-confirm,
+  .member-block-confirm__panel {
+    transition: none !important;
   }
 }
 </style>
