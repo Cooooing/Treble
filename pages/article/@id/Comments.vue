@@ -10,22 +10,27 @@ import type { ListCommentThreadsResp } from "@bass/bbs-sdk-fetch/models/ListComm
 import type { RespCommentListItem } from "@bass/bbs-sdk-fetch/models/RespCommentListItem";
 import type { RespCommentThread } from "@bass/bbs-sdk-fetch/models/RespCommentThread";
 import Avatar from "@/components/identity/Avatar.vue";
-import MemberLink from "@/components/identity/MemberLink.vue";
 import { message } from "@/components/feedback/message";
 import Icon from "@/components/ui/Icon.vue";
 import { currentAccount } from "@/services/sessionState";
-import { fromNow } from "@/utils/date";
 import { pageNumber, pageRequest } from "@/utils/page";
 import { bbsClient } from "@/utils/sdk";
 import ArticleEditorPanel from "./ArticleEditorPanel.vue";
+import CommentThread from "./CommentThread.vue";
 
-const props = defineProps<{ article: ArticleDetail; comments: ListCommentThreadsResp }>();
+const props = defineProps<{
+  article: ArticleDetail;
+  comments: ListCommentThreadsResp;
+  isAuthor?: boolean;
+  canAcceptAnswer?: boolean;
+}>();
 const emit = defineEmits<{ updated: [total: number] }>();
 const pageContext = usePageContext();
 const account = computed(() =>
   typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value,
 );
 const threads = ref(props.comments.rows || []);
+const topComment = ref(props.comments.topComment);
 const threadPage = ref(props.comments.page);
 const commentOrder = ref<ListCommentThreadsReqOrderEnum>(ListCommentThreadsReqOrderEnum.COMMENT_ORDER_HOTTEST);
 const replyPages = ref<Record<string, ListCommentRepliesResp>>({});
@@ -38,7 +43,11 @@ const loadingReplyParentId = ref<string>();
 const editorOpen = ref(false);
 const comment = ref<CreateCommentReq>({ articleId: props.article.id || "", content: "" });
 const total = computed(() => pageNumber(threadPage.value?.total, 0));
+const displayedTotal = computed(() => total.value + (topComment.value?.thread ? 1 : 0));
+const acceptedCommentID = computed(() => props.article.activity?.qa?.acceptedCommentId);
+const canPinComment = computed(() => Boolean(props.isAuthor && props.article.type !== "ARTICLE_TYPE_QA"));
 const replyPageSize = 10;
+
 function openCommentEditor(target?: RespCommentListItem) {
   if (!account.value) {
     void navigate(`/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
@@ -85,6 +94,32 @@ async function reactToComment(action: "like" | "thank", id?: string) {
   }
 }
 
+async function acceptAnswer(commentId?: string) {
+  if (!props.article.id || !commentId) return;
+  try {
+    await bbsClient.articleActivity.acceptAnswer({
+      acceptArticleAnswerReq: { articleId: props.article.id, commentId },
+    });
+    message.success("回答已采纳。");
+    window.location.reload();
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "采纳失败，请稍后重试。");
+  }
+}
+
+async function setPinnedComment(commentId?: string) {
+  if (!props.article.id) return;
+  try {
+    await bbsClient.article.setPinnedComment({
+      setPinnedArticleCommentReq: { articleId: props.article.id, commentId },
+    });
+    message.success(commentId ? "评论已置顶。" : "已取消置顶。");
+    await loadThreads(1, commentOrder.value);
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "设置置顶评论失败，请稍后重试。");
+  }
+}
+
 async function loadThreads(page = 1, order = commentOrder.value) {
   if (!props.article.id || loadingThreads.value) return;
   loadingThreads.value = true;
@@ -99,8 +134,9 @@ async function loadThreads(page = 1, order = commentOrder.value) {
     });
     commentOrder.value = order;
     threads.value = response.rows || [];
+    topComment.value = response.topComment;
     threadPage.value = response.page;
-    emit("updated", pageNumber(response.page?.total, 0));
+    emit("updated", pageNumber(response.page?.total, 0) + (response.topComment?.thread ? 1 : 0));
     replyPages.value = {};
     collapsedReplyParentIds.value = {};
   } catch (cause) {
@@ -112,32 +148,6 @@ async function loadThreads(page = 1, order = commentOrder.value) {
 
 function isRepliesCollapsed(parentId: string) {
   return Boolean(collapsedReplyParentIds.value[parentId]);
-}
-
-function isRepliesFullyExpanded(thread: RespCommentThread) {
-  const parentId = thread.root?.id;
-  if (!parentId || isRepliesCollapsed(parentId)) return false;
-  return Boolean(replyPages.value[parentId]) || (thread.previewReplies?.length || 0) >= (thread.replyCount || 0);
-}
-
-function displayedReplies(thread: RespCommentThread) {
-  const parentId = thread.root?.id;
-  if (!parentId || isRepliesCollapsed(parentId)) return [];
-  return replyPages.value[parentId]?.rows || thread.previewReplies || [];
-}
-
-function replyTotalPages(thread: RespCommentThread) {
-  const parentId = thread.root?.id;
-  const totalReplies = pageNumber(replyPages.value[parentId || ""]?.page?.total, thread.replyCount || 0);
-  return Math.max(1, Math.ceil(totalReplies / replyPageSize));
-}
-
-function replyPageNumbers(totalPages: number, currentPage: number) {
-  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
-  if (currentPage <= 4) return [1, 2, 3, 4, 5, "...", totalPages];
-  if (currentPage >= totalPages - 3)
-    return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-  return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
 }
 
 async function revealReplies(thread: RespCommentThread) {
@@ -181,7 +191,7 @@ async function loadReplies(parentId: string, page: number) {
   <section :aria-busy="loadingThreads" class="comment-thread-list">
     <header class="comment-thread-list__header">
       <strong
-        >评论 <span>{{ total }}</span></strong
+        >评论 <span>{{ displayedTotal }}</span></strong
       >
       <nav aria-label="评论排序" class="comment-sort">
         <button
@@ -215,136 +225,42 @@ async function loadReplies(parentId: string, page: number) {
       <button v-else class="reply__text fn-flex-1" type="button" @click="openCommentEditor()">登录参与讨论...</button>
     </div>
 
-    <div v-if="threads.length" class="article-comments__list">
+    <div v-if="topComment?.thread || threads.length" class="article-comments__list">
       <ul>
-        <li v-for="thread in threads" :key="thread.root?.id" class="article-comment comment-thread">
-          <template v-if="thread.root">
-            <div :id="`comment_${thread.root.id}`" class="comment-thread__root fn-flex">
-              <MemberLink :username="thread.root.user?.name || ''">
-                <Avatar :name="thread.root.user?.name" :size="48" :url="thread.root.user?.avatarUrl" square />
-              </MemberLink>
-              <div class="fn-flex-1">
-                <div class="comment-info">
-                  <MemberLink :username="thread.root.user?.name || ''" class="ft-gray">
-                    {{ thread.root.user?.nickname || thread.root.user?.name || "匿名用户" }}
-                  </MemberLink>
-                </div>
-                <section class="vditor-reset comment" v-html="thread.root.contentRender || thread.root.content" />
-                <footer class="comment-thread__action">
-                  <span class="ft-fade">{{ thread.root.createdAt ? fromNow(thread.root.createdAt) : "刚刚" }}</span>
-                  <span class="comment-thread__action-buttons">
-                    <button type="button" @click="reactToComment('like', thread.root.id)">
-                      <Icon name="thumbs-up" /> {{ thread.root.likeCount || 0 }}
-                    </button>
-                    <button type="button" @click="reactToComment('thank', thread.root.id)">
-                      <Icon name="heart" /> {{ thread.root.thankCount || 0 }}
-                    </button>
-                    <button type="button" @click="openCommentEditor(thread.root)"><Icon name="reply" /> 回复</button>
-                  </span>
-                </footer>
-              </div>
-            </div>
-
-            <section v-if="thread.replyCount" class="comment-thread__replies">
-              <template v-if="!isRepliesCollapsed(thread.root.id)">
-                <article v-for="reply in displayedReplies(thread)" :key="reply.id" class="comment-thread__reply">
-                  <MemberLink :username="reply.user?.name || ''">
-                    <Avatar :name="reply.user?.name" :size="24" :url="reply.user?.avatarUrl" square />
-                  </MemberLink>
-                  <div class="fn-flex-1">
-                    <div class="comment-thread__reply-content">
-                      <MemberLink :username="reply.user?.name || ''" class="comment-thread__user">{{
-                        reply.user?.nickname || reply.user?.name || "匿名用户"
-                      }}</MemberLink>
-                      <span v-if="reply.replyUser && reply.replyId !== thread.root.id" class="comment-thread__target">
-                        回复
-                        <MemberLink :username="reply.replyUser.name || ''">
-                          {{ reply.replyUser.nickname || reply.replyUser.name || "匿名用户" }}
-                        </MemberLink>
-                        ：
-                      </span>
-                      <span v-html="reply.contentRender || reply.content" />
-                    </div>
-                    <footer class="comment-thread__action">
-                      <span>{{ reply.createdAt ? fromNow(reply.createdAt) : "刚刚" }}</span>
-                      <span class="comment-thread__action-buttons">
-                        <button type="button" @click="reactToComment('like', reply.id)">
-                          <Icon name="thumbs-up" /> {{ reply.likeCount || 0 }}
-                        </button>
-                        <button type="button" @click="reactToComment('thank', reply.id)">
-                          <Icon name="heart" /> {{ reply.thankCount || 0 }}
-                        </button>
-                        <button type="button" @click="openCommentEditor(reply)"><Icon name="reply" /> 回复</button>
-                      </span>
-                    </footer>
-                  </div>
-                </article>
-              </template>
-              <div class="comment-thread__reply-controls">
-                <template v-if="isRepliesCollapsed(thread.root.id) || !isRepliesFullyExpanded(thread)">
-                  <span>共 {{ thread.replyCount }} 条回复，</span>
-                  <button
-                    :disabled="loadingReplyParentId === thread.root.id"
-                    class="comment-thread__toggle"
-                    type="button"
-                    @click="revealReplies(thread)"
-                  >
-                    点击查看
-                  </button>
-                </template>
-                <template v-else>
-                  <nav
-                    v-if="replyTotalPages(thread) > 1"
-                    :aria-label="`评论 ${thread.root.id} 的回复分页`"
-                    class="comment-thread__pager"
-                  >
-                    <span>共 {{ replyTotalPages(thread) }} 页</span>
-                    <button
-                      v-if="pageNumber(replyPages[thread.root.id]?.page?.page) > 1"
-                      :disabled="loadingReplyParentId === thread.root.id"
-                      type="button"
-                      @click="loadReplies(thread.root.id, pageNumber(replyPages[thread.root.id]?.page?.page) - 1)"
-                    >
-                      上一页
-                    </button>
-                    <template
-                      v-for="(item, index) in replyPageNumbers(
-                        replyTotalPages(thread),
-                        pageNumber(replyPages[thread.root.id]?.page?.page),
-                      )"
-                      :key="`${item}-${index}`"
-                    >
-                      <span v-if="item === '...'" aria-hidden="true">...</span>
-                      <button
-                        v-else
-                        :aria-current="item === pageNumber(replyPages[thread.root.id]?.page?.page) ? 'page' : undefined"
-                        :class="{
-                          'comment-thread__page--current': item === pageNumber(replyPages[thread.root.id]?.page?.page),
-                        }"
-                        :disabled="loadingReplyParentId === thread.root.id"
-                        type="button"
-                        @click="loadReplies(thread.root.id, item)"
-                      >
-                        {{ item }}
-                      </button>
-                    </template>
-                    <button
-                      v-if="pageNumber(replyPages[thread.root.id]?.page?.page) < replyTotalPages(thread)"
-                      :disabled="loadingReplyParentId === thread.root.id"
-                      type="button"
-                      @click="loadReplies(thread.root.id, pageNumber(replyPages[thread.root.id]?.page?.page) + 1)"
-                    >
-                      下一页
-                    </button>
-                  </nav>
-                  <button class="comment-thread__toggle" type="button" @click="collapseReplies(thread.root.id)">
-                    收起
-                  </button>
-                </template>
-              </div>
-            </section>
-          </template>
-        </li>
+        <CommentThread
+          v-if="topComment?.thread"
+          :thread="topComment.thread"
+          pin-label="置顶"
+          :is-article-author="topComment.thread.root?.createdBy === article.createdBy"
+          :can-pin="canPinComment"
+          :reply-page="replyPages[topComment.thread.root?.id || '']"
+          :replies-collapsed="Boolean(collapsedReplyParentIds[topComment.thread.root?.id || ''])"
+          :replies-loading="loadingReplyParentId === topComment.thread.root?.id"
+          @collapse="collapseReplies(topComment.thread.root?.id || '')"
+          @page-replies="loadReplies(topComment.thread.root?.id || '', $event)"
+          @pin="setPinnedComment"
+          @react="reactToComment"
+          @reply="openCommentEditor"
+          @reveal="revealReplies(topComment.thread)"
+        />
+        <CommentThread
+          v-for="thread in threads"
+          :key="thread.root?.id"
+          :thread="thread"
+          :is-article-author="thread.root?.createdBy === article.createdBy"
+          :can-accept-answer="Boolean(canAcceptAnswer && !acceptedCommentID)"
+          :can-pin="canPinComment"
+          :reply-page="replyPages[thread.root?.id || '']"
+          :replies-collapsed="Boolean(collapsedReplyParentIds[thread.root?.id || ''])"
+          :replies-loading="loadingReplyParentId === thread.root?.id"
+          @accept="acceptAnswer"
+          @collapse="collapseReplies(thread.root?.id || '')"
+          @page-replies="loadReplies(thread.root?.id || '', $event)"
+          @pin="setPinnedComment"
+          @react="reactToComment"
+          @reply="openCommentEditor"
+          @reveal="revealReplies(thread)"
+        />
       </ul>
       <nav v-if="total > pageNumber(threadPage?.size, 20)" aria-label="顶层评论分页" class="comment-root-pager">
         <button
@@ -385,3 +301,25 @@ async function loadReplies(parentId: string, page: number) {
     />
   </section>
 </template>
+
+<style scoped>
+:deep(.comment-thread__badge) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  margin-inline-start: 7px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--b3-theme-primary, #f3b425) 16%, transparent);
+  color: var(--b3-theme-primary, #a46900);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+@media (max-width: 640px) {
+  :deep(.comment-thread__badge) {
+    margin-inline-start: 6px;
+  }
+}
+</style>

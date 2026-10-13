@@ -1636,7 +1636,7 @@ body.revision-modal-open {
 .article-list .abstract:visited {
   color: #999;
 }
-.article-list .author {
+.article-list .article-list__member-link {
   color: #616161;
   font-weight: 600;
 }

@@ -178,6 +178,7 @@ onMounted(() => {
                 :key="articleState.id"
                 :article="articleState"
                 :comments="data.comments"
+                :is-author="canAddPostscript"
                 @updated="updateReplyCount"
               />
             </section>

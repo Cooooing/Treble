@@ -87,13 +87,13 @@ function formatCount(value: number | undefined): string {
                 </MemberLink>
                 <div class="article-list__author-line ft-smaller ft-fade">
                   <p>
-                    <MemberLink :username="article.authorUser?.name || ''" class="author">
+                    <MemberLink :username="article.authorUser?.name || ''" class="article-list__member-link">
                       {{ article.authorUser?.nickname || article.authorUser?.name || "匿名用户" }}
                     </MemberLink>
                     <span v-if="article.authorUser?.introduction"> - {{ article.authorUser.introduction }}</span>
                   </p>
                   <p v-if="article.lastReplyUser">
-                    <MemberLink :username="article.lastReplyUser.name || ''">
+                    <MemberLink :username="article.lastReplyUser.name || ''" class="article-list__member-link">
                       {{ article.lastReplyUser.nickname || article.lastReplyUser.name || "匿名用户" }}
                     </MemberLink>
                     回复于

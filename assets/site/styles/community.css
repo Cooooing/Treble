@@ -235,7 +235,7 @@
   white-space: nowrap;
 }
 
-.article-list .author {
+.article-list .article-list__member-link {
   color: var(--text-gray-color);
 }
 
@@ -253,7 +253,7 @@
 }
 
 .article-list .abstract:hover,
-.article-list .author:hover {
+.article-list .article-list__member-link:hover {
   color: #e59230;
   text-decoration: none;
 }
@@ -450,7 +450,7 @@ html[data-theme="dark"] .taxonomy-list__item h3 a {
 }
 
 html[data-theme="dark"] .article-list .abstract,
-html[data-theme="dark"] .article-list .author,
+html[data-theme="dark"] .article-list .article-list__member-link,
 html[data-theme="dark"] .community-sidebar__empty {
   color: #aeb8c2;
 }
