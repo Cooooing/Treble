@@ -10,9 +10,11 @@ withDefaults(
     articles: ArticleListItem[];
     compact?: boolean;
     more?: string;
+    emptyText?: string;
   }>(),
   {
     compact: false,
+    emptyText: undefined,
   },
 );
 </script>
@@ -20,6 +22,6 @@ withDefaults(
 <template>
   <ContentPanel :more-href="more" :title="title">
     <ArticleList v-if="articles.length" :articles="articles" :compact="compact" />
-    <EmptyState v-else />
+    <EmptyState v-else :description="emptyText" />
   </ContentPanel>
 </template>

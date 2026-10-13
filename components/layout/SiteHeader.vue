@@ -26,7 +26,8 @@ const unreadCount = ref(0);
 const searchQuery = ref("");
 const searchHistory = ref<string[]>([]);
 const searchHistoryOpen = ref(false);
-const menus = [
+const locationCity = ref<string>();
+const publicMenus = [
   { name: "最新", path: "/recent", icon: "refresh" },
   { name: "最热", path: "/hot", icon: "fire" },
   { name: "清风明月", path: "/moonbreezes", icon: "moonbreezes" },
@@ -36,6 +37,11 @@ const account = computed(() => {
   if (typeof window === "undefined") return pageContext.user;
   return pageContext.user || currentAccount.value;
 });
+const menus = computed(() => [
+  ...publicMenus,
+  ...(locationCity.value ? [{ name: locationCity.value, path: "/nearby", icon: "feed" }] : []),
+  ...(account.value ? [{ name: "关注", path: "/following", icon: "userrole" }] : []),
+]);
 
 function syncClientAccount() {
   // A rendering failure can yield an error page without its original page
@@ -100,6 +106,12 @@ onMounted(async () => {
   searchHistory.value = loadSearchHistory();
   syncClientAccount();
   if (account.value) {
+    try {
+      const city = (await bbsClient.location.getCurrent({ body: {} })).location?.city?.trim();
+      locationCity.value = city || undefined;
+    } catch {
+      locationCity.value = undefined;
+    }
     try {
       unreadCount.value = (await bbsClient.notification.countUnread({ body: {} })).count || 0;
     } catch {
