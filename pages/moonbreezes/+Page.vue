@@ -4,6 +4,8 @@ import { useData } from "vike-vue/useData";
 import type { Moonbreeze } from "@bass/bbs-sdk-fetch/models/Moonbreeze";
 import MoonbreezeList from "@/components/moonbreeze/MoonbreezeList.vue";
 import MoonbreezeSidebar from "@/components/moonbreeze/MoonbreezeSidebar.vue";
+import ViewHistorySidebar from "@/components/history/ViewHistorySidebar.vue";
+import ContentSidebar from "@/components/layout/ContentSidebar.vue";
 import ErrorState from "@/components/feedback/ErrorState.vue";
 import type { Data } from "./+data";
 
@@ -28,7 +30,12 @@ function append(nextRows: Moonbreeze[], cursor?: string) {
       <section class="content">
         <MoonbreezeList :next-cursor="nextCursor" :rows="rows" stream="public" @append="append" />
       </section>
-      <aside class="side"><MoonbreezeSidebar :rows="rows" @created="prepend" /></aside>
+      <ContentSidebar :domains="data.domains" :tags="data.tags">
+        <template #before>
+          <ViewHistorySidebar v-if="data.viewHistory" :rows="data.viewHistory" />
+          <MoonbreezeSidebar :rows="rows" @created="prepend" />
+        </template>
+      </ContentSidebar>
     </div>
   </main>
 </template>
