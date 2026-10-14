@@ -1,18 +1,26 @@
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const props = defineProps<{
   disabled?: boolean;
   scheduled?: boolean;
+  mode?: "schedule" | "deadline";
+  modelValue?: Date;
 }>();
 
 const emit = defineEmits<{
   schedule: [scheduledAt: Date];
   cancel: [];
+  "update:modelValue": [value: Date];
 }>();
+
+const isDeadlinePicker = computed(() => props.mode === "deadline");
+const pickerTitle = computed(() => (isDeadlinePicker.value ? "投票截止时间" : "定时发布"));
 
 const open = ref(false);
 const root = ref<HTMLElement>();
+const panel = ref<HTMLElement>();
+const panelStyle = ref<Record<string, string>>({});
 const year = ref("");
 const month = ref("");
 const day = ref("");
@@ -163,8 +171,19 @@ function limitField(part: TimePart, event?: Event) {
 
 function openPicker() {
   confirmationValidationMessage.value = "";
-  if (!selectedAt.value) setDate(minimumAt(new Date()));
+  if (!selectedAt.value) setDate(props.modelValue || minimumAt(new Date()));
   open.value = true;
+  void nextTick(positionPanel);
+}
+
+function positionPanel() {
+  if (!root.value || !panel.value) return;
+  const trigger = root.value.getBoundingClientRect();
+  const bounds = panel.value.getBoundingClientRect();
+  const gutter = 16;
+  const left = Math.min(Math.max(gutter, trigger.right - bounds.width), window.innerWidth - bounds.width - gutter);
+  const top = Math.min(Math.max(gutter, trigger.top - bounds.height - 10), window.innerHeight - bounds.height - gutter);
+  panelStyle.value = { position: "fixed", top: `${top}px`, left: `${left}px`, right: "auto", bottom: "auto" };
 }
 
 function selectShortcut(minutes: number) {
@@ -182,7 +201,8 @@ function confirm() {
     confirmationValidationMessage.value = message;
     return;
   }
-  emit("schedule", value);
+  if (isDeadlinePicker.value) emit("update:modelValue", value);
+  else emit("schedule", value);
   open.value = false;
 }
 
@@ -191,14 +211,40 @@ function closeWhenClickOutside(event: MouseEvent) {
     open.value = false;
 }
 
-onMounted(() => document.addEventListener("mousedown", closeWhenClickOutside));
-onBeforeUnmount(() => document.removeEventListener("mousedown", closeWhenClickOutside));
+onMounted(() => {
+  if (props.modelValue) setDate(props.modelValue);
+  document.addEventListener("mousedown", closeWhenClickOutside);
+  window.addEventListener("resize", positionPanel);
+  window.addEventListener("scroll", positionPanel, true);
+});
+onBeforeUnmount(() => {
+  document.removeEventListener("mousedown", closeWhenClickOutside);
+  window.removeEventListener("resize", positionPanel);
+  window.removeEventListener("scroll", positionPanel, true);
+});
+watch(
+  () => props.modelValue,
+  (value) => {
+    if (isDeadlinePicker.value && value) setDate(value);
+  },
+);
 </script>
 
 <template>
   <div ref="root" class="scheduled-publish">
     <button
-      v-if="!scheduled"
+      v-if="isDeadlinePicker"
+      :aria-expanded="open"
+      :disabled="disabled"
+      aria-controls="scheduledPublishPanel"
+      class="article-draft-action"
+      type="button"
+      @click="open ? (open = false) : openPicker()"
+    >
+      {{ selectedText || "设置截止时间" }}
+    </button>
+    <button
+      v-else-if="!scheduled"
       :aria-expanded="open"
       :disabled="disabled"
       aria-controls="scheduledPublishPanel"
@@ -208,16 +254,37 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", closeWhenClickOu
     >
       定时发布
     </button>
-    <button v-else :disabled="disabled" class="article-draft-action" type="button" @click="openPicker">修改定时</button>
-    <button v-if="scheduled" :disabled="disabled" class="article-draft-action" type="button" @click="emit('cancel')">
+    <button v-else-if="scheduled" :disabled="disabled" class="article-draft-action" type="button" @click="openPicker">
+      修改定时
+    </button>
+    <button
+      v-if="!isDeadlinePicker && scheduled"
+      :disabled="disabled"
+      class="article-draft-action"
+      type="button"
+      @click="emit('cancel')"
+    >
       取消定时
     </button>
 
-    <section v-if="open" id="scheduledPublishPanel" aria-label="设置定时发布时间" class="scheduled-publish__panel">
+    <section
+      v-if="open"
+      id="scheduledPublishPanel"
+      ref="panel"
+      :style="panelStyle"
+      aria-label="设置定时发布时间"
+      class="scheduled-publish__panel"
+    >
       <div class="scheduled-publish__heading">
-        <strong>定时发布</strong>
+        <strong>{{ pickerTitle }}</strong>
       </div>
-      <p>文章会以当前草稿内容在指定时间公开发布。</p>
+      <p>
+        {{
+          isDeadlinePicker
+            ? "截止后所有读者均可查看投票结果，且不能再投票。"
+            : "文章会以当前草稿内容在指定时间公开发布。"
+        }}
+      </p>
       <div aria-label="快捷时间" class="scheduled-publish__shortcuts">
         <button :disabled="disabled" type="button" @click="selectShortcut(30)">30 分钟后</button>
         <button :disabled="disabled" type="button" @click="selectShortcut(60)">1 小时后</button>
@@ -274,9 +341,11 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", closeWhenClickOu
         <p v-if="displayValidationMessage" class="scheduled-publish__validation" role="status">
           {{ displayValidationMessage }}
         </p>
-        <p v-else-if="selectedText" class="scheduled-publish__summary">将于 {{ selectedText }} 发布</p>
+        <p v-else-if="selectedText" class="scheduled-publish__summary">
+          {{ isDeadlinePicker ? `截止于 ${selectedText}` : `将于 ${selectedText} 发布` }}
+        </p>
         <button :disabled="disabled || Boolean(validationMessage)" class="green" type="button" @click="confirm">
-          确认定时
+          {{ isDeadlinePicker ? "确认截止时间" : "确认定时" }}
         </button>
       </div>
     </section>
@@ -384,14 +453,5 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", closeWhenClickOu
   margin: 0;
   font-size: 14px;
   line-height: 1.4;
-}
-@media (max-width: 640px) {
-  .scheduled-publish__panel {
-    position: fixed;
-    right: 16px;
-    bottom: 16px;
-    left: 16px;
-    width: auto;
-  }
 }
 </style>
