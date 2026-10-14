@@ -30,7 +30,8 @@ const account = computed(() =>
   typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value,
 );
 const threads = ref(props.comments.rows || []);
-const topComment = ref(props.comments.topComment);
+const acceptedAnswer = ref(props.comments.acceptedAnswer);
+const pinnedComment = ref(props.comments.pinnedComment);
 const threadPage = ref(props.comments.page);
 const commentOrder = ref<ListCommentThreadsReqOrderEnum>(ListCommentThreadsReqOrderEnum.COMMENT_ORDER_HOTTEST);
 const replyPages = ref<Record<string, ListCommentRepliesResp>>({});
@@ -43,9 +44,11 @@ const loadingReplyParentId = ref<string>();
 const editorOpen = ref(false);
 const comment = ref<CreateCommentReq>({ articleId: props.article.id || "", content: "" });
 const total = computed(() => pageNumber(threadPage.value?.total, 0));
-const displayedTotal = computed(() => total.value + (topComment.value?.thread ? 1 : 0));
-const acceptedCommentID = computed(() => props.article.activity?.qa?.acceptedCommentId);
-const canPinComment = computed(() => Boolean(props.isAuthor && props.article.type !== "ARTICLE_TYPE_QA"));
+const displayedTotal = computed(
+  () => total.value + (acceptedAnswer.value?.thread ? 1 : 0) + (pinnedComment.value?.thread ? 1 : 0),
+);
+const acceptedCommentID = computed(() => props.article.acceptedCommentId);
+const canPinComment = computed(() => Boolean(props.isAuthor));
 const replyPageSize = 10;
 
 function openCommentEditor(target?: RespCommentListItem) {
@@ -97,7 +100,7 @@ async function reactToComment(action: "like" | "thank", id?: string) {
 async function acceptAnswer(commentId?: string) {
   if (!props.article.id || !commentId) return;
   try {
-    await bbsClient.articleActivity.acceptAnswer({
+    await bbsClient.article.acceptAnswer({
       acceptArticleAnswerReq: { articleId: props.article.id, commentId },
     });
     message.success("回答已采纳。");
@@ -134,9 +137,15 @@ async function loadThreads(page = 1, order = commentOrder.value) {
     });
     commentOrder.value = order;
     threads.value = response.rows || [];
-    topComment.value = response.topComment;
+    acceptedAnswer.value = response.acceptedAnswer;
+    pinnedComment.value = response.pinnedComment;
     threadPage.value = response.page;
-    emit("updated", pageNumber(response.page?.total, 0) + (response.topComment?.thread ? 1 : 0));
+    emit(
+      "updated",
+      pageNumber(response.page?.total, 0) +
+        (response.acceptedAnswer?.thread ? 1 : 0) +
+        (response.pinnedComment?.thread ? 1 : 0),
+    );
     replyPages.value = {};
     collapsedReplyParentIds.value = {};
   } catch (cause) {
@@ -225,30 +234,60 @@ async function loadReplies(parentId: string, page: number) {
       <button v-else class="reply__text fn-flex-1" type="button" @click="openCommentEditor()">登录参与讨论...</button>
     </div>
 
-    <div v-if="topComment?.thread || threads.length" class="article-comments__list">
+    <div v-if="acceptedAnswer?.thread || pinnedComment?.thread || threads.length" class="article-comments__list">
       <ul>
         <CommentThread
-          v-if="topComment?.thread"
-          :thread="topComment.thread"
+          v-if="acceptedAnswer?.thread"
+          :thread="acceptedAnswer.thread"
+          pin-label="已采纳回答"
+          :is-article-author="acceptedAnswer.thread.root?.createdBy === article.createdBy"
+          :reply-page="replyPages[acceptedAnswer.thread.root?.id || '']"
+          :replies-collapsed="Boolean(collapsedReplyParentIds[acceptedAnswer.thread.root?.id || ''])"
+          :replies-loading="loadingReplyParentId === acceptedAnswer.thread.root?.id"
+          @collapse="collapseReplies(acceptedAnswer.thread.root?.id || '')"
+          @page-replies="loadReplies(acceptedAnswer.thread.root?.id || '', $event)"
+          @react="reactToComment"
+          @reply="openCommentEditor"
+          @reveal="revealReplies(acceptedAnswer.thread)"
+        />
+        <CommentThread
+          v-if="pinnedComment?.thread"
+          :thread="pinnedComment.thread"
           pin-label="置顶"
-          :is-article-author="topComment.thread.root?.createdBy === article.createdBy"
+          :is-article-author="pinnedComment.thread.root?.createdBy === article.createdBy"
+          :can-accept-answer="
+            Boolean(
+              canAcceptAnswer &&
+                !acceptedCommentID &&
+                pinnedComment.thread.root?.parentId == null &&
+                pinnedComment.thread.root?.createdBy !== article.createdBy,
+            )
+          "
           :can-pin="canPinComment"
-          :reply-page="replyPages[topComment.thread.root?.id || '']"
-          :replies-collapsed="Boolean(collapsedReplyParentIds[topComment.thread.root?.id || ''])"
-          :replies-loading="loadingReplyParentId === topComment.thread.root?.id"
-          @collapse="collapseReplies(topComment.thread.root?.id || '')"
-          @page-replies="loadReplies(topComment.thread.root?.id || '', $event)"
+          :reply-page="replyPages[pinnedComment.thread.root?.id || '']"
+          :replies-collapsed="Boolean(collapsedReplyParentIds[pinnedComment.thread.root?.id || ''])"
+          :replies-loading="loadingReplyParentId === pinnedComment.thread.root?.id"
+          @collapse="collapseReplies(pinnedComment.thread.root?.id || '')"
+          @accept="acceptAnswer"
+          @page-replies="loadReplies(pinnedComment.thread.root?.id || '', $event)"
           @pin="setPinnedComment"
           @react="reactToComment"
           @reply="openCommentEditor"
-          @reveal="revealReplies(topComment.thread)"
+          @reveal="revealReplies(pinnedComment.thread)"
         />
         <CommentThread
           v-for="thread in threads"
           :key="thread.root?.id"
           :thread="thread"
           :is-article-author="thread.root?.createdBy === article.createdBy"
-          :can-accept-answer="Boolean(canAcceptAnswer && !acceptedCommentID)"
+          :can-accept-answer="
+            Boolean(
+              canAcceptAnswer &&
+                !acceptedCommentID &&
+                thread.root?.parentId == null &&
+                thread.root?.createdBy !== article.createdBy,
+            )
+          "
           :can-pin="canPinComment"
           :reply-page="replyPages[thread.root?.id || '']"
           :replies-collapsed="Boolean(collapsedReplyParentIds[thread.root?.id || ''])"

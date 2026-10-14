@@ -179,6 +179,7 @@ onMounted(() => {
                 :article="articleState"
                 :comments="data.comments"
                 :is-author="canAddPostscript"
+                :can-accept-answer="Boolean(canAddPostscript && articleState.type === 'ARTICLE_TYPE_QA')"
                 @updated="updateReplyCount"
               />
             </section>
