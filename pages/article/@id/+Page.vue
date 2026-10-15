@@ -31,6 +31,7 @@ const postscriptEditorOpen = ref(false);
 const actionPending = ref<"like" | "thank" | "collect">();
 const selectedPollOptionIDs = ref<string[]>([...(data.article?.poll?.selectedOptionIds || [])]);
 const pollPending = ref(false);
+const lotteryPending = ref(false);
 const articleHeadings = ref<Array<{ id: string; level: number; text: string }>>([]);
 const canAddPostscript = computed(() =>
   Boolean(
@@ -47,6 +48,7 @@ watch(
     postscripts.value = data.postscripts || article?.postscripts || [];
     articleHeadings.value = [];
     actionPending.value = undefined;
+    lotteryPending.value = false;
     selectedPollOptionIDs.value = [...(article?.poll?.selectedOptionIds || [])];
     replyCount.value = data.comments?.page?.total || data.comments?.rows?.length || 0;
   },
@@ -76,6 +78,21 @@ const canVotePoll = computed(() => {
   );
 });
 const pollVoteTotal = computed(() => Number(articleState.value?.poll?.totalVoteCount || 0));
+const lotteryDrawn = computed(() => Boolean(articleState.value?.lottery?.drawnAt));
+const lotteryEnded = computed(() => {
+  const drawAt = articleState.value?.lottery?.drawAt;
+  return Boolean(drawAt && new Date(drawAt).getTime() <= Date.now());
+});
+const canEnterLottery = computed(() => {
+  const article = articleState.value;
+  return Boolean(
+    article?.lottery &&
+      account.value?.profile?.id &&
+      article.createdBy !== account.value.profile.id &&
+      !lotteryEnded.value &&
+      !lotteryDrawn.value,
+  );
+});
 
 function pollOptionPercent(voteCount?: number) {
   if (!pollVoteTotal.value) return 0;
@@ -124,6 +141,25 @@ async function votePoll() {
     message.error(cause instanceof Error ? cause.message : "投票失败，请稍后重试。");
   } finally {
     pollPending.value = false;
+  }
+}
+
+async function setLotteryEntry(entered: boolean) {
+  const article = articleState.value;
+  if (!article?.id || !canEnterLottery.value || lotteryPending.value) return;
+  lotteryPending.value = true;
+  try {
+    await bbsClient.article.enterLottery({ enterArticleLotteryReq: { articleId: article.id, entered } });
+    if (article.lottery) {
+      if (article.lottery.entered !== entered)
+        article.lottery.entryCount = String(Number(article.lottery.entryCount || 0) + (entered ? 1 : -1));
+      article.lottery.entered = entered;
+    }
+    message.success(entered ? "报名成功。" : "已撤销报名。");
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "操作失败，请稍后重试。");
+  } finally {
+    lotteryPending.value = false;
   }
 }
 
@@ -281,6 +317,55 @@ onMounted(() => {
               </button>
               <p v-else-if="!account" class="ft-fade">登录后即可参与投票。</p>
               <p v-else-if="pollEnded" class="ft-fade">投票已截止。</p>
+            </section>
+            <section v-if="articleState.lottery" aria-label="文章抽奖" class="article-poll article-lottery">
+              <header class="article-poll__header">
+                <div>
+                  <h2>抽奖</h2>
+                  <p>
+                    {{
+                      lotteryDrawn
+                        ? "已开奖"
+                        : `开奖时间：${new Date(articleState.lottery.drawAt || "").toLocaleString()}`
+                    }}
+                  </p>
+                </div>
+                <div class="article-poll__summary">
+                  <span class="article-poll__participants">{{ articleState.lottery.entryCount || 0 }} 人报名</span>
+                </div>
+              </header>
+              <div
+                v-for="prize in articleState.lottery.prizes"
+                :key="prize.id || prize.name"
+                class="article-lottery__prize"
+              >
+                <div>
+                  <strong>{{ prize.name }}</strong>
+                  <small v-if="prize.description">{{ prize.description }}</small>
+                </div>
+                <span>{{ prize.winnerLimit }} 个名额</span>
+                <p v-if="lotteryDrawn && prize.winnerUsers?.length" class="article-lottery__winners">
+                  中奖者：<MemberLink
+                    v-for="user in prize.winnerUsers"
+                    :key="user.id"
+                    :username="user.name || ''"
+                    :avatar="user.avatarUrl"
+                  />
+                </p>
+                <p v-else-if="lotteryDrawn" class="article-lottery__winners">本奖项暂无中奖者。</p>
+              </div>
+              <button
+                v-if="canEnterLottery"
+                :disabled="lotteryPending"
+                class="article-poll__submit"
+                type="button"
+                @click="setLotteryEntry(!articleState.lottery.entered)"
+              >
+                {{ lotteryPending ? "正在处理…" : articleState.lottery.entered ? "撤销报名" : "报名抽奖" }}
+              </button>
+              <p v-else-if="!account" class="ft-fade">登录后即可参与抽奖。</p>
+              <p v-else-if="canAddPostscript" class="ft-fade">作者不能参与自己的抽奖。</p>
+              <p v-else-if="lotteryEnded && !lotteryDrawn" class="ft-fade">抽奖正在开奖，请稍后刷新查看结果。</p>
             </section>
           </div>
         </div>
@@ -531,6 +616,35 @@ onMounted(() => {
 .article-poll__submit:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+.article-lottery__prize {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  padding: 12px;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 3px;
+  background: var(--background-color);
+}
+.article-lottery__prize strong,
+.article-lottery__prize small {
+  display: block;
+}
+.article-lottery__prize small,
+.article-lottery__prize > span,
+.article-lottery__winners {
+  color: var(--text-fade-color);
+  font-size: 12px;
+}
+.article-lottery__prize > span {
+  white-space: nowrap;
+}
+.article-lottery__winners {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+}
+.article-lottery__winners :deep(a) {
+  margin-left: 6px;
 }
 @media (max-width: 640px) {
   .article-poll {

@@ -22,13 +22,6 @@ export const articleTypes: Array<{
     icon: "iconAsk",
   },
   {
-    type: "ARTICLE_TYPE_LOTTERY",
-    name: "抽奖",
-    description: "发起一个有趣的抽奖活动",
-    editorHint: "说明抽奖奖品、参与条件、开奖时间与领奖方式\n\n请在发布前确认规则清晰、公平且可执行。",
-    icon: "star",
-  },
-  {
     type: "ARTICLE_TYPE_POLL",
     name: "投票",
     description: "邀请大家表达自己的选择",
@@ -36,10 +29,10 @@ export const articleTypes: Array<{
     icon: "feed",
   },
   {
-    type: "ARTICLE_TYPE_COLUMN",
-    name: "专栏",
-    description: "持续整理一个值得阅读的主题",
-    editorHint: "写下这一期想整理的主题、背景与阅读收获\n\n结构清晰的标题和小节能让内容更易阅读。",
-    icon: "book",
+    type: "ARTICLE_TYPE_LOTTERY",
+    name: "抽奖",
+    description: "发起一个有趣的抽奖活动",
+    editorHint: "说明抽奖奖品、参与条件、开奖时间与领奖方式\n\n请在发布前确认规则清晰、公平且可执行。",
+    icon: "star",
   },
 ];

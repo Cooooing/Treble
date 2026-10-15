@@ -45,6 +45,16 @@ const form = reactive<ReqArticle>({
         maxChoices: props.article.poll.maxChoices,
       }
     : { options: ["", ""], maxChoices: 1 },
+  lottery: props.article?.lottery
+    ? {
+        drawAt: props.article.lottery.drawAt,
+        prizes: props.article.lottery.prizes?.map((prize) => ({
+          name: prize.name || "",
+          description: prize.description || "",
+          winnerLimit: prize.winnerLimit || 1,
+        })) || [{ name: "", description: "", winnerLimit: 1 }],
+      }
+    : { prizes: [{ name: "", description: "", winnerLimit: 1 }] },
 });
 const currentType = articleTypes.find((item) => item.type === type);
 const loading = ref(false);
@@ -74,6 +84,7 @@ const matchingTags = computed(() => {
   );
 });
 const isPoll = computed(() => form.type === "ARTICLE_TYPE_POLL");
+const isLottery = computed(() => form.type === "ARTICLE_TYPE_LOTTERY");
 const pollDeadline = computed<Date | undefined>({
   get: () => (form.poll?.endsAt ? new Date(form.poll.endsAt) : undefined),
   set: (value: Date | string | undefined) => {
@@ -91,6 +102,23 @@ function removePollOption(index: number) {
   if ((form.poll?.options?.length || 0) <= 2) return;
   form.poll?.options?.splice(index, 1);
   if (form.poll && form.poll.maxChoices > form.poll.options.length) form.poll.maxChoices = form.poll.options.length;
+}
+
+const lotteryDrawAt = computed<Date | undefined>({
+  get: () => (form.lottery?.drawAt ? new Date(form.lottery.drawAt) : undefined),
+  set: (value: Date | string | undefined) => {
+    if (!form.lottery || !value) return;
+    const drawAt = value instanceof Date ? value : new Date(value);
+    if (!Number.isNaN(drawAt.getTime())) form.lottery.drawAt = drawAt;
+  },
+});
+
+function addLotteryPrize() {
+  if ((form.lottery?.prizes.length || 0) < 10) form.lottery?.prizes.push({ name: "", description: "", winnerLimit: 1 });
+}
+
+function removeLotteryPrize(index: number) {
+  if ((form.lottery?.prizes.length || 0) > 1) form.lottery?.prizes.splice(index, 1);
 }
 
 function normalizeTagName(value: string) {
@@ -206,6 +234,26 @@ async function save(publish: boolean): Promise<string | undefined> {
       return void message.warning("每人可选数量须在 1 到选项数量之间。");
     poll.options = options;
     poll.endsAt = new Date(poll.endsAt);
+  }
+  if (isLottery.value) {
+    const lottery = form.lottery;
+    const prizes = lottery?.prizes.map((prize) => ({
+      name: prize.name.trim(),
+      description: prize.description?.trim() || undefined,
+      winnerLimit: Number(prize.winnerLimit),
+    }));
+    if (
+      !prizes?.length ||
+      prizes.some(
+        (prize) =>
+          !prize.name || !Number.isInteger(prize.winnerLimit) || prize.winnerLimit < 1 || prize.winnerLimit > 100,
+      )
+    )
+      return void message.warning("请填写奖项名称，并将每个奖项名额设为 1 到 100。");
+    if (!lottery?.drawAt || new Date(lottery.drawAt).getTime() <= Date.now() + 5 * 60 * 1000)
+      return void message.warning("开奖时间至少应在五分钟后。");
+    lottery.prizes = prizes;
+    lottery.drawAt = new Date(lottery.drawAt);
   }
   confirmTypedTag();
   if (rewardOpen.value && !form.rewardContent?.trim()) return void message.warning("请输入打赏内容，或收起打赏设置。");
@@ -475,6 +523,81 @@ onBeforeUnmount(() => {
           </div>
         </section>
 
+        <section v-if="isLottery" aria-label="抽奖设置" class="article-poll-settings">
+          <header class="article-poll-settings__header">
+            <div>
+              <h2>抽奖设置</h2>
+              <p>发布后奖项与开奖时间不可修改。</p>
+            </div>
+            <span class="article-poll-settings__count">{{ form.lottery?.prizes.length || 0 }}/10</span>
+          </header>
+          <div class="article-lottery-settings__prizes">
+            <fieldset
+              v-for="(prize, index) in form.lottery?.prizes"
+              :key="index"
+              class="article-lottery-settings__prize"
+            >
+              <legend>奖项 {{ index + 1 }}</legend>
+              <label>
+                <span>奖项名称</span>
+                <input
+                  v-model="prize.name"
+                  :disabled="loading"
+                  :placeholder="`奖项 ${index + 1}`"
+                  maxlength="120"
+                  required
+                  type="text"
+                />
+              </label>
+              <label>
+                <span>说明</span>
+                <input
+                  v-model="prize.description"
+                  :disabled="loading"
+                  placeholder="奖品说明（可选）"
+                  maxlength="500"
+                  type="text"
+                />
+              </label>
+              <label class="article-lottery-settings__limit">
+                <span>名额</span>
+                <input
+                  v-model.number="prize.winnerLimit"
+                  :disabled="loading"
+                  max="100"
+                  min="1"
+                  required
+                  type="number"
+                />
+              </label>
+              <button
+                v-if="(form.lottery?.prizes.length || 0) > 1"
+                :aria-label="`删除奖项 ${index + 1}`"
+                :disabled="loading"
+                class="article-poll-settings__remove"
+                type="button"
+                @click="removeLotteryPrize(index)"
+              >
+                ×
+              </button>
+            </fieldset>
+          </div>
+          <button
+            :disabled="loading || (form.lottery?.prizes.length || 0) >= 10"
+            class="article-poll-settings__add"
+            type="button"
+            @click="addLotteryPrize"
+          >
+            + 添加奖项
+          </button>
+          <div class="article-poll-settings__rules">
+            <div>
+              <span>开奖时间</span>
+              <ScheduledPublishControl v-model="lotteryDrawAt" :disabled="loading" mode="deadline" />
+            </div>
+          </div>
+        </section>
+
         <section class="wrapper post__footer">
           <div class="post__type">
             <Icon :name="currentType?.icon || 'article'" aria-hidden="true" class="post__info" />
@@ -643,9 +766,45 @@ onBeforeUnmount(() => {
   background: var(--background-color);
   color: var(--text-color);
 }
+.article-lottery-settings__prizes {
+  display: grid;
+  gap: 10px;
+}
+.article-lottery-settings__prize {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 92px 28px;
+  gap: 8px;
+  align-items: end;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 4px;
+}
+.article-lottery-settings__prize legend {
+  padding: 0 4px;
+  color: var(--text-fade-color);
+  font-size: 12px;
+}
+.article-lottery-settings__prize label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: var(--text-fade-color);
+  font-size: 12px;
+}
+.article-lottery-settings__limit input {
+  min-width: 0;
+}
 @media (max-width: 640px) {
   .article-supplementary {
     width: calc(100% - 20px);
+  }
+  .article-lottery-settings__prize {
+    grid-template-columns: 1fr 76px 28px;
+  }
+  .article-lottery-settings__prize label:nth-of-type(2) {
+    grid-column: 1 / -1;
   }
 }
 </style>
