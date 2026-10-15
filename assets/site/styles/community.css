@@ -116,7 +116,10 @@
 }
 
 .article-list:not(.article-list--compact) h2 a {
-  overflow-wrap: anywhere;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .article-list__body {
