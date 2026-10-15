@@ -149,7 +149,10 @@
 }
 
 .member-article-list h2 a {
-  overflow-wrap: anywhere;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .member-article-list__stats {

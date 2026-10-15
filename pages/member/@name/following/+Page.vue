@@ -50,10 +50,14 @@ const { profile, rows, private: isPrivate } = toRefs(useData<any>());
   gap: 1px;
 }
 .member-row b {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
   color: var(--text-color);
   font-size: 16px;
   line-height: 22px;
-  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .member-row small,
 .member-row em {

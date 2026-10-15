@@ -40,10 +40,14 @@ const { profile, rows, private: isPrivate } = toRefs(useData<any>());
   background: var(--background-secondary-color);
 }
 .comment-row h2 {
+  display: block;
+  overflow: hidden;
   margin: 0 0 6px;
   color: var(--text-color);
   font-size: 16px;
   line-height: 24px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .comment-row p {
   display: -webkit-box;
