@@ -65,7 +65,12 @@ async function submit() {
           <h2>第 {{ index + 1 }} 条附言</h2>
           <time>{{ postscript.createdAt ? fromNow(postscript.createdAt) : "刚刚" }}</time>
         </header>
-        <div v-if="postscript.contentRender" class="vditor-reset" v-html="postscript.contentRender" />
+        <div
+          v-if="postscript.contentRender"
+          class="vditor-reset"
+          data-image-preview
+          v-html="postscript.contentRender"
+        />
         <p v-else>{{ postscript.content }}</p>
       </li>
     </ol>

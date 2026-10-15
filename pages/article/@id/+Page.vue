@@ -248,6 +248,7 @@ onMounted(() => {
             <div v-if="articleState.statement" class="article-statement">{{ articleState.statement }}</div>
             <MarkdownRenderer
               :key="data.article?.id"
+              data-image-preview
               :html="articleState.contentRender"
               :md="articleState.content || ''"
               class="vditor-reset article-content"
@@ -264,7 +265,7 @@ onMounted(() => {
             </section>
             <section v-if="articleState.hasReward && articleState.rewardContentRender" id="articleRewardContent">
               <span>{{ articleState.rewardPoints || 0 }} 积分悬赏</span>
-              <div class="vditor-reset" v-html="articleState.rewardContentRender" />
+              <div class="vditor-reset" data-image-preview v-html="articleState.rewardContentRender" />
             </section>
             <section v-if="articleState.poll" aria-label="文章投票" class="article-poll">
               <header class="article-poll__header">

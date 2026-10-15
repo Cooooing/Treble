@@ -8,11 +8,16 @@
     </main>
     <SiteFooter />
     <UserCardHost />
-    <WorkCountdown />
+    <ClientOnly>
+      <WorkCountdown />
+      <ImagePreviewHost />
+    </ClientOnly>
   </div>
 </template>
 
 <script lang="ts" setup>
+import ClientOnly from "@/components/ui/ClientOnly.vue";
+import ImagePreviewHost from "@/components/content/ImagePreviewHost.vue";
 import SiteFooter from "@/components/layout/SiteFooter.vue";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
 import WorkCountdown from "@/components/layout/WorkCountdown.vue";

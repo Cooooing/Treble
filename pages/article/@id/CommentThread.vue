@@ -66,7 +66,11 @@ function pageNumbers(total: number, current: number) {
           <span v-if="isArticleAuthor" class="comment-thread__badge">作者</span>
           <span v-if="pinLabel" class="comment-thread__badge">{{ pinLabel }}</span>
         </div>
-        <section class="vditor-reset comment" v-html="thread.root.contentRender || thread.root.content" />
+        <section
+          class="vditor-reset comment"
+          data-image-preview
+          v-html="thread.root.contentRender || thread.root.content"
+        />
         <footer class="comment-thread__action">
           <span class="ft-fade">{{ thread.root.createdAt ? fromNow(thread.root.createdAt) : "刚刚" }}</span>
           <span class="comment-thread__action-buttons">
@@ -91,7 +95,7 @@ function pageNumbers(total: number, current: number) {
             ><Avatar :name="reply.user?.name" :size="24" :url="reply.user?.avatarUrl" square
           /></MemberLink>
           <div class="fn-flex-1">
-            <div class="comment-thread__reply-content">
+            <div class="comment-thread__reply-content" data-image-preview>
               <MemberLink :username="reply.user?.name || ''" class="comment-thread__user">{{
                 reply.user?.nickname || reply.user?.name || "匿名用户"
               }}</MemberLink>
