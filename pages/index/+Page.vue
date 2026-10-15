@@ -2,6 +2,7 @@
 import { onMounted, toRefs } from "vue";
 import { useData } from "vike-vue/useData";
 import ArticleListPanel from "@/components/article/ArticleListPanel.vue";
+import ActivityHub from "@/components/home/ActivityHub.vue";
 import { message } from "@/components/feedback/message";
 import { Data } from "./+data";
 
@@ -19,5 +20,6 @@ onMounted(() => {
         <ArticleListPanel :articles="hots" compact more="/hot" title="最热" />
       </section>
     </div>
+    <ActivityHub />
   </div>
 </template>
