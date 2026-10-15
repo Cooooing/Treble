@@ -11,7 +11,6 @@ const account = computed(() => pageContext.user || currentAccount.value);
 const holiday = ref<GetCurrentHolidayResp>();
 
 onMounted(async () => {
-  if (!account.value) return;
   try {
     holiday.value = await bbsClient.holiday.getCurrent({ body: {} });
   } catch {
