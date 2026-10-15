@@ -78,10 +78,9 @@ const publicLocationLabel = computed(
 );
 
 async function load() {
-  const [account, settings, place, totp] = await Promise.all([
+  const [account, settings, totp] = await Promise.all([
     bbsClient.account.getCurrent({ body: {} }),
     bbsClient.privacySetting.getCurrent({ body: {} }),
-    bbsClient.location.getCurrent({ body: {} }),
     bbsClient.otp.getCurrentTotp({ body: {} }),
   ]);
   setCurrentAccount(account.account);
@@ -93,7 +92,7 @@ async function load() {
   });
   mbtiInput.value = profile.mbti || "";
   Object.assign(privacy, settings.privacySetting || {});
-  Object.assign(location, place.location || {});
+  Object.assign(location, account.account?.location || {});
   totpEnabled.value = Boolean(totp.totp?.enable);
   if (account.account?.profile?.name) {
     try {

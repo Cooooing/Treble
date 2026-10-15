@@ -1,18 +1,3 @@
-import type { AccountService } from "@bass/bbs-sdk-fetch/apis/AccountService";
-import type { ArticleService } from "@bass/bbs-sdk-fetch/apis/ArticleService";
-import type { ArticleSearchService } from "@bass/bbs-sdk-fetch/apis/ArticleSearchService";
-import type { AuthService } from "@bass/bbs-sdk-fetch/apis/AuthService";
-import type { CheckinService } from "@bass/bbs-sdk-fetch/apis/CheckinService";
-import type { CommentService } from "@bass/bbs-sdk-fetch/apis/CommentService";
-import type { DomainService } from "@bass/bbs-sdk-fetch/apis/DomainService";
-import type { LocationService } from "@bass/bbs-sdk-fetch/apis/LocationService";
-import type { NotificationService } from "@bass/bbs-sdk-fetch/apis/NotificationService";
-import type { OtpService } from "@bass/bbs-sdk-fetch/apis/OtpService";
-import type { PostscriptService } from "@bass/bbs-sdk-fetch/apis/PostscriptService";
-import type { PreferencesService } from "@bass/bbs-sdk-fetch/apis/PreferencesService";
-import type { PrivacySettingService } from "@bass/bbs-sdk-fetch/apis/PrivacySettingService";
-import type { RelationService } from "@bass/bbs-sdk-fetch/apis/RelationService";
-import type { TagService } from "@bass/bbs-sdk-fetch/apis/TagService";
 import type { BaseAPI } from "@bass/bbs-sdk-fetch/runtime";
 import { createSdkConfiguration, createSdkFetch, toBbsProxyUrl } from "./shared";
 
@@ -83,6 +68,10 @@ export const bbsClient = {
   domain: deferBbsService(async () => {
     const { DomainService } = await import("@bass/bbs-sdk-fetch/apis/DomainService");
     return throughBbsProxy(new DomainService(bbsConfiguration));
+  }),
+  holiday: deferBbsService(async () => {
+    const { HolidayService } = await import("@bass/bbs-sdk-fetch/apis/HolidayService");
+    return throughBbsProxy(new HolidayService(bbsConfiguration));
   }),
   location: deferBbsService(async () => {
     const { LocationService } = await import("@bass/bbs-sdk-fetch/apis/LocationService");

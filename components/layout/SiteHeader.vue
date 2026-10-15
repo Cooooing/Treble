@@ -27,22 +27,32 @@ const unreadCount = ref(0);
 const searchQuery = ref("");
 const searchHistory = ref<string[]>([]);
 const searchHistoryOpen = ref(false);
-const locationCity = ref<string>();
-const publicMenus = [
-  { name: "最新", path: "/recent", icon: "refresh" },
-  { name: "最热", path: "/hot", icon: "fire" },
-  { name: "清风明月", path: "/moonbreezes", icon: "moonbreezes" },
-];
+const guestCity = ref<string>();
 
 const account = computed(() => {
   if (typeof window === "undefined") return pageContext.user;
   return pageContext.user || currentAccount.value;
 });
+const locationCity = computed(() => {
+  if (account.value) return normalizeCity(account.value.location?.city);
+  return normalizeCity(guestCity.value);
+});
 const menus = computed(() => [
-  ...publicMenus,
+  { name: "最新", path: "/recent", icon: "refresh" },
+  { name: "最热", path: "/hot", icon: "fire" },
+  { name: "清风明月", path: "/moonbreezes", icon: "moonbreezes" },
   ...(locationCity.value ? [{ name: locationCity.value, path: "/nearby", icon: "feed" }] : []),
   ...(account.value ? [{ name: "关注", path: "/following", icon: "userrole" }] : []),
 ]);
+
+function normalizeCity(value?: string): string | undefined {
+  const city = value?.trim();
+  if (!city) return undefined;
+  if (["0", "null", "undefined", "未知", "内网IP", "局域网", "本地", "保留地址", "N/A"].includes(city)) {
+    return undefined;
+  }
+  return city;
+}
 
 function syncClientAccount() {
   // A rendering failure can yield an error page without its original page
@@ -106,13 +116,14 @@ onMounted(async () => {
   theme.value = getStoredTheme();
   searchHistory.value = loadSearchHistory();
   syncClientAccount();
-  if (account.value) {
+  if (!account.value) {
     try {
-      const city = (await bbsClient.location.getCurrent({ body: {} })).location?.city?.trim();
-      locationCity.value = city || undefined;
+      guestCity.value = normalizeCity((await bbsClient.location.getCurrent({ body: {} })).location?.city);
     } catch {
-      locationCity.value = undefined;
+      guestCity.value = undefined;
     }
+  }
+  if (account.value) {
     try {
       unreadCount.value = (await bbsClient.notification.countUnread({ body: {} })).count || 0;
     } catch {
