@@ -35,7 +35,7 @@ function formatCount(value: number | undefined): string {
             <MemberLink :username="article.authorUser?.name || ''">
               <Avatar
                 :name="article.authorUser?.name"
-                :size="32"
+                :size="20"
                 :url="article.authorUser?.avatarUrl"
                 class="avatar-small slogan"
                 square
