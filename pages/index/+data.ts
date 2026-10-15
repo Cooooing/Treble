@@ -8,13 +8,13 @@ export async function data() {
     bbsClient.article.list({
       listArticlesReq: {
         query: { order: "ARTICLE_ORDER_NEWEST", publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
-        page: pageRequest(1, 15),
+        page: pageRequest(1, 20),
       },
     }),
     bbsClient.article.list({
       listArticlesReq: {
         query: { order: "ARTICLE_ORDER_HOTTEST", publishStatus: "ARTICLE_PUBLISH_STATUS_PUBLISHED" },
-        page: pageRequest(1, 8),
+        page: pageRequest(1, 20),
       },
     }),
   ]);
