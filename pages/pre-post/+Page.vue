@@ -90,7 +90,7 @@ import AppLink from "@/components/ui/AppLink.vue";
   margin: 20px 30px 0;
   font-size: 15px;
   line-height: 1.5;
-  text-align: left;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
