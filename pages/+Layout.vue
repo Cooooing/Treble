@@ -8,12 +8,14 @@
     </main>
     <SiteFooter />
     <UserCardHost />
+    <WorkCountdown />
   </div>
 </template>
 
 <script lang="ts" setup>
 import SiteFooter from "@/components/layout/SiteFooter.vue";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
+import WorkCountdown from "@/components/layout/WorkCountdown.vue";
 import UserCardHost from "@/components/identity/UserCardHost.vue";
 </script>
 

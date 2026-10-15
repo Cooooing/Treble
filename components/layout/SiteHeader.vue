@@ -15,6 +15,7 @@ import {
   saveSearchHistory,
 } from "@/services/searchHistory";
 import { currentAccount, setCurrentAccount } from "@/services/sessionState";
+import { openWorkCountdownSettings } from "@/services/workCountdown";
 import { bbsClient } from "@/utils/sdk";
 import { applyTheme, defaultTheme, getStoredTheme, type Theme } from "@/utils/theme";
 
@@ -216,6 +217,7 @@ watch(
                 <AppLink :href="account.profile?.name ? `/member/${account.profile.name}` : '/home'">个人主页</AppLink>
               </li>
               <li><AppLink href="/settings">设置</AppLink></li>
+              <li><button type="button" @click="openWorkCountdownSettings()">下班倒计时</button></li>
               <li><AppLink href="/help">帮助</AppLink></li>
               <li><button type="button" @click="signOut">退出登录</button></li>
             </ul>
