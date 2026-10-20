@@ -625,14 +625,21 @@
   border: 0;
   background: transparent;
   color: var(--text-fade-color);
+  box-shadow: none;
   cursor: pointer;
   font: inherit;
+  touch-action: manipulation;
+  transform: none;
+  transition: color 140ms ease;
 }
 
 .article-page .comment-thread__action-buttons button:hover,
-.article-page .comment-thread__action-buttons button:focus-visible {
+.article-page .comment-thread__action-buttons button:focus-visible,
+.article-page .comment-thread__action-buttons button:active {
   color: #4285f4;
+  box-shadow: none;
   outline: none;
+  transform: none;
 }
 
 .article-page .comment-thread__action-buttons svg {

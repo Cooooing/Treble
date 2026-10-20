@@ -21,7 +21,7 @@ export function refreshUnreadNotificationCount() {
   refreshPromise ??= bbsClient.notification
     .countUnread({ body: {} })
     .then((response) => {
-      unreadNotificationCount.value = response.count || 0;
+      unreadNotificationCount.value = Number(response.count || 0);
     })
     .catch(() => undefined)
     .finally(() => {

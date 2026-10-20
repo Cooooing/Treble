@@ -25,10 +25,10 @@ const account = computed(() =>
   typeof window === "undefined" ? pageContext.user : pageContext.user || currentAccount.value,
 );
 const articleState = ref(data.article);
-const replyCount = ref(data.comments?.page?.total || data.comments?.rows?.length || 0);
+const replyCount = ref<number>(Number(data.comments?.page?.total || data.comments?.rows?.length || 0));
 const postscripts = ref<ArticlePostscript[]>(data.postscripts || data.article?.postscripts || []);
 const postscriptEditorOpen = ref(false);
-const actionPending = ref<"like" | "thank" | "collect">();
+const actionPending = ref<"like" | "thank" | "collect" | "watch">();
 const selectedPollOptionIDs = ref<string[]>([...(data.article?.poll?.selectedOptionIds || [])]);
 const pollPending = ref(false);
 const lotteryPending = ref(false);
@@ -40,6 +40,9 @@ const canAddPostscript = computed(() =>
       account.value.profile.id === articleState.value.createdBy,
   ),
 );
+const isArticleAuthor = computed(
+  () => Boolean(account.value?.profile?.id && articleState.value?.createdBy === account.value.profile.id),
+);
 
 watch(
   () => data.article,
@@ -50,7 +53,7 @@ watch(
     actionPending.value = undefined;
     lotteryPending.value = false;
     selectedPollOptionIDs.value = [...(article?.poll?.selectedOptionIds || [])];
-    replyCount.value = data.comments?.page?.total || data.comments?.rows?.length || 0;
+    replyCount.value = Number(data.comments?.page?.total || data.comments?.rows?.length || 0);
   },
 );
 
@@ -178,32 +181,50 @@ function scrollToHeading(id: string) {
   window.history.replaceState(null, "", `#${encodeURIComponent(id)}`);
 }
 
-async function changeArticleAction(action: "like" | "thank" | "collect") {
+async function changeArticleAction(action: "like" | "thank" | "collect" | "watch") {
   const currentArticle = articleState.value;
   if (!currentArticle?.id) return;
   if (!account.value) {
     loginForArticleAction();
     return;
   }
+  if (isArticleAuthor.value) {
+    message.warning("不能与自己的文章互动。");
+    return;
+  }
   if (actionPending.value) return;
 
   const actionState = currentArticle.viewerActionState || {};
   const active =
-    action === "like" ? !actionState.liked : action === "thank" ? !actionState.thanked : !actionState.collected;
+    action === "like"
+      ? !actionState.liked
+      : action === "thank"
+        ? !actionState.thanked
+        : action === "collect"
+          ? !actionState.collected
+          : !actionState.watched;
   actionPending.value = action;
   try {
     if (action === "like") {
       const response = await bbsClient.article.like({ likeArticleReq: { articleId: currentArticle.id, active } });
       currentArticle.viewerActionState = { ...actionState, liked: response.liked };
       currentArticle.likeCount = Math.max(0, (currentArticle.likeCount || 0) + (response.liked ? 1 : -1));
+      message.success(response.liked ? "已点赞。" : "已取消点赞。");
     } else if (action === "thank") {
       const response = await bbsClient.article.thank({ thankArticleReq: { articleId: currentArticle.id, active } });
       currentArticle.viewerActionState = { ...actionState, thanked: response.thanked };
       currentArticle.thankCount = Math.max(0, (currentArticle.thankCount || 0) + (response.thanked ? 1 : -1));
-    } else {
+      message.success(response.thanked ? "已感谢。" : "已取消感谢。");
+    } else if (action === "collect") {
       const response = await bbsClient.article.collect({ collectArticleReq: { articleId: currentArticle.id, active } });
       currentArticle.viewerActionState = { ...actionState, collected: response.collected };
       currentArticle.collectCount = Math.max(0, (currentArticle.collectCount || 0) + (response.collected ? 1 : -1));
+      message.success(response.collected ? "已收藏。" : "已取消收藏。");
+    } else {
+      const response = await bbsClient.article.watch({ watchArticleReq: { articleId: currentArticle.id, active } });
+      currentArticle.viewerActionState = { ...actionState, watched: response.watched };
+      currentArticle.watchCount = Math.max(0, (currentArticle.watchCount || 0) + (response.watched ? 1 : -1));
+      message.success(response.watched ? "已关注文章。" : "已取消关注文章。");
     }
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "操作失败，请稍后重试。");
@@ -460,12 +481,14 @@ onMounted(() => {
           <Icon name="star" /><span class="share__count">{{ articleState.collectCount || 0 }}</span>
         </button>
         <button
-          class="share__item share__item--count share__item--unavailable"
-          disabled
-          title="关注文章暂未开放"
+          :class="{ 'share__button--active': articleState.viewerActionState?.watched }"
+          :disabled="actionPending === 'watch'"
+          class="share__item share__item--count"
+          :title="articleState.viewerActionState?.watched ? '取消关注文章' : '关注文章'"
           type="button"
+          @click="changeArticleAction('watch')"
         >
-          <Icon name="view" /><span aria-hidden="true" class="share__count" />
+          <Icon name="view" /><span class="share__count">{{ articleState.watchCount || 0 }}</span>
         </button>
         <button class="share__item share__item--utility" title="复制文章链接" type="button" @click="copyArticleLink">
           <Icon name="link" /><span aria-hidden="true" class="share__count" />
