@@ -22,7 +22,10 @@ async function startServer() {
   if (!bbsBffUrl) {
     throw new Error("必须配置 BBS_BFF_URL");
   }
-  const realtimeNodeUrl = process.env.REALTIME_NODE_URL?.replace(/\/$/, "") || "";
+  const realtimeNodeUrl = (process.env.REALTIME_NODE_URL || process.env.VITE_REALTIME_NODE_URL || "").replace(
+    /\/$/,
+    "",
+  );
   if (realtimeNodeUrl) {
     const realtimeNodeEndpoint = new URL(realtimeNodeUrl);
     if (!["http:", "https:"].includes(realtimeNodeEndpoint.protocol)) {

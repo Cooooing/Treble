@@ -217,11 +217,19 @@
   padding-top: 15px;
 }
 
+.article-page .article-tail > .wrapper {
+  display: block;
+}
+
+.article-page .article-tail__taxonomy {
+  margin: 0 0 8px;
+}
+
 .article-page .article__meta {
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  margin-top: 15px;
+  margin-top: 0;
   border-radius: 3px;
   background: var(--background-secondary-color);
   color: var(--text-fade-color);
@@ -305,10 +313,10 @@
 
 .article-page .share {
   position: static;
-  width: 30px;
+  width: 40px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   color: var(--layer-color);
   font-size: 22px;
   text-align: center;
@@ -316,22 +324,35 @@
 
 .article-page .share__item {
   display: grid;
-  width: 30px;
-  height: 39px;
-  grid-template-rows: 22px 13px;
+  width: 40px;
+  height: 40px;
+  grid-template-rows: 22px 14px;
   align-items: center;
   justify-items: center;
   padding: 0;
   border: 0;
+  border-radius: 6px;
   background: transparent;
+  box-shadow: none;
   color: inherit;
   cursor: pointer;
   font: inherit;
+  line-height: 1;
+  text-decoration: none;
+  touch-action: manipulation;
+  transition: color 140ms ease;
 }
 
-.article-page .share a {
-  color: inherit;
-  text-decoration: none;
+.article-page .share__item--utility {
+  grid-template-rows: 1fr;
+}
+
+.article-page .share__item--utility svg {
+  grid-row: 1;
+}
+
+.article-page .share__item--utility .share__count {
+  display: none;
 }
 
 .article-page .share button:disabled {
@@ -349,7 +370,9 @@
 .article-page .share a:focus-visible,
 .article-page .share__button--active {
   color: #e59230;
+  box-shadow: none;
   outline: none;
+  transform: none;
 }
 
 .article-page .share svg {
@@ -358,9 +381,10 @@
 }
 
 .article-page .share__count {
-  min-height: 13px;
+  min-height: 14px;
   font-size: 13px;
-  line-height: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 14px;
 }
 
 .article-page #articleToC {
@@ -997,14 +1021,17 @@ html[data-theme="dark"] .article-page .article-postscripts {
 @media (min-width: 1025px) {
   .article.article-page {
     --article-content-width: min(1120px, calc(100vw - 140px));
+    --article-share-gap: 24px;
+    --article-share-width: 40px;
+    --article-side-width: calc(var(--article-share-gap) + var(--article-share-width));
   }
 
   .article-page .article-layout {
     display: grid;
-    grid-template-columns: 30px minmax(0, var(--article-content-width)) 30px;
+    grid-template-columns: var(--article-side-width) minmax(0, var(--article-content-width)) var(--article-side-width);
     justify-content: center;
     align-items: start;
-    width: min(calc(100% - 80px), calc(var(--article-content-width) + 60px));
+    width: min(calc(100% - 32px), calc(var(--article-content-width) + 128px));
   }
 
   .article.article-page .article-container {
@@ -1017,6 +1044,8 @@ html[data-theme="dark"] .article-page .article-postscripts {
     position: sticky;
     top: 100px;
     grid-column: 3;
+    justify-self: start;
+    margin-left: var(--article-share-gap);
     z-index: 10;
   }
 
@@ -1040,7 +1069,10 @@ html[data-theme="dark"] .article-page .article-postscripts {
 
 @media (min-width: 1800px) {
   .article-page .article-layout {
-    grid-template-columns: minmax(220px, 1fr) minmax(0, var(--article-content-width)) minmax(220px, 1fr);
+    grid-template-columns: minmax(var(--article-side-width), 1fr) minmax(0, var(--article-content-width)) minmax(
+        var(--article-side-width),
+        1fr
+      );
     width: min(calc(100% - 80px), calc(var(--article-content-width) + 500px));
   }
 
@@ -1072,7 +1104,7 @@ html[data-theme="dark"] .article-page .article-postscripts {
   .article.article-page > .article-layout > .share {
     grid-column: 3;
     justify-self: start;
-    margin-left: 30px;
+    margin-left: var(--article-share-gap);
   }
 }
 
@@ -1108,10 +1140,11 @@ html[data-theme="dark"] .article-page .article-postscripts {
   .article-page .share {
     position: static;
     width: auto;
-    flex-direction: row;
-    justify-content: center;
-    margin: 12px 0 4px;
-    gap: 22px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(40px, 1fr));
+    margin: 16px 10px 4px;
+    gap: 8px;
+    justify-items: center;
   }
 
   .article-page .article-footer {

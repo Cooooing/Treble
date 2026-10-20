@@ -372,8 +372,12 @@ onMounted(() => {
         </div>
         <div class="article-tail">
           <div class="wrapper">
-            <Author :article="articleState" :reply-count="replyCount" />
-            <ArticleTaxonomy :domains="articleState.domains" :tags="articleState.tags" />
+            <div class="article-tail__taxonomy">
+              <ArticleTaxonomy :domains="articleState.domains" :tags="articleState.tags" />
+            </div>
+            <div class="article-tail__author">
+              <Author :article="articleState" :reply-count="replyCount" />
+            </div>
           </div>
         </div>
         <main class="main article-discussion">
@@ -428,7 +432,7 @@ onMounted(() => {
         <button
           :class="{ 'share__button--active': articleState.viewerActionState?.liked }"
           :disabled="actionPending === 'like'"
-          class="share__item"
+          class="share__item share__item--count"
           title="点赞"
           type="button"
           @click="changeArticleAction('like')"
@@ -438,7 +442,7 @@ onMounted(() => {
         <button
           :class="{ 'share__button--active': articleState.viewerActionState?.thanked }"
           :disabled="actionPending === 'thank'"
-          class="share__item"
+          class="share__item share__item--count"
           title="感谢"
           type="button"
           @click="changeArticleAction('thank')"
@@ -448,20 +452,25 @@ onMounted(() => {
         <button
           :class="{ 'share__button--active': articleState.viewerActionState?.collected }"
           :disabled="actionPending === 'collect'"
-          class="share__item"
+          class="share__item share__item--count"
           title="收藏"
           type="button"
           @click="changeArticleAction('collect')"
         >
           <Icon name="star" /><span class="share__count">{{ articleState.collectCount || 0 }}</span>
         </button>
-        <button class="share__item share__item--unavailable" disabled title="关注文章暂未开放" type="button">
+        <button
+          class="share__item share__item--count share__item--unavailable"
+          disabled
+          title="关注文章暂未开放"
+          type="button"
+        >
           <Icon name="view" /><span aria-hidden="true" class="share__count" />
         </button>
-        <button class="share__item" title="复制文章链接" type="button" @click="copyArticleLink">
+        <button class="share__item share__item--utility" title="复制文章链接" type="button" @click="copyArticleLink">
           <Icon name="link" /><span aria-hidden="true" class="share__count" />
         </button>
-        <a aria-label="参与讨论" class="share__item" href="#comments" title="参与讨论">
+        <a aria-label="参与讨论" class="share__item share__item--utility" href="#comments" title="参与讨论">
           <Icon name="reply" /><span aria-hidden="true" class="share__count" />
         </a>
       </aside>

@@ -9,6 +9,11 @@ import AppLink from "@/components/ui/AppLink.vue";
 import { message } from "@/components/feedback/message";
 import { logout } from "@/services/auth";
 import {
+  initializeNotificationState,
+  refreshUnreadNotificationCount,
+  unreadNotificationCount,
+} from "@/services/notificationState";
+import {
   getRealtimeConnection,
   getRealtimeNodeUrl,
   stopRealtimeConnection,
@@ -29,7 +34,6 @@ const pageContext = usePageContext();
 const accountMenu = ref<HTMLDetailsElement>();
 const searchBox = ref<HTMLElement>();
 const theme = ref<Theme>(defaultTheme);
-const unreadCount = ref(0);
 const searchQuery = ref("");
 const searchHistory = ref<string[]>([]);
 const searchHistoryOpen = ref(false);
@@ -119,14 +123,6 @@ async function signOut() {
   }
 }
 
-async function refreshUnreadCount() {
-  try {
-    unreadCount.value = (await bbsClient.notification.countUnread({ body: {} })).count || 0;
-  } catch {
-    // Keep the last known count when a transient refresh fails.
-  }
-}
-
 async function issueRealtimeTicket(): Promise<RealtimeTicket | undefined> {
   const response = await bbsClient.realtime.createTicket({ body: {} });
   if (!response.ticket || !response.path) return undefined;
@@ -150,9 +146,8 @@ async function connectRealtime() {
       const oldestNotificationID = receivedNotificationIDs.values().next().value;
       if (oldestNotificationID) receivedNotificationIDs.delete(oldestNotificationID);
     }
-    unreadCount.value += 1;
     message.info("收到一条新通知", { id: `notification:${notificationID}` });
-    void refreshUnreadCount();
+    void refreshUnreadNotificationCount();
   });
   realtime.start();
 }
@@ -186,7 +181,8 @@ onMounted(async () => {
     }
   }
   if (account.value) {
-    await refreshUnreadCount();
+    initializeNotificationState();
+    await refreshUnreadNotificationCount();
     void connectRealtime();
   }
 });
@@ -275,7 +271,7 @@ watch(
       </button>
       <template v-if="account">
         <AppLink aria-label="通知中心" class="no-msg" href="/notifications"
-          ><Icon name="notification" />&nbsp;{{ unreadCount }}</AppLink
+          ><Icon name="notification" />&nbsp;{{ unreadNotificationCount }}</AppLink
         >
         <AppLink class="pre-post" href="/pre-post"><Icon name="addpost" />&nbsp;发帖</AppLink>
         <details ref="accountMenu" class="account-menu">

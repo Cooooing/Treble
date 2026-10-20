@@ -3,6 +3,7 @@ import { onMounted, ref, toRefs, watch } from "vue";
 import { useData } from "vike-vue/useData";
 import type { RespNotification } from "@bass/bbs-sdk-fetch/models/RespNotification";
 import { message } from "@/components/feedback/message";
+import { notifyNotificationRead } from "@/services/notificationState";
 import { fromNow } from "@/utils/date";
 import { bbsClient } from "@/utils/sdk";
 import EmptyState from "@/components/feedback/EmptyState.vue";
@@ -26,6 +27,7 @@ async function markUnreadNotifications() {
       ...notification,
       readAt: notification.readAt || new Date(),
     }));
+    notifyNotificationRead();
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "通知状态更新失败，请稍后重试。");
   } finally {
