@@ -97,6 +97,10 @@ export const bbsClient = {
     const { PrivacySettingService } = await import("@bass/bbs-sdk-fetch/apis/PrivacySettingService");
     return throughBbsProxy(new PrivacySettingService(bbsConfiguration));
   }),
+  realtime: deferBbsService(async () => {
+    const { RealtimeService } = await import("@bass/bbs-sdk-fetch/apis/RealtimeService");
+    return throughBbsProxy(new RealtimeService(bbsConfiguration));
+  }),
   relation: deferBbsService(async () => {
     const { RelationService } = await import("@bass/bbs-sdk-fetch/apis/RelationService");
     return throughBbsProxy(new RelationService(bbsConfiguration));

@@ -63,12 +63,13 @@ pnpm dev
 
 `.env` 仅供本机 Node 服务读取，至少配置：
 
-| 变量          | 用途                                                  |
-| ------------- | ----------------------------------------------------- |
-| `BBS_BFF_URL` | 唯一 BBS BFF 地址，开发默认 `http://127.0.0.1:8001`。 |
-| `REDIS_URL`   | Treble 私有 Redis，会话存储使用。                     |
-| `PORT`        | Treble Node 服务端口，默认 `2324`。                   |
-| `BASS_REPO`   | 可选的 Bass 本地仓库路径。                            |
+| 变量                | 用途                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| `BBS_BFF_URL`       | 唯一 BBS BFF 地址，开发默认 `http://127.0.0.1:8001`。                                            |
+| `REALTIME_NODE_URL` | 可选的浏览器直连 realtime node 地址；Treble 在运行时公开该地址，生产环境使用 Node 负载均衡入口。 |
+| `REDIS_URL`         | Treble 私有 Redis，会话存储使用。                                                                |
+| `PORT`              | Treble Node 服务端口，默认 `2324`。                                                              |
+| `BASS_REPO`         | 可选的 Bass 本地仓库路径。                                                                       |
 
 不要把真实密码、token 或机器绝对路径提交到 Git；只更新 `.env.example` 中的脱敏示例。
 
@@ -105,4 +106,4 @@ IDEA 中在 **Settings → Languages & Frameworks → JavaScript → Prettier** 
 
 容器镜像仅封装已构建的 `dist/`，因此先在有本地 Bass SDK 的环境执行 `pnpm build`，
 再执行 `docker build -t treble .`。运行时通过容器环境变量提供 `BBS_BFF_URL`、
-`REDIS_URL` 与 `PORT`，不复制 `.env` 到镜像。
+`REDIS_URL`、`PORT` 与 `REALTIME_NODE_URL`，不复制 `.env` 到镜像。

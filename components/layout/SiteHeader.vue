@@ -9,6 +9,12 @@ import AppLink from "@/components/ui/AppLink.vue";
 import { message } from "@/components/feedback/message";
 import { logout } from "@/services/auth";
 import {
+  getRealtimeConnection,
+  getRealtimeNodeUrl,
+  stopRealtimeConnection,
+  type RealtimeTicket,
+} from "@/services/realtime";
+import {
   clearSearchHistory,
   loadSearchHistory,
   removeSearchHistory,
@@ -28,6 +34,8 @@ const searchQuery = ref("");
 const searchHistory = ref<string[]>([]);
 const searchHistoryOpen = ref(false);
 const guestCity = ref<string>();
+const receivedNotificationIDs = new Set<string>();
+let unsubscribeNotification: (() => void) | undefined;
 
 const account = computed(() => {
   if (typeof window === "undefined") return pageContext.user;
@@ -101,12 +109,66 @@ function clearHistory() {
 
 async function signOut() {
   accountMenu.value?.removeAttribute("open");
+  stopRealtimeConnection();
   try {
     await logout();
   } catch (error) {
     message.warning(error instanceof Error ? `${error.message}，但已在本设备退出。` : "已在本设备退出。");
   } finally {
     await navigate("/");
+  }
+}
+
+async function refreshUnreadCount() {
+  try {
+    unreadCount.value = (await bbsClient.notification.countUnread({ body: {} })).count || 0;
+  } catch {
+    // Keep the last known count when a transient refresh fails.
+  }
+}
+
+async function issueRealtimeTicket(): Promise<RealtimeTicket | undefined> {
+  const response = await bbsClient.realtime.createTicket({ body: {} });
+  if (!response.ticket || !response.path) return undefined;
+  return { ticket: response.ticket, path: response.path };
+}
+
+async function connectRealtime() {
+  if (!account.value) return;
+  const realtimeNodeURL = await getRealtimeNodeUrl();
+  if (!realtimeNodeURL || !account.value) return;
+  const realtime = getRealtimeConnection({
+    issueTicket: issueRealtimeTicket,
+    resolveEndpoint: ({ path, ticket }) => `${realtimeNodeURL}${path}?ticket=${encodeURIComponent(ticket)}`,
+  });
+
+  unsubscribeNotification = realtime.subscribe("notification", (event) => {
+    const notificationID = notificationIDFromEvent(event);
+    if (!notificationID || receivedNotificationIDs.has(notificationID)) return;
+    receivedNotificationIDs.add(notificationID);
+    if (receivedNotificationIDs.size > 100) {
+      const oldestNotificationID = receivedNotificationIDs.values().next().value;
+      if (oldestNotificationID) receivedNotificationIDs.delete(oldestNotificationID);
+    }
+    unreadCount.value += 1;
+    message.info("收到一条新通知", { id: `notification:${notificationID}` });
+    void refreshUnreadCount();
+  });
+  realtime.start();
+}
+
+function disconnectRealtime() {
+  unsubscribeNotification?.();
+  unsubscribeNotification = undefined;
+}
+
+function notificationIDFromEvent(event: MessageEvent<string>) {
+  try {
+    const payload = JSON.parse(event.data) as { notification_id?: string | number };
+    const notificationID = String(payload.notification_id || "").trim();
+    return notificationID && notificationID !== "0" ? notificationID : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -124,15 +186,13 @@ onMounted(async () => {
     }
   }
   if (account.value) {
-    try {
-      unreadCount.value = (await bbsClient.notification.countUnread({ body: {} })).count || 0;
-    } catch {
-      unreadCount.value = 0;
-    }
+    await refreshUnreadCount();
+    void connectRealtime();
   }
 });
 
 onBeforeUnmount(() => {
+  disconnectRealtime();
   document.removeEventListener("pointerdown", closeWhenClickingOutside);
   document.removeEventListener("keydown", closeOnEscape);
 });

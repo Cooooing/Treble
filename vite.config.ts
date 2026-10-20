@@ -4,6 +4,7 @@ import { wrapperEnv } from "./build/utils";
 import { createVitePlugins } from "./build/vite/plugin";
 import { exclude, include } from "./build/vite/optimizer";
 import { createBbsGateway, ensureCsrfCookie } from "./server/bbsGateway";
+import { runtimeConfigHandler } from "./server/runtimeConfig";
 
 export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
   const root = process.cwd();
@@ -14,6 +15,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
   const bassRepo = path.resolve(serverEnv.BASS_REPO || process.env.BASS_REPO || path.resolve(root, "..", "Bass"));
   const bbsSdkSource = path.join(bassRepo, "common/proto/gen-sdk/typescript-fetch/bff_bbs/src");
   const bbsBffUrl = new URL(serverEnv.BBS_BFF_URL || "http://127.0.0.1:8001/");
+  const realtimeNodeUrl = (serverEnv.REALTIME_NODE_URL || "").replace(/\/$/, "");
   const { VITE_DROP_CONSOLE } = viteEnv;
 
   return {
@@ -56,6 +58,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
         configureServer(server) {
           server.middlewares.use(ensureCsrfCookie(false));
           server.middlewares.use("/api/bbs", createBbsGateway({ bffUrl: bbsBffUrl.toString(), isProduction: false }));
+          server.middlewares.use("/runtime-config.json", runtimeConfigHandler(realtimeNodeUrl));
         },
       },
     ],
