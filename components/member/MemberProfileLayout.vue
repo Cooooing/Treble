@@ -191,6 +191,14 @@ watch(viewerID, () => void RefreshRelationState());
               {{ profile.account?.nickname || profile.account?.name }}
             </h1>
             <p v-if="profile.account?.name" class="member-profile__name">{{ profile.account.name }}</p>
+            <p
+              v-if="profile.online !== undefined"
+              :class="profile.online ? 'member-profile__status--online' : 'member-profile__status--offline'"
+              class="member-profile__status"
+            >
+              <span aria-hidden="true" class="member-profile__status-dot" />
+              {{ profile.online ? "在线" : "离线" }}
+            </p>
             <span v-if="profile.account?.mbti" class="member-profile__mbti">{{ profile.account.mbti }}</span>
           </div>
           <div v-if="canManageRelation" class="member-profile__actions">
@@ -364,6 +372,30 @@ watch(viewerID, () => void RefreshRelationState());
   color: var(--text-gray-color);
   font-size: 14px;
   line-height: 22px;
+}
+.member-profile__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  margin: 6px 0 0;
+  padding: 0 7px;
+  border-radius: 3px;
+  color: var(--color-text-inverse);
+  font-size: 12px;
+  line-height: 20px;
+}
+.member-profile__status--online {
+  background: #2e9b56;
+}
+.member-profile__status--offline {
+  background: var(--text-fade-color);
+}
+.member-profile__status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
 }
 .member-profile__mbti {
   display: inline-block;
