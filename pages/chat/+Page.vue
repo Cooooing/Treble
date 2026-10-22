@@ -55,10 +55,13 @@ let realtimeStarted = false;
 const pageSize = 50;
 const guestPageSize = 20;
 const maximumLoadedMessages = 300;
+const topicInputMarker = "\u00A0";
 const sideWidth = ref(20);
 const composerHeight = ref(28);
 const sendShortcut = ref<"ctrl-enter" | "enter">("ctrl-enter");
 const shortcutMenuOpen = ref(false);
+const topicEditorOpen = ref(false);
+const topicDraft = ref("");
 const now = ref(new Date());
 let clockTimer: ReturnType<typeof setInterval> | undefined;
 let markdownConverter: Promise<typeof import("vditor").default> | undefined;
@@ -196,7 +199,7 @@ async function appendMessage(row: GlobalMessage) {
 }
 
 async function send() {
-  const value = (editor.value?.getValue() || content.value).trim();
+  const value = (editor.value?.getValue() || content.value).replaceAll(topicInputMarker, "").trim();
   if (!value) {
     message.warning("请输入消息内容。");
     return;
@@ -223,6 +226,34 @@ async function send() {
 
 function unavailable(feature: string) {
   message.info(`${feature}功能正在接入。`);
+}
+
+function openTopicEditor() {
+  topicDraft.value = topic.value === "暂未设置话题" ? "" : topic.value;
+  topicEditorOpen.value = true;
+}
+
+async function quoteTopic() {
+  const quote = `\n\n*\`# ${topic.value} #\`*  `;
+  const history = content.value;
+  const input = history || topicInputMarker;
+  const value = `${input}${quote}`;
+  content.value = value;
+  await nextTick();
+  editor.value?.setValueAndFocus(value, input.length);
+}
+
+function submitTopicEditor() {
+  const value = topicDraft.value.trim();
+  if (!value) {
+    message.warning("请输入话题内容。");
+    return;
+  }
+  if (value.length > 64) {
+    message.warning("话题不能超过 64 个字符。");
+    return;
+  }
+  message.info("聊天室话题修改正在接入。");
 }
 
 function focusComposer() {
@@ -366,6 +397,17 @@ onBeforeUnmount(() => {
           <button aria-label="调整消息区与输入区高度" class="global-chat__splitter global-chat__splitter--horizontal" type="button" @pointerdown.prevent="startResize($event, 'vertical')" />
           <form v-if="isLoggedIn" class="global-chat__composer" @click="focusComposer" @submit.prevent="send">
           <label class="fn-none" for="global-chat-content">输入聊天室消息</label>
+          <div class="global-chat__composer-tools" aria-label="聊天室工具">
+            <button aria-label="发送红包" type="button" @click.stop="unavailable('红包')">
+              <Icon name="red-packet" />
+            </button>
+            <button aria-label="插入表情" type="button" @click.stop="unavailable('表情包')">
+              <Icon name="emoji" />
+            </button>
+            <button aria-label="发送弹幕" type="button" @click.stop="unavailable('弹幕')">
+              <Icon name="barrage" />
+            </button>
+          </div>
           <ClientOnly>
             <RichTextEditor
               id="global-chat-content"
@@ -385,30 +427,11 @@ onBeforeUnmount(() => {
               @keydown.capture="handleComposerKeydown"
             />
           </ClientOnly>
-            <p v-if="isCurfew" class="global-chat__curfew">
-              <span aria-hidden="true">💤</span>
-              现在是聊天室宵禁时间（19:30–08:00），您发送的消息将不会产生活跃度，请早点下班休息 :)
-            </p>
             <footer class="global-chat__composer-footer">
-            <div class="global-chat__tools" aria-label="聊天室工具">
-              <button aria-label="发送红包" type="button" @click="unavailable('红包')">
-                <Icon name="red-packet" />
-              </button>
-              <button aria-label="插入表情" type="button" @click="unavailable('表情包')">
-                <Icon name="emoji" />
-              </button>
-              <button aria-label="发送弹幕" class="global-chat__barrager" type="button" @click="unavailable('弹幕')">
-                弹
-              </button>
-              <button
-                aria-label="引用当前话题"
-                class="global-chat__topic-tool"
-                type="button"
-                @click="content = `${content}${content ? '\n' : ''}# ${topic} #`"
-              >
-                <Icon name="topic" />
-              </button>
-            </div>
+              <p v-if="isCurfew" class="global-chat__curfew">
+                <span aria-hidden="true">💤</span>
+                现在是聊天室宵禁时间（19:30–08:00），您发送的消息将不会产生活跃度，请早点下班休息 :)
+              </p>
               <div class="global-chat__send-control">
                 <button class="global-chat__send" type="submit">发送</button>
                 <button aria-label="选择发送快捷键" class="global-chat__send-menu" type="button" @click="shortcutMenuOpen = !shortcutMenuOpen">
@@ -430,6 +453,10 @@ onBeforeUnmount(() => {
           <section class="global-chat__side-section">
             <h2>当前话题</h2>
             <p><Icon name="topic" /># {{ topic }} #</p>
+            <div class="global-chat__topic-actions">
+              <button aria-label="编辑话题" type="button" @click="openTopicEditor"><Icon name="topic-edit" /></button>
+              <button aria-label="引用话题" type="button" @click="quoteTopic"><Icon name="topic-quote" /></button>
+            </div>
           </section>
           <section class="global-chat__side-section global-chat__members">
             <h2>当前在线 <span>{{ onlineTotal }}</span></h2>
@@ -449,6 +476,23 @@ onBeforeUnmount(() => {
             <p v-else class="global-chat__members-empty">暂无在线成员。</p>
           </section>
         </aside>
+      </section>
+    </div>
+    <div v-if="topicEditorOpen" class="global-chat__topic-dialog" role="presentation" @click.self="topicEditorOpen = false">
+      <section aria-labelledby="global-chat-topic-dialog-title" aria-modal="true" class="global-chat__topic-dialog-panel" role="dialog">
+        <header>
+          <h2 id="global-chat-topic-dialog-title">设置话题</h2>
+          <button aria-label="关闭" type="button" @click="topicEditorOpen = false">×</button>
+        </header>
+        <p>最大长度 64 个字符，不合法字符将被自动过滤。</p>
+        <form @submit.prevent="submitTopicEditor">
+          <label class="fn-none" for="global-chat-topic-input">话题内容</label>
+          <input id="global-chat-topic-input" v-model="topicDraft" autofocus maxlength="64" />
+          <footer>
+            <button type="button" @click="topicEditorOpen = false">取消</button>
+            <button type="submit">设置</button>
+          </footer>
+        </form>
       </section>
     </div>
   </div>
@@ -615,7 +659,7 @@ onBeforeUnmount(() => {
   padding: 0 0.875rem 0.625rem;
   border: 0;
   background: var(--layer-background-color);
-  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
 }
 .global-chat__side {
   display: grid;
@@ -635,7 +679,7 @@ onBeforeUnmount(() => {
 }
 .global-chat__side-section h2 span {
   float: right;
-  color: var(--color-accent);
+  color: var(--text-color);
   font-variant-numeric: tabular-nums;
 }
 .global-chat__side-section p {
@@ -651,6 +695,37 @@ onBeforeUnmount(() => {
   width: 0.875rem;
   height: 0.875rem;
   color: var(--color-accent);
+}
+.global-chat__topic-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+}
+.global-chat__topic-actions button {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  place-items: center;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+}
+.global-chat__topic-actions button:hover,
+.global-chat__topic-actions button:focus-visible {
+  color: var(--color-accent);
+  box-shadow: none;
+  outline: 0;
+  transform: none;
+}
+.global-chat__topic-actions :deep(.icon) {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: currentColor;
 }
 .global-chat__members {
   min-height: 0;
@@ -814,15 +889,16 @@ onBeforeUnmount(() => {
   color: var(--text-fade-color);
   font-size: 0.75rem;
 }
-.global-chat__tools {
+.global-chat__composer-tools {
   display: flex;
   align-items: center;
   gap: 0.375rem;
+  min-height: 2.5rem;
 }
-.global-chat__tools button {
+.global-chat__composer-tools button {
   display: grid;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
   border: 0;
   place-items: center;
@@ -830,18 +906,19 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: none;
 }
-.global-chat__tools button:hover,
-.global-chat__tools button:focus-visible {
+.global-chat__composer-tools button:hover,
+.global-chat__composer-tools button:focus-visible {
   background: transparent;
   box-shadow: none;
   outline: 0;
 }
-.global-chat__tools :deep(.icon) {
-  width: 1.125rem;
-  height: 1.125rem;
+.global-chat__composer-tools :deep(.icon) {
+  width: 1.375rem;
+  height: 1.375rem;
 }
 .global-chat__curfew {
-  margin: 0.375rem 0 0;
+  min-width: 0;
+  margin: 0;
   color: var(--text-fade-color);
   font-size: 0.75rem;
   line-height: 1.5;
@@ -951,22 +1028,83 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
   opacity: 0.5;
 }
-.global-chat__tools button:nth-child(1) {
-  color: #ff705a;
+.global-chat__topic-dialog {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 35%);
 }
-.global-chat__tools button:nth-child(2) {
-  color: inherit;
+.global-chat__topic-dialog-panel {
+  width: min(100%, 26rem);
+  padding: 1rem;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 0.25rem;
+  background: var(--layer-background-color);
+  box-shadow: var(--shadow-overlay);
 }
-.global-chat__barrager {
-  border: 1px solid #f5963b !important;
-  border-radius: 0.1875rem !important;
-  color: #f5963b !important;
-  font-size: 0.875rem;
-  font-weight: 600;
+.global-chat__topic-dialog-panel > header,
+.global-chat__topic-dialog-panel footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.global-chat__topic-dialog-panel h2,
+.global-chat__topic-dialog-panel p {
+  margin: 0;
+}
+.global-chat__topic-dialog-panel h2 {
+  font-size: 1rem;
+}
+.global-chat__topic-dialog-panel > header > button,
+.global-chat__topic-dialog-panel footer button {
+  border: 0;
+  background: transparent;
+  color: var(--text-fade-color);
+  cursor: pointer;
+  font: inherit;
+}
+.global-chat__topic-dialog-panel > header > button {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1.5rem;
   line-height: 1;
 }
-.global-chat__topic-tool {
-  color: #e59230;
+.global-chat__topic-dialog-panel p {
+  margin-top: 1rem;
+  color: var(--text-fade-color);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.global-chat__topic-dialog-panel input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.25rem;
+  margin-top: 0.625rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 0.1875rem;
+  background: var(--background-secondary-color);
+  color: var(--text-color);
+  font: inherit;
+}
+.global-chat__topic-dialog-panel input:focus {
+  border-color: var(--color-accent);
+  outline: 0;
+}
+.global-chat__topic-dialog-panel footer {
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.global-chat__topic-dialog-panel footer button:last-child {
+  min-height: 1.875rem;
+  padding: 0 0.75rem;
+  border-radius: 0.1875rem;
+  background: var(--color-accent);
+  color: #fff;
 }
 @media (max-width: 48rem) {
   .global-chat-page {

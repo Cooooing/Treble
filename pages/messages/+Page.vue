@@ -6,6 +6,7 @@ import ClientOnly from "@/components/ui/ClientOnly.vue";
 import Avatar from "@/components/identity/Avatar.vue";
 import EmptyState from "@/components/feedback/EmptyState.vue";
 import { message } from "@/components/feedback/message";
+import Icon from "@/components/ui/Icon.vue";
 import { notifyPrivateChatRead } from "@/services/privateChatState";
 import { getRealtimeConnection, getRealtimeNodeUrl, type RealtimeTicket } from "@/services/realtime";
 import { bbsClient } from "@/utils/sdk";
@@ -206,6 +207,10 @@ function focusComposer() {
   editor.value?.focus();
 }
 
+function unavailable(feature: string) {
+  message.info(`${feature}功能正在接入。`);
+}
+
 function handleComposerKeydown(event: KeyboardEvent) {
   if (event.isComposing || sendShortcut.value !== "enter" || event.key !== "Enter" || event.shiftKey) return;
   event.preventDefault();
@@ -373,6 +378,14 @@ onBeforeUnmount(() => unsubscribe?.());
             />
             <form class="private-chat__composer" @click="focusComposer" @submit.prevent="send">
               <label class="fn-none" for="private-chat-content">输入私聊消息</label>
+              <div class="private-chat__composer-tools" aria-label="私聊工具">
+                <button aria-label="发送红包" type="button" @click.stop="unavailable('红包')">
+                  <Icon name="red-packet" />
+                </button>
+                <button aria-label="插入表情" type="button" @click.stop="unavailable('表情包')">
+                  <Icon name="emoji" />
+                </button>
+              </div>
               <ClientOnly>
                 <RichTextEditor
                   id="private-chat-content"
@@ -668,7 +681,7 @@ onBeforeUnmount(() => unsubscribe?.());
 }
 .private-chat__composer {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   min-height: 0;
   padding: 0 0.875rem 0.625rem;
   overflow: hidden;
@@ -696,6 +709,34 @@ onBeforeUnmount(() => unsubscribe?.());
   padding: 0 !important;
   overflow-y: auto !important;
   background: var(--layer-background-color);
+}
+.private-chat__composer-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+}
+.private-chat__composer-tools button {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  place-items: center;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+}
+.private-chat__composer-tools button:hover,
+.private-chat__composer-tools button:focus-visible {
+  color: var(--color-accent);
+  box-shadow: none;
+  outline: 0;
+  transform: none;
+}
+.private-chat__composer-tools :deep(.icon) {
+  width: 1.375rem;
+  height: 1.375rem;
 }
 .private-chat__composer footer {
   display: flex;

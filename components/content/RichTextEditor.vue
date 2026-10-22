@@ -118,6 +118,34 @@ defineExpose({
   setValue(value: string) {
     vditor.value?.setValue(value);
   },
+  setValueAndFocus(value: string, cursorOffset: number) {
+    const editor = vditor.value;
+    if (!editor) return;
+    editor.setValue(value);
+    editor.focus();
+
+    const internal = editor as unknown as {
+      vditor: { currentMode: "ir" | "sv" | "wysiwyg"; ir: { element: HTMLElement }; sv: { element: HTMLElement }; wysiwyg: { element: HTMLElement } };
+    };
+    const root = internal.vditor[internal.vditor.currentMode].element;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let remaining = cursorOffset;
+    let text = walker.nextNode();
+    while (text) {
+      const length = text.textContent?.length || 0;
+      if (remaining <= length) {
+        const range = document.createRange();
+        range.setStart(text, remaining);
+        range.collapse(true);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        return;
+      }
+      remaining -= length;
+      text = walker.nextNode();
+    }
+  },
   focus() {
     vditor.value?.focus();
   },
