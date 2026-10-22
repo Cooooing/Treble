@@ -16,7 +16,7 @@ type Session = {
   unreadCount?: number;
   pinned?: boolean;
   muted?: boolean;
-  peer?: { userId?: string; name?: string; nickname?: string; avatarUrl?: string };
+  peer?: { userId?: string; name?: string; nickname?: string; avatarUrl?: string; online?: boolean };
   lastMessage?: { content?: string; revoked?: boolean };
   lastMessageAt?: Date;
 };
@@ -56,7 +56,11 @@ const sendShortcut = ref<"ctrl-enter" | "enter">("ctrl-enter");
 const shortcutMenuOpen = ref(false);
 const pendingMessages = ref(0);
 const maximumLoadedMessages = 300;
-const selectedConversation = computed(() => selectedPeerID.value ? selectedPeer.value || sessions.value.find((session) => session.peerUserId === selectedPeerID.value)?.peer : undefined);
+const selectedConversation = computed(() =>
+  selectedPeerID.value
+    ? selectedPeer.value || sessions.value.find((session) => session.peerUserId === selectedPeerID.value)?.peer
+    : undefined,
+);
 const currentUserID = computed(() => {
   const userID = pageContext.user?.profile?.id;
   return userID === undefined ? undefined : String(userID);
@@ -153,7 +157,10 @@ async function send() {
 }
 
 function isTimelineAtBottom(element: HTMLElement) {
-  return element.scrollHeight <= element.clientHeight || element.scrollHeight - element.scrollTop - element.clientHeight <= 32;
+  return (
+    element.scrollHeight <= element.clientHeight ||
+    element.scrollHeight - element.scrollTop - element.clientHeight <= 32
+  );
 }
 
 async function renderMessages(messages: PrivateMessage[]) {
@@ -307,13 +314,25 @@ onBeforeUnmount(() => unsubscribe?.());
           >
             <Avatar :name="session.peer?.name" :size="36" square :url="session.peer?.avatarUrl" />
             <span class="private-chat__session-content">
-              <strong>{{ memberDisplayName(session.peer, `用户 ${session.peerUserId}`) }}</strong>
+              <span class="private-chat__session-title">
+                <span>{{ memberDisplayName(session.peer, `用户 ${session.peerUserId}`) }}</span>
+                <span
+                  :class="{ 'private-chat__presence--online': session.peer?.online }"
+                  class="private-chat__presence"
+                  >{{ session.peer?.online ? "[在线]" : "[离线]" }}</span
+                >
+              </span>
               <p>{{ session.lastMessage?.revoked ? "消息已撤回" : session.lastMessage?.content || "暂无消息" }}</p>
             </span>
             <span v-if="session.unreadCount" class="private-chat__badge">{{ session.unreadCount }}</span>
           </button>
         </aside>
-        <button aria-label="调整会话列表与私聊区域宽度" class="private-chat__splitter private-chat__splitter--vertical" type="button" @pointerdown.prevent="startResize($event, 'horizontal')" />
+        <button
+          aria-label="调整会话列表与私聊区域宽度"
+          class="private-chat__splitter private-chat__splitter--vertical"
+          type="button"
+          @pointerdown.prevent="startResize($event, 'horizontal')"
+        />
         <section class="private-chat__conversation" aria-live="polite">
           <template v-if="selectedConversation"
             ><header>
@@ -337,9 +356,21 @@ onBeforeUnmount(() => unsubscribe?.());
                   <time v-if="row.createdAt">{{ row.createdAt.toLocaleString() }}</time>
                 </section>
               </article>
-              <button v-if="pendingMessages" class="private-chat__new-messages" type="button" @click="scrollTimelineToLatest">新消息（{{ pendingMessages }} 条）</button>
+              <button
+                v-if="pendingMessages"
+                class="private-chat__new-messages"
+                type="button"
+                @click="scrollTimelineToLatest"
+              >
+                新消息（{{ pendingMessages }} 条）
+              </button>
             </main>
-            <button aria-label="调整消息区与输入区高度" class="private-chat__splitter private-chat__splitter--horizontal" type="button" @pointerdown.prevent="startResize($event, 'vertical')" />
+            <button
+              aria-label="调整消息区与输入区高度"
+              class="private-chat__splitter private-chat__splitter--horizontal"
+              type="button"
+              @pointerdown.prevent="startResize($event, 'vertical')"
+            />
             <form class="private-chat__composer" @click="focusComposer" @submit.prevent="send">
               <label class="fn-none" for="private-chat-content">输入私聊消息</label>
               <ClientOnly>
@@ -348,27 +379,64 @@ onBeforeUnmount(() => unsubscribe?.());
                   ref="editor"
                   v-model="content"
                   height="100%"
-                  :options="{ cache: { enable: false }, placeholder: '说点什么吧，友善第一。', preview: { mode: 'editor' }, resize: { enable: false }, toolbar: [], ctrlEnter: () => { if (sendShortcut === 'ctrl-enter') void send() } }"
+                  :options="{
+                    cache: { enable: false },
+                    placeholder: '说点什么吧，友善第一。',
+                    preview: { mode: 'editor' },
+                    resize: { enable: false },
+                    toolbar: [],
+                    ctrlEnter: () => {
+                      if (sendShortcut === 'ctrl-enter') void send();
+                    },
+                  }"
                   @keydown.capture="handleComposerKeydown"
                 />
               </ClientOnly>
               <footer>
                 <div class="private-chat__send-control">
-                  <button class="private-chat__send" :disabled="sending" type="submit">{{ sending ? "发送中…" : "发送" }}</button>
-                  <button aria-label="选择发送快捷键" class="private-chat__send-menu" type="button" @click="shortcutMenuOpen = !shortcutMenuOpen" />
+                  <button class="private-chat__send" :disabled="sending" type="submit">
+                    {{ sending ? "发送中…" : "发送" }}
+                  </button>
+                  <button
+                    aria-label="选择发送快捷键"
+                    class="private-chat__send-menu"
+                    type="button"
+                    @click="shortcutMenuOpen = !shortcutMenuOpen"
+                  />
                   <div v-if="shortcutMenuOpen" class="private-chat__shortcut-menu">
-                    <button :class="{ 'private-chat__shortcut-option--selected': sendShortcut === 'enter' }" type="button" @click="setSendShortcut('enter')">按 Enter 键发送消息</button>
-                    <button :class="{ 'private-chat__shortcut-option--selected': sendShortcut === 'ctrl-enter' }" type="button" @click="setSendShortcut('ctrl-enter')">按 Ctrl+Enter 键发送消息</button>
+                    <button
+                      :class="{ 'private-chat__shortcut-option--selected': sendShortcut === 'enter' }"
+                      type="button"
+                      @click="setSendShortcut('enter')"
+                    >
+                      按 Enter 键发送消息
+                    </button>
+                    <button
+                      :class="{ 'private-chat__shortcut-option--selected': sendShortcut === 'ctrl-enter' }"
+                      type="button"
+                      @click="setSendShortcut('ctrl-enter')"
+                    >
+                      按 Ctrl+Enter 键发送消息
+                    </button>
                   </div>
                 </div>
               </footer>
-            </form> </template
-          ><section v-else class="private-chat__start" aria-labelledby="private-chat-start-title">
+            </form>
+          </template>
+          <section v-else class="private-chat__start" aria-labelledby="private-chat-start-title">
             <p id="private-chat-start-title">请在列表点选联系人，或直接发起聊天。</p>
             <form @submit.prevent="startConversation">
               <label class="fn-none" for="private-chat-with">输入用户名</label>
-              <input id="private-chat-with" v-model="chatWithName" autocomplete="off" maxlength="32" placeholder="输入用户名" />
-              <button :disabled="starting || !chatWithName.trim()" type="submit">{{ starting ? "查询中…" : "发起聊天" }}</button>
+              <input
+                id="private-chat-with"
+                v-model="chatWithName"
+                autocomplete="off"
+                maxlength="32"
+                placeholder="输入用户名"
+              />
+              <button :disabled="starting || !chatWithName.trim()" type="submit">
+                {{ starting ? "查询中…" : "发起聊天" }}
+              </button>
             </form>
           </section>
         </section>
@@ -488,16 +556,32 @@ onBeforeUnmount(() => unsubscribe?.());
   min-width: 0;
   flex: 1 1 auto;
 }
-.private-chat__session-content strong {
-  display: block;
+.private-chat__session-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.private-chat__session-title > :first-child {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.private-chat__presence {
+  flex: 0 0 auto;
+  color: var(--text-fade-color);
+  font-size: 0.75rem;
+}
+.private-chat__presence--online {
+  color: var(--color-success);
+}
 .private-chat__session-content p {
+  display: block;
   margin: 0.25rem 0 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--text-fade-color);
   white-space: nowrap;
 }
 .private-chat__badge {
@@ -702,7 +786,9 @@ onBeforeUnmount(() => unsubscribe?.());
   background: var(--layer-border-color);
   cursor: pointer;
   opacity: 0.65;
-  transition: background-color 0.15s ease, opacity 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
 }
 .private-chat__splitter:hover,
 .private-chat__splitter:focus-visible {
