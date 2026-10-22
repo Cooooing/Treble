@@ -73,6 +73,10 @@ export const bbsClient = {
     const { HolidayService } = await import("@bass/bbs-sdk-fetch/apis/HolidayService");
     return throughBbsProxy(new HolidayService(bbsConfiguration));
   }),
+  im: deferBbsService(async () => {
+    const { IMService } = await import("@bass/bbs-sdk-fetch/apis/IMService");
+    return throughBbsProxy(new IMService(bbsConfiguration));
+  }),
   location: deferBbsService(async () => {
     const { LocationService } = await import("@bass/bbs-sdk-fetch/apis/LocationService");
     return throughBbsProxy(new LocationService(bbsConfiguration));

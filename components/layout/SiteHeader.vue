@@ -14,6 +14,11 @@ import {
   unreadNotificationCount,
 } from "@/services/notificationState";
 import {
+  initializePrivateChatState,
+  refreshUnreadPrivateChatCount,
+  unreadPrivateChatCount,
+} from "@/services/privateChatState";
+import {
   getRealtimeConnection,
   getRealtimeNodeUrl,
   stopRealtimeConnection,
@@ -40,10 +45,11 @@ const searchHistoryOpen = ref(false);
 const guestCity = ref<string>();
 const receivedNotificationIDs = new Set<string>();
 let unsubscribeNotification: (() => void) | undefined;
+let unsubscribePrivateChat: (() => void) | undefined;
 
 const account = computed(() => {
   if (typeof window === "undefined") return pageContext.user;
-  return pageContext.user || currentAccount.value;
+  return currentAccount.value || pageContext.user;
 });
 const locationCity = computed(() => {
   if (account.value) return normalizeCity(account.value.location?.city);
@@ -52,6 +58,7 @@ const locationCity = computed(() => {
 const menus = computed(() => [
   { name: "最新", path: "/recent", icon: "refresh" },
   { name: "最热", path: "/hot", icon: "fire" },
+  { name: "聊天室", path: "/chat", icon: "chat" },
   { name: "清风明月", path: "/moonbreezes", icon: "moonbreezes" },
   ...(locationCity.value ? [{ name: locationCity.value, path: "/nearby", icon: "feed" }] : []),
   ...(account.value ? [{ name: "关注", path: "/following", icon: "userrole" }] : []),
@@ -67,10 +74,9 @@ function normalizeCity(value?: string): string | undefined {
 }
 
 function syncClientAccount() {
-  // A rendering failure can yield an error page without its original page
-  // context. Do not turn that missing context into a client-side logout: only
-  // replace the cached account after the server has actually supplied one.
-  if (pageContext.user) setCurrentAccount(pageContext.user);
+  // SSR seeds the first client render. Once a client-side settings action has
+  // updated the account, it is newer than every subsequently navigated SSR snapshot.
+  if (!currentAccount.value && pageContext.user) setCurrentAccount(pageContext.user);
 }
 
 function closeWhenClickingOutside(event: PointerEvent) {
@@ -149,12 +155,20 @@ async function connectRealtime() {
     message.info("收到一条新通知", { id: `notification:${notificationID}` });
     void refreshUnreadNotificationCount();
   });
+  unsubscribePrivateChat = realtime.subscribe("private_chat_message", (event) => {
+    const receiverID = privateChatReceiverIDFromEvent(event);
+    if (!receiverID || receiverID !== account.value?.profile?.id) return;
+    void refreshUnreadPrivateChatCount();
+    if (pageContext.urlPathname !== "/messages") message.info("收到一条新私信", { id: `private-chat:${receiverID}` });
+  });
   realtime.start();
 }
 
 function disconnectRealtime() {
   unsubscribeNotification?.();
   unsubscribeNotification = undefined;
+  unsubscribePrivateChat?.();
+  unsubscribePrivateChat = undefined;
 }
 
 function notificationIDFromEvent(event: MessageEvent<string>) {
@@ -162,6 +176,16 @@ function notificationIDFromEvent(event: MessageEvent<string>) {
     const payload = JSON.parse(event.data) as { notification_id?: string | number };
     const notificationID = String(payload.notification_id || "").trim();
     return notificationID && notificationID !== "0" ? notificationID : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function privateChatReceiverIDFromEvent(event: MessageEvent<string>) {
+  try {
+    const payload = JSON.parse(event.data) as { receiver_id?: string | number };
+    const receiverID = String(payload.receiver_id || "").trim();
+    return receiverID && receiverID !== "0" ? receiverID : undefined;
   } catch {
     return undefined;
   }
@@ -182,7 +206,9 @@ onMounted(async () => {
   }
   if (account.value) {
     initializeNotificationState();
+    initializePrivateChatState();
     await refreshUnreadNotificationCount();
+    await refreshUnreadPrivateChatCount();
     void connectRealtime();
   }
 });
@@ -197,7 +223,7 @@ watch(
   () => pageContext.user,
   (nextAccount) => {
     if (typeof window === "undefined") return;
-    if (nextAccount) setCurrentAccount(nextAccount);
+    if (!currentAccount.value && nextAccount) setCurrentAccount(nextAccount);
   },
 );
 
@@ -272,6 +298,9 @@ watch(
       <template v-if="account">
         <AppLink aria-label="通知中心" class="no-msg" href="/notifications"
           ><Icon name="notification" />&nbsp;{{ unreadNotificationCount }}</AppLink
+        >
+        <AppLink aria-label="私聊" class="no-msg" href="/messages"
+          ><Icon name="idle-chat" />&nbsp;{{ unreadPrivateChatCount }}</AppLink
         >
         <AppLink class="pre-post" href="/pre-post"><Icon name="addpost" />&nbsp;发帖</AppLink>
         <details ref="accountMenu" class="account-menu">
