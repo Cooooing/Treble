@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from "vue";
+import { nextTick, onMounted, onUnmounted, ref } from "vue";
 import { defaultTheme, isDarkTheme, type Theme } from "@/utils/theme";
 import "vditor/dist/index.css";
 
@@ -24,8 +24,9 @@ function mdRender(theme: Theme) {
       enable: true,
     },
     anchor: 1,
-    after() {
+    async after() {
       render.value = false;
+      await nextTick();
       const headings = Array.from(contentRef.value?.querySelectorAll<HTMLElement>("h1, h2, h3, h4, h5, h6") || [])
         .map((heading, index) => {
           const id = heading.id || `article-heading-${index + 1}`;

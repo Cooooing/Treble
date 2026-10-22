@@ -34,6 +34,7 @@ const editorReady = ref(false);
 const theme = ref<Theme>(defaultTheme);
 const editorId = props.id || `editor-${++sequence}`;
 let disposed = false;
+let lastEditorValue: string | undefined;
 
 function syncTheme(nextTheme: Theme) {
   theme.value = nextTheme;
@@ -82,6 +83,7 @@ onMounted(async () => {
       after?.();
     },
     input: (value) => {
+      lastEditorValue = value;
       emit("update:modelValue", value);
       input?.(value);
     },
@@ -92,6 +94,10 @@ onMounted(async () => {
 watch(
   () => props.modelValue,
   (value) => {
+    if (value === lastEditorValue) {
+      lastEditorValue = undefined;
+      return;
+    }
     if (!editorReady.value || value === undefined || vditor.value?.getValue() === value) return;
     vditor.value?.setValue(value);
   },

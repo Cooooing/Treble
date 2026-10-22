@@ -1,12 +1,12 @@
 <template>
-  <div class="site-layout">
+  <div :class="{ 'site-layout--chat': isRealtimePage }" class="site-layout">
     <SiteHeader />
     <main id="site-main" class="bg">
       <div id="page-container">
         <div id="page-content" class="page-content"><slot /></div>
       </div>
     </main>
-    <SiteFooter />
+    <SiteFooter v-if="!isRealtimePage" />
     <UserCardHost />
     <ClientOnly>
       <WorkCountdown />
@@ -22,6 +22,11 @@ import SiteFooter from "@/components/layout/SiteFooter.vue";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
 import WorkCountdown from "@/components/layout/WorkCountdown.vue";
 import UserCardHost from "@/components/identity/UserCardHost.vue";
+import { computed } from "vue";
+import { usePageContext } from "vike-vue/usePageContext";
+
+const pageContext = usePageContext();
+const isRealtimePage = computed(() => pageContext.urlPathname === "/chat" || pageContext.urlPathname === "/messages");
 </script>
 
 <style scoped>
@@ -43,5 +48,17 @@ import UserCardHost from "@/components/identity/UserCardHost.vue";
   flex: 1 0 auto;
   flex-direction: column;
   min-height: 0;
+}
+
+.site-layout--chat {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.site-layout--chat > #site-main,
+.site-layout--chat #page-container,
+.site-layout--chat #page-content {
+  flex: 1 1 0;
+  overflow: hidden;
 }
 </style>
