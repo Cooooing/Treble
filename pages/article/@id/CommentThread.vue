@@ -6,6 +6,7 @@ import Avatar from "@/components/identity/Avatar.vue";
 import MemberLink from "@/components/identity/MemberLink.vue";
 import Icon from "@/components/ui/Icon.vue";
 import { fromNow } from "@/utils/date";
+import { memberDisplayName } from "@/utils/member";
 import { pageNumber } from "@/utils/page";
 
 const props = defineProps<{
@@ -61,7 +62,7 @@ function pageNumbers(total: number, current: number) {
       <div class="fn-flex-1">
         <div class="comment-info">
           <MemberLink :username="thread.root.user?.name || ''" class="ft-gray">
-            {{ thread.root.user?.nickname || thread.root.user?.name || "匿名用户" }}
+            {{ memberDisplayName(thread.root.user) }}
           </MemberLink>
           <span v-if="isArticleAuthor" class="comment-thread__badge">作者</span>
           <span v-if="pinLabel" class="comment-thread__badge">{{ pinLabel }}</span>
@@ -97,12 +98,12 @@ function pageNumbers(total: number, current: number) {
           <div class="fn-flex-1">
             <div class="comment-thread__reply-content" data-image-preview>
               <MemberLink :username="reply.user?.name || ''" class="comment-thread__user">{{
-                reply.user?.nickname || reply.user?.name || "匿名用户"
+                memberDisplayName(reply.user)
               }}</MemberLink>
               <span v-if="reply.replyUser && reply.replyId !== thread.root.id" class="comment-thread__target"
                 >回复
                 <MemberLink :username="reply.replyUser.name || ''">{{
-                  reply.replyUser.nickname || reply.replyUser.name || "匿名用户"
+                  memberDisplayName(reply.replyUser)
                 }}</MemberLink
                 >：</span
               >

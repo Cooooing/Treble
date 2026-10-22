@@ -4,6 +4,7 @@ import type { Moonbreeze } from "@bass/bbs-sdk-fetch/models/Moonbreeze";
 import Avatar from "@/components/identity/Avatar.vue";
 import MemberLink from "@/components/identity/MemberLink.vue";
 import { message } from "@/components/feedback/message";
+import { memberDisplayName } from "@/utils/member";
 import { fromNow } from "@/utils/date";
 import { bbsClient } from "@/utils/sdk";
 
@@ -53,7 +54,7 @@ async function loadMore() {
       <div class="moonbreeze-card__body">
         <header class="moonbreeze-card__meta">
           <MemberLink :username="row.author?.name || ''">{{
-            row.author?.nickname || row.author?.name || "匿名用户"
+            memberDisplayName(row.author)
           }}</MemberLink>
           <div v-if="row.createdAt || row.city" class="moonbreeze-card__details">
             <time v-if="row.createdAt" :datetime="row.createdAt.toISOString()">{{ fromNow(row.createdAt) }}</time>

@@ -4,11 +4,12 @@ import Avatar from "@/components/identity/Avatar.vue";
 import MemberLink from "@/components/identity/MemberLink.vue";
 import ContentPanel from "@/components/layout/ContentPanel.vue";
 import AppLink from "@/components/ui/AppLink.vue";
+import { memberDisplayName } from "@/utils/member";
 
 defineProps<{ rows: ArticleViewHistoryItem[] }>();
 
 function authorName(row: ArticleViewHistoryItem): string {
-  return row.article?.authorUser?.nickname || row.article?.authorUser?.name || "用户";
+  return memberDisplayName(row.article?.authorUser, "用户");
 }
 
 </script>

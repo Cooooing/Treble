@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { toRefs } from "vue";
 import { useData } from "vike-vue/useData";
+import { memberDisplayName } from "@/utils/member";
 import Avatar from "@/components/identity/Avatar.vue";
 import MemberLink from "@/components/identity/MemberLink.vue";
 import MemberProfileLayout from "@/components/member/MemberProfileLayout.vue";
@@ -15,8 +16,7 @@ const { profile, rows, private: isPrivate } = toRefs(useData<any>());
       <MemberLink v-for="row in rows" :key="row.account?.id" :username="row.account?.name || ''" class="member-row">
         <Avatar :name="row.account?.name" :size="48" :url="row.account?.avatarUrl" square />
         <span
-          ><b>{{ row.account?.nickname || row.account?.name }}</b
-          ><small v-if="row.account?.nickname">{{ row.account?.name }}</small
+          ><b>{{ memberDisplayName(row.account) }}</b
           ><em v-if="row.account?.introduction">{{ row.account.introduction }}</em></span
         >
       </MemberLink>

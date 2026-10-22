@@ -4,6 +4,7 @@ import Avatar from "@/components/identity/Avatar.vue";
 import MemberLink from "@/components/identity/MemberLink.vue";
 import Icon from "@/components/ui/Icon.vue";
 import { fromNow } from "@/utils/date";
+import { memberDisplayName } from "@/utils/member";
 
 defineProps<{ article: ArticleDetail; replyCount: number }>();
 </script>
@@ -22,7 +23,7 @@ defineProps<{ article: ArticleDetail; replyCount: number }>();
     <div class="fn-flex-1">
       <div id="articleMeta" class="fn-clear">
         <MemberLink :username="article.authorUser?.name || ''" class="article__stats article__stats--a"
-          ><span class="article__cnt">{{ article.authorUser?.nickname || article.authorUser?.name || "匿名用户" }}</span
+          ><span class="article__cnt">{{ memberDisplayName(article.authorUser) }}</span
           ><time>{{ article.createdAt ? fromNow(article.createdAt.getTime()) : "刚刚" }}</time></MemberLink
         >
         <span v-if="article.city" class="article__stats">{{ article.city }}</span>

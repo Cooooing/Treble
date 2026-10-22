@@ -11,6 +11,7 @@ import type { RespCommentListItem } from "@bass/bbs-sdk-fetch/models/RespComment
 import type { RespCommentThread } from "@bass/bbs-sdk-fetch/models/RespCommentThread";
 import Avatar from "@/components/identity/Avatar.vue";
 import { message } from "@/components/feedback/message";
+import { memberDisplayName } from "@/utils/member";
 import Icon from "@/components/ui/Icon.vue";
 import { currentAccount } from "@/services/sessionState";
 import { pageNumber, pageRequest } from "@/utils/page";
@@ -328,7 +329,7 @@ async function loadReplies(parentId: string, page: number) {
       :submitting="submitting"
       :title="
         replyComment
-          ? `回复 ${replyComment.user?.nickname || replyComment.user?.name || '用户'}`
+          ? `回复 ${memberDisplayName(replyComment.user, '用户')}`
           : article.title || '发表评论'
       "
       aria-label="发布回复"

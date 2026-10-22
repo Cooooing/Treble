@@ -7,6 +7,7 @@ import Icon from "@/components/ui/Icon.vue";
 import { message } from "@/components/feedback/message";
 import { currentAccount } from "@/services/sessionState";
 import { fromNow } from "@/utils/date";
+import { memberDisplayName } from "@/utils/member";
 import { bbsClient } from "@/utils/sdk";
 import type { Profile } from "@bass/bbs-sdk-fetch/models/Profile";
 
@@ -124,10 +125,6 @@ async function ConfirmBlock() {
   }
 }
 
-function NotifyPrivateMessageUnavailable() {
-  message.info("私信功能暂未开放。");
-}
-
 function NotifyReportUnavailable() {
   actionMenuOpen.value = false;
   message.info("举报功能暂未开放。");
@@ -188,7 +185,7 @@ watch(viewerID, () => void RefreshRelationState());
           <div class="member-profile__identity">
             <Avatar :name="profile.account?.name" :size="120" :url="profile.account?.avatarUrl" />
             <h1 v-if="profile.account?.nickname || profile.account?.name">
-              {{ profile.account?.nickname || profile.account?.name }}
+              {{ memberDisplayName(profile.account) }}
             </h1>
             <p v-if="profile.account?.name" class="member-profile__name">{{ profile.account.name }}</p>
             <p
@@ -211,7 +208,7 @@ watch(viewerID, () => void RefreshRelationState());
             >
               {{ followLabel }}
             </button>
-            <button class="member-profile__action" type="button" @click="NotifyPrivateMessageUnavailable">私信</button>
+            <AppLink :href="`/messages?peer=${targetID}`" class="member-profile__action">私信</AppLink>
             <div ref="actionMenu" class="member-profile__action-menu">
               <button
                 :aria-expanded="actionMenuOpen"

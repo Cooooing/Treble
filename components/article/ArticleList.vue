@@ -4,6 +4,7 @@ import Avatar from "@/components/identity/Avatar.vue";
 import MemberLink from "@/components/identity/MemberLink.vue";
 import AppLink from "@/components/ui/AppLink.vue";
 import { fromNow } from "@/utils/date";
+import { memberDisplayName } from "@/utils/member";
 import ArticleTaxonomy from "./ArticleTaxonomy.vue";
 
 defineProps<{ articles: ArticleListItem[]; compact?: boolean }>();
@@ -88,13 +89,13 @@ function formatCount(value: number | undefined): string {
                 <div class="article-list__author-line ft-smaller ft-fade">
                   <p>
                     <MemberLink :username="article.authorUser?.name || ''" class="article-list__member-link">
-                      {{ article.authorUser?.nickname || article.authorUser?.name || "匿名用户" }}
+                      {{ memberDisplayName(article.authorUser) }}
                     </MemberLink>
                     <span v-if="article.authorUser?.introduction"> - {{ article.authorUser.introduction }}</span>
                   </p>
                   <p v-if="article.lastReplyUser">
                     <MemberLink :username="article.lastReplyUser.name || ''" class="article-list__member-link">
-                      {{ article.lastReplyUser.nickname || article.lastReplyUser.name || "匿名用户" }}
+                      {{ memberDisplayName(article.lastReplyUser) }}
                     </MemberLink>
                     回复于
                     {{ article.lastReplyAt ? fromNow(article.lastReplyAt) : "刚刚" }}

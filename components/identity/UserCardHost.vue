@@ -8,6 +8,7 @@ import { message } from "@/components/feedback/message";
 import { currentAccount } from "@/services/sessionState";
 import { registerUserCardController, type UserCardController } from "@/services/userCard";
 import { bbsClient } from "@/utils/sdk";
+import { memberDisplayName } from "@/utils/member";
 
 type CardState = "initial" | "show" | "hide";
 
@@ -235,7 +236,7 @@ watch(
             <header class="user-card__meta">
               <div class="user-card__name-wrapper">
                 <AppLink :href="`/member/${profile.account.name}`" class="user-card__name">
-                  {{ profile.account.nickname || profile.account.name }}
+                  {{ memberDisplayName(profile.account) }}
                 </AppLink>
                 <AppLink :href="`/member/${profile.account.name}`" class="user-card__account">{{
                   profile.account.name
@@ -262,7 +263,12 @@ watch(
             >
               {{ followLabel }}
             </button>
-            <button class="user-card__message" disabled type="button">私信（暂未开放）</button>
+            <AppLink
+              v-if="profile.account?.id"
+              :href="`/messages?peer=${profile.account.id}`"
+              class="user-card__message"
+              >私信</AppLink
+            >
           </footer>
         </div>
       </article>
@@ -458,7 +464,8 @@ watch(
   border-radius: 4px;
   background: color-mix(in srgb, var(--color-bg-surface) 82%, transparent);
   color: var(--color-text-subtle);
-  cursor: not-allowed;
+  cursor: pointer;
+  text-decoration: none;
   font: inherit;
   font-size: 13px;
   line-height: 1;
