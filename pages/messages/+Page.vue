@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { usePageContext } from "vike-vue/usePageContext";
 import RichTextEditor from "@/components/content/RichTextEditor.vue";
 import ClientOnly from "@/components/ui/ClientOnly.vue";
@@ -9,6 +9,7 @@ import { message } from "@/components/feedback/message";
 import Icon from "@/components/ui/Icon.vue";
 import { notifyPrivateChatRead } from "@/services/privateChatState";
 import { getRealtimeConnection, getRealtimeNodeUrl, type RealtimeTicket } from "@/services/realtime";
+import { useChatTimeline } from "@/services/chatTimeline";
 import { bbsClient } from "@/utils/sdk";
 import { memberDisplayName } from "@/utils/member";
 
@@ -55,7 +56,6 @@ const sideWidth = ref(24);
 const composerHeight = ref(28);
 const sendShortcut = ref<"ctrl-enter" | "enter">("ctrl-enter");
 const shortcutMenuOpen = ref(false);
-const pendingMessages = ref(0);
 const maximumLoadedMessages = 300;
 const selectedConversation = computed(() =>
   selectedPeerID.value
@@ -73,6 +73,16 @@ const privateChatStyle = computed(() => ({
 let unsubscribe: (() => void) | undefined;
 let markdownConverter: Promise<typeof import("vditor").default> | undefined;
 const timeline = ref<HTMLElement>();
+const timelineContent = ref<HTMLElement>();
+const {
+  pendingMessages,
+  handleScroll: handleTimelinePosition,
+  prepareAppend,
+  recordPendingMessage,
+  scrollToLatest,
+  settleAppendedMessage,
+  settleInitialRender,
+} = useChatTimeline(timeline, timelineContent);
 
 async function loadSessions() {
   const response = await bbsClient.im.listPrivateChatSessions({ pagePage: "1", pageSize: "50" });
@@ -89,8 +99,7 @@ async function selectSession(peerUserId?: string) {
       listPrivateChatMessagesReq: { peerUserId, page: { page: "1", size: "50" } },
     });
     rows.value = await renderMessages([...(response.rows || [])].reverse());
-    await nextTick();
-    scrollTimelineToLatest();
+    await settleInitialRender();
     const latest = rows.value.at(-1);
     if (latest?.id) {
       await bbsClient.im.markPrivateChatSessionRead({
@@ -148,20 +157,13 @@ async function send() {
     });
     editor.value?.setValue("");
     content.value = "";
-    if (response.message) await appendRealtimeMessage(response.message);
+    if (response.message) await appendRealtimeMessage(response.message, true);
     await loadSessions();
   } catch (error) {
     message.error(error instanceof Error ? error.message : "消息发送失败");
   } finally {
     sending.value = false;
   }
-}
-
-function isTimelineAtBottom(element: HTMLElement) {
-  return (
-    element.scrollHeight <= element.clientHeight ||
-    element.scrollHeight - element.scrollTop - element.clientHeight <= 32
-  );
 }
 
 async function renderMessages(messages: PrivateMessage[]) {
@@ -179,28 +181,25 @@ async function renderMessages(messages: PrivateMessage[]) {
   }
 }
 
-function scrollTimelineToLatest() {
-  if (!timeline.value) return;
-  timeline.value.scrollTop = Math.max(0, timeline.value.scrollHeight - timeline.value.clientHeight);
-  pendingMessages.value = 0;
-}
-
 function handleTimelineScroll() {
-  if (timeline.value && isTimelineAtBottom(timeline.value)) pendingMessages.value = 0;
+  handleTimelinePosition();
 }
 
-async function appendRealtimeMessage(messageRow: PrivateMessage) {
-  if (!messageRow.id || rows.value.some((row) => row.id === messageRow.id)) return;
-  const [renderedRow] = await renderMessages([messageRow]);
-  const isAtBottom = !timeline.value || isTimelineAtBottom(timeline.value);
-  rows.value.push(renderedRow);
-  if (rows.value.length > maximumLoadedMessages) rows.value.splice(0, rows.value.length - maximumLoadedMessages);
-  if (isAtBottom) {
-    await nextTick();
-    scrollTimelineToLatest();
+async function appendRealtimeMessage(messageRow: PrivateMessage, forceFollow = false) {
+  if (!messageRow.id) return;
+  if (rows.value.some((row) => row.id === messageRow.id)) {
+    if (forceFollow) scrollToLatest();
     return;
   }
-  pendingMessages.value += 1;
+  const [renderedRow] = await renderMessages([messageRow]);
+  const followedLatest = prepareAppend(forceFollow);
+  rows.value.push(renderedRow);
+  if (rows.value.length > maximumLoadedMessages) rows.value.splice(0, rows.value.length - maximumLoadedMessages);
+  if (followedLatest) {
+    await settleAppendedMessage(true);
+    return;
+  }
+  recordPendingMessage();
 }
 
 function focusComposer() {
@@ -327,9 +326,13 @@ onBeforeUnmount(() => unsubscribe?.());
                   >{{ session.peer?.online ? "[在线]" : "[离线]" }}</span
                 >
               </span>
-              <p>{{ session.lastMessage?.revoked ? "消息已撤回" : session.lastMessage?.content || "暂无消息" }}</p>
+              <span class="private-chat__session-preview">
+                <span>{{
+                  session.lastMessage?.revoked ? "消息已撤回" : session.lastMessage?.content || "暂无消息"
+                }}</span>
+                <span v-if="session.unreadCount" class="private-chat__badge">{{ session.unreadCount }}</span>
+              </span>
             </span>
-            <span v-if="session.unreadCount" class="private-chat__badge">{{ session.unreadCount }}</span>
           </button>
         </aside>
         <button
@@ -345,30 +348,29 @@ onBeforeUnmount(() => unsubscribe?.());
               ><span v-if="loading">加载中…</span>
             </header>
             <main ref="timeline" @scroll.passive="handleTimelineScroll">
-              <article
-                v-for="row in rows"
-                :key="row.id"
-                :class="{ 'private-chat__message--self': row.senderId === currentUserID }"
-                class="private-chat__message"
-              >
-                <section class="private-chat__bubble">
-                  <p v-if="row.revoked" class="private-chat__revoked">这条消息已撤回</p>
-                  <p v-else-if="row.messageType === 'IM_MESSAGE_TYPE_RED_PACKET'" class="private-chat__red-packet">
-                    红包消息：{{ row.content }}
-                  </p>
-                  <div v-else-if="row.html" class="private-chat__content vditor-reset" v-html="row.html" />
-                  <p v-else>{{ row.content }}</p>
-                  <time v-if="row.createdAt">{{ row.createdAt.toLocaleString() }}</time>
-                </section>
-              </article>
-              <button
-                v-if="pendingMessages"
-                class="private-chat__new-messages"
-                type="button"
-                @click="scrollTimelineToLatest"
-              >
-                新消息（{{ pendingMessages }} 条）
-              </button>
+              <div ref="timelineContent" class="private-chat__timeline-content">
+                <article
+                  v-for="row in rows"
+                  :key="row.id"
+                  :class="{ 'private-chat__message--self': row.senderId === currentUserID }"
+                  class="private-chat__message"
+                >
+                  <section class="private-chat__bubble">
+                    <p v-if="row.revoked" class="private-chat__revoked">这条消息已撤回</p>
+                    <p v-else-if="row.messageType === 'IM_MESSAGE_TYPE_RED_PACKET'" class="private-chat__red-packet">
+                      红包消息：{{ row.content }}
+                    </p>
+                    <!-- Vditor sanitizes the Markdown before this content is assigned. -->
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <div v-else-if="row.html" class="private-chat__content vditor-reset" v-html="row.html" />
+                    <p v-else>{{ row.content }}</p>
+                    <time v-if="row.createdAt">{{ row.createdAt.toLocaleString() }}</time>
+                  </section>
+                </article>
+                <button v-if="pendingMessages" class="private-chat__new-messages" type="button" @click="scrollToLatest">
+                  新消息（{{ pendingMessages }} 条）
+                </button>
+              </div>
             </main>
             <button
               aria-label="调整消息区与输入区高度"
@@ -589,21 +591,33 @@ onBeforeUnmount(() => unsubscribe?.());
 .private-chat__presence--online {
   color: var(--color-success);
 }
-.private-chat__session-content p {
-  display: block;
+.private-chat__session-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0.25rem 0 0;
+  min-width: 0;
+}
+.private-chat__session-preview > :first-child {
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-fade-color);
   white-space: nowrap;
 }
 .private-chat__badge {
-  min-width: 20px;
-  border-radius: 10px;
+  display: inline-grid;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0 0.3125rem;
+  border-radius: 0.625rem;
   background: var(--color-accent);
   color: #fff;
-  text-align: center;
   font-size: 12px;
+  line-height: 1;
 }
 .private-chat__conversation {
   display: grid;
@@ -619,9 +633,14 @@ onBeforeUnmount(() => unsubscribe?.());
 .private-chat__conversation main {
   display: flex;
   flex-direction: column;
-  gap: 14px;
   padding: clamp(1rem, 2.4vh, 1.5rem) clamp(1.25rem, 2.8vw, 2rem);
   overflow-y: auto;
+}
+.private-chat__timeline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
 .private-chat__message {
   display: flex;

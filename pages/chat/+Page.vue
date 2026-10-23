@@ -10,6 +10,7 @@ import EmptyState from "@/components/feedback/EmptyState.vue";
 import { message } from "@/components/feedback/message";
 import { getRealtimeConnection, getRealtimeNodeUrl, type RealtimeTicket } from "@/services/realtime";
 import { currentAccount } from "@/services/sessionState";
+import { useChatTimeline } from "@/services/chatTimeline";
 import { bbsClient } from "@/utils/sdk";
 
 type GlobalMessage = {
@@ -43,11 +44,11 @@ const loading = ref(false);
 const loadingOlder = ref(false);
 const onlineMembers = ref<OnlineMember[]>([]);
 const onlineTotal = ref("0");
-const pendingMessages = ref(0);
 const hasOlder = ref(true);
 const topic = ref("暂未设置话题");
 const pageContext = usePageContext();
 const timeline = ref<HTMLElement>();
+const timelineContent = ref<HTMLElement>();
 const editor = ref<InstanceType<typeof RichTextEditor>>();
 const isLoggedIn = computed(() => Boolean(pageContext.user || currentAccount.value));
 let unsubscribe: (() => void) | undefined;
@@ -65,6 +66,16 @@ const topicDraft = ref("");
 const now = ref(new Date());
 let clockTimer: ReturnType<typeof setInterval> | undefined;
 let markdownConverter: Promise<typeof import("vditor").default> | undefined;
+const {
+  pendingMessages,
+  handleScroll: handleTimelinePosition,
+  prepareAppend,
+  preserveHistoryPosition,
+  recordPendingMessage,
+  scrollToLatest,
+  settleAppendedMessage,
+  settleInitialRender,
+} = useChatTimeline(timeline, timelineContent);
 
 const chatStyle = computed(() => ({
   "--global-chat-side-width": `${sideWidth.value}%`,
@@ -90,18 +101,16 @@ async function loadMessages(beforeId?: string) {
         page: { page: "1", size: isLoggedIn.value ? String(pageSize) : String(guestPageSize) },
       },
     });
-    const nextRows = await renderMessages([...response.rows || []].reverse());
+    const nextRows = await renderMessages([...(response.rows || [])].reverse());
     if (isOlderPage) {
       const existingIDs = new Set(rows.value.map((row) => row.id));
       rows.value.unshift(...nextRows.filter((row) => row.id && !existingIDs.has(row.id)));
       hasOlder.value = nextRows.length === pageSize;
-      await nextTick();
-      if (timeline.value) timeline.value.scrollTop = timeline.value.scrollHeight - scrollHeight + scrollTop;
+      await preserveHistoryPosition(scrollHeight, scrollTop);
     } else {
       rows.value = nextRows;
       hasOlder.value = nextRows.length === (isLoggedIn.value ? pageSize : guestPageSize);
-      await nextTick();
-      scrollTimelineToLatest();
+      await settleInitialRender();
     }
   } catch (error) {
     message.error(error instanceof Error ? error.message : "聊天室消息加载失败");
@@ -133,7 +142,13 @@ function displayName(member: OnlineMember) {
 }
 
 function messageSender(row: GlobalMessage) {
-  return row.sender || onlineMembers.value.find((member) => member.userId === row.senderId) || { userId: row.senderId, name: `用户 ${row.senderId}` };
+  return (
+    row.sender ||
+    onlineMembers.value.find((member) => member.userId === row.senderId) || {
+      userId: row.senderId,
+      name: `用户 ${row.senderId}`,
+    }
+  );
 }
 
 function isOwnMessage(row: GlobalMessage) {
@@ -151,11 +166,7 @@ function handleTimelineScroll() {
   const element = timeline.value;
   if (!element) return;
   if (element.scrollTop <= 0) loadOlderMessages();
-  if (isTimelineAtBottom(element)) pendingMessages.value = 0;
-}
-
-function isTimelineAtBottom(element: HTMLElement) {
-  return element.scrollHeight <= element.clientHeight || element.scrollHeight - element.scrollTop - element.clientHeight <= 32;
+  handleTimelinePosition();
 }
 
 async function renderMessages(messages: GlobalMessage[]) {
@@ -173,28 +184,20 @@ async function renderMessages(messages: GlobalMessage[]) {
   }
 }
 
-function scrollTimelineToLatest() {
-  if (!timeline.value) return;
-  timeline.value.scrollTop = Math.max(0, timeline.value.scrollHeight - timeline.value.clientHeight);
-  pendingMessages.value = 0;
-}
-
-function scrollTimelineNow() {
-  if (timeline.value) timeline.value.scrollTop = Math.max(0, timeline.value.scrollHeight - timeline.value.clientHeight);
-  pendingMessages.value = 0;
-}
-
-async function appendMessage(row: GlobalMessage) {
-  if (!row.id || rows.value.some((item) => item.id === row.id)) return;
+async function appendMessage(row: GlobalMessage, forceFollow = false) {
+  if (!row.id) return;
+  if (rows.value.some((item) => item.id === row.id)) {
+    if (forceFollow) scrollToLatest();
+    return;
+  }
   const [renderedRow] = await renderMessages([row]);
-  const isAtBottom = !timeline.value || isTimelineAtBottom(timeline.value);
+  const followedLatest = prepareAppend(forceFollow);
   rows.value.push(renderedRow);
   if (rows.value.length > maximumLoadedMessages) rows.value.splice(0, rows.value.length - maximumLoadedMessages);
-  if (isAtBottom) {
-    await nextTick();
-    scrollTimelineToLatest();
+  if (followedLatest) {
+    await settleAppendedMessage(true);
   } else {
-    pendingMessages.value += 1;
+    recordPendingMessage();
   }
 }
 
@@ -214,7 +217,7 @@ async function send() {
     const response = await bbsClient.im.sendGlobalChatMessage({
       sendGlobalChatMessageReq: { clientMessageId: crypto.randomUUID(), content: value },
     });
-    if (response.message) await appendMessage(response.message);
+    if (response.message) await appendMessage(response.message, true);
   } catch (error) {
     if (!(editor.value?.getValue() || content.value).trim()) {
       editor.value?.setValue(value);
@@ -359,74 +362,88 @@ onBeforeUnmount(() => {
       <section :style="chatStyle" class="content module global-chat">
         <section class="global-chat__main">
           <main ref="timeline" class="global-chat__timeline" aria-live="polite" @scroll.passive="handleTimelineScroll">
-          <p v-if="loadingOlder" class="global-chat__history-status">正在加载更早消息…</p>
-          <p v-else-if="isLoggedIn && !hasOlder && rows.length" class="global-chat__history-status">已显示全部历史消息</p>
-          <EmptyState v-if="!loading && !rows.length" />
-          <article
-            v-for="row in rows"
-            :key="row.id"
-            :class="{ 'global-chat__message--own': isOwnMessage(row) }"
-            :data-bubble-style="row.bubbleStyle || 'default'"
-            class="global-chat__message"
-          >
-            <MemberLink :avatar="messageSender(row).avatarUrl" :size="38" square :username="messageSender(row).name || ''">
-              <Avatar :name="messageSender(row).name" :size="38" square :url="messageSender(row).avatarUrl" />
-            </MemberLink>
-            <section class="global-chat__bubble">
-              <header>
-                <strong>{{ displayName(messageSender(row)) }}</strong>
-              </header>
-              <p v-if="row.revoked" class="global-chat__revoked">这条消息已撤回</p>
-              <p v-else-if="row.messageType === 'IM_MESSAGE_TYPE_RED_PACKET'" class="global-chat__red-packet">
-                红包消息：{{ row.content }}
+            <div ref="timelineContent" class="global-chat__timeline-content">
+              <p v-if="loadingOlder" class="global-chat__history-status">正在加载更早消息…</p>
+              <p v-else-if="isLoggedIn && !hasOlder && rows.length" class="global-chat__history-status">
+                已显示全部历史消息
               </p>
-              <!-- Vditor sanitizes the Markdown before this content is assigned. -->
-              <!-- eslint-disable-next-line vue/no-v-html -->
-              <div v-else-if="row.html" class="global-chat__content vditor-reset" v-html="row.html"></div>
-              <p v-else class="global-chat__content">{{ row.content }}</p>
-              <footer>
-                <time v-if="row.createdAt">{{ row.createdAt.toLocaleString() }}</time
-                ><button aria-label="消息操作" type="button"><Icon name="more" /></button>
-              </footer>
-            </section>
-          </article>
-          <button v-if="pendingMessages" class="global-chat__new-messages" type="button" @click="scrollTimelineNow">
-            新消息（{{ pendingMessages }} 条）
-          </button>
+              <EmptyState v-if="!loading && !rows.length" />
+              <article
+                v-for="row in rows"
+                :key="row.id"
+                :class="{ 'global-chat__message--own': isOwnMessage(row) }"
+                :data-bubble-style="row.bubbleStyle || 'default'"
+                class="global-chat__message"
+              >
+                <MemberLink
+                  :avatar="messageSender(row).avatarUrl"
+                  :size="38"
+                  square
+                  :username="messageSender(row).name || ''"
+                >
+                  <Avatar :name="messageSender(row).name" :size="38" square :url="messageSender(row).avatarUrl" />
+                </MemberLink>
+                <section class="global-chat__bubble">
+                  <header>
+                    <strong>{{ displayName(messageSender(row)) }}</strong>
+                  </header>
+                  <p v-if="row.revoked" class="global-chat__revoked">这条消息已撤回</p>
+                  <p v-else-if="row.messageType === 'IM_MESSAGE_TYPE_RED_PACKET'" class="global-chat__red-packet">
+                    红包消息：{{ row.content }}
+                  </p>
+                  <!-- Vditor sanitizes the Markdown before this content is assigned. -->
+                  <!-- eslint-disable-next-line vue/no-v-html -->
+                  <div v-else-if="row.html" class="global-chat__content vditor-reset" v-html="row.html"></div>
+                  <p v-else class="global-chat__content">{{ row.content }}</p>
+                  <footer>
+                    <time v-if="row.createdAt">{{ row.createdAt.toLocaleString() }}</time
+                    ><button aria-label="消息操作" type="button"><Icon name="more" /></button>
+                  </footer>
+                </section>
+              </article>
+              <button v-if="pendingMessages" class="global-chat__new-messages" type="button" @click="scrollToLatest">
+                新消息（{{ pendingMessages }} 条）
+              </button>
+            </div>
           </main>
-          <button aria-label="调整消息区与输入区高度" class="global-chat__splitter global-chat__splitter--horizontal" type="button" @pointerdown.prevent="startResize($event, 'vertical')" />
+          <button
+            aria-label="调整消息区与输入区高度"
+            class="global-chat__splitter global-chat__splitter--horizontal"
+            type="button"
+            @pointerdown.prevent="startResize($event, 'vertical')"
+          />
           <form v-if="isLoggedIn" class="global-chat__composer" @click="focusComposer" @submit.prevent="send">
-          <label class="fn-none" for="global-chat-content">输入聊天室消息</label>
-          <div class="global-chat__composer-tools" aria-label="聊天室工具">
-            <button aria-label="发送红包" type="button" @click.stop="unavailable('红包')">
-              <Icon name="red-packet" />
-            </button>
-            <button aria-label="插入表情" type="button" @click.stop="unavailable('表情包')">
-              <Icon name="emoji" />
-            </button>
-            <button aria-label="发送弹幕" type="button" @click.stop="unavailable('弹幕')">
-              <Icon name="barrage" />
-            </button>
-          </div>
-          <ClientOnly>
-            <RichTextEditor
-              id="global-chat-content"
-              ref="editor"
-              v-model="content"
-              height="100%"
-              :options="{
-                cache: { enable: false },
-                placeholder: '说点什么吧，友善第一。',
-                preview: { mode: 'editor' },
-                resize: { enable: false },
-                toolbar: [],
-                ctrlEnter: () => {
-                  if (sendShortcut === 'ctrl-enter') void send()
-                },
-              }"
-              @keydown.capture="handleComposerKeydown"
-            />
-          </ClientOnly>
+            <label class="fn-none" for="global-chat-content">输入聊天室消息</label>
+            <div class="global-chat__composer-tools" aria-label="聊天室工具">
+              <button aria-label="发送红包" type="button" @click.stop="unavailable('红包')">
+                <Icon name="red-packet" />
+              </button>
+              <button aria-label="插入表情" type="button" @click.stop="unavailable('表情包')">
+                <Icon name="emoji" />
+              </button>
+              <button aria-label="发送弹幕" type="button" @click.stop="unavailable('弹幕')">
+                <Icon name="barrage" />
+              </button>
+            </div>
+            <ClientOnly>
+              <RichTextEditor
+                id="global-chat-content"
+                ref="editor"
+                v-model="content"
+                height="100%"
+                :options="{
+                  cache: { enable: false },
+                  placeholder: '说点什么吧，友善第一。',
+                  preview: { mode: 'editor' },
+                  resize: { enable: false },
+                  toolbar: [],
+                  ctrlEnter: () => {
+                    if (sendShortcut === 'ctrl-enter') void send();
+                  },
+                }"
+                @keydown.capture="handleComposerKeydown"
+              />
+            </ClientOnly>
             <footer class="global-chat__composer-footer">
               <p v-if="isCurfew" class="global-chat__curfew">
                 <span aria-hidden="true">💤</span>
@@ -434,11 +451,27 @@ onBeforeUnmount(() => {
               </p>
               <div class="global-chat__send-control">
                 <button class="global-chat__send" type="submit">发送</button>
-                <button aria-label="选择发送快捷键" class="global-chat__send-menu" type="button" @click="shortcutMenuOpen = !shortcutMenuOpen">
-                </button>
+                <button
+                  aria-label="选择发送快捷键"
+                  class="global-chat__send-menu"
+                  type="button"
+                  @click="shortcutMenuOpen = !shortcutMenuOpen"
+                ></button>
                 <div v-if="shortcutMenuOpen" class="global-chat__shortcut-menu">
-                  <button :class="{ 'global-chat__shortcut-option--selected': sendShortcut === 'enter' }" type="button" @click="setSendShortcut('enter')">按 Enter 键发送消息</button>
-                  <button :class="{ 'global-chat__shortcut-option--selected': sendShortcut === 'ctrl-enter' }" type="button" @click="setSendShortcut('ctrl-enter')">按 Ctrl+Enter 键发送消息</button>
+                  <button
+                    :class="{ 'global-chat__shortcut-option--selected': sendShortcut === 'enter' }"
+                    type="button"
+                    @click="setSendShortcut('enter')"
+                  >
+                    按 Enter 键发送消息
+                  </button>
+                  <button
+                    :class="{ 'global-chat__shortcut-option--selected': sendShortcut === 'ctrl-enter' }"
+                    type="button"
+                    @click="setSendShortcut('ctrl-enter')"
+                  >
+                    按 Ctrl+Enter 键发送消息
+                  </button>
                 </div>
               </div>
             </footer>
@@ -448,7 +481,12 @@ onBeforeUnmount(() => {
             <a href="/login?next=%2Fchat">登录后参与讨论</a>
           </section>
         </section>
-        <button aria-label="调整聊天区与侧栏宽度" class="global-chat__splitter global-chat__splitter--vertical" type="button" @pointerdown.prevent="startResize($event, 'horizontal')" />
+        <button
+          aria-label="调整聊天区与侧栏宽度"
+          class="global-chat__splitter global-chat__splitter--vertical"
+          type="button"
+          @pointerdown.prevent="startResize($event, 'horizontal')"
+        />
         <aside class="global-chat__side" aria-label="聊天室信息">
           <section class="global-chat__side-section">
             <h2>当前话题</h2>
@@ -459,7 +497,9 @@ onBeforeUnmount(() => {
             </div>
           </section>
           <section class="global-chat__side-section global-chat__members">
-            <h2>当前在线 <span>{{ onlineTotal }}</span></h2>
+            <h2>
+              当前在线 <span>{{ onlineTotal }}</span>
+            </h2>
             <div v-if="onlineMembers.length" class="global-chat__member-list">
               <MemberLink
                 v-for="member in onlineMembers"
@@ -478,8 +518,18 @@ onBeforeUnmount(() => {
         </aside>
       </section>
     </div>
-    <div v-if="topicEditorOpen" class="global-chat__topic-dialog" role="presentation" @click.self="topicEditorOpen = false">
-      <section aria-labelledby="global-chat-topic-dialog-title" aria-modal="true" class="global-chat__topic-dialog-panel" role="dialog">
+    <div
+      v-if="topicEditorOpen"
+      class="global-chat__topic-dialog"
+      role="presentation"
+      @click.self="topicEditorOpen = false"
+    >
+      <section
+        aria-labelledby="global-chat-topic-dialog-title"
+        aria-modal="true"
+        class="global-chat__topic-dialog-panel"
+        role="dialog"
+      >
         <header>
           <h2 id="global-chat-topic-dialog-title">设置话题</h2>
           <button aria-label="关闭" type="button" @click="topicEditorOpen = false">×</button>
@@ -534,11 +584,16 @@ onBeforeUnmount(() => {
 .global-chat__timeline {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.6rem, 1.4vh, 0.9rem);
   min-height: 0;
   padding: clamp(1rem, 2.4vh, 1.5rem) clamp(1.25rem, 2.8vw, 2rem);
   overflow-y: auto;
   scrollbar-gutter: stable;
+}
+.global-chat__timeline-content {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.6rem, 1.4vh, 0.9rem);
+  min-width: 0;
 }
 .global-chat__history-status {
   align-self: center;
@@ -1010,7 +1065,9 @@ onBeforeUnmount(() => {
   padding: 0;
   background: var(--layer-border-color);
   opacity: 0.65;
-  transition: background-color 0.15s ease, opacity 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
 }
 .global-chat__splitter:hover,
 .global-chat__splitter:focus-visible {
