@@ -37,6 +37,10 @@ function deferBbsService<T extends BaseAPI>(loadService: () => Promise<T>): T {
 }
 
 export const bbsClient = {
+  asset: deferBbsService(async () => {
+    const { AssetService } = await import("@bass/bbs-sdk-fetch/apis/AssetService");
+    return throughBbsProxy(new AssetService(bbsConfiguration));
+  }),
   account: deferBbsService(async () => {
     const { AccountService } = await import("@bass/bbs-sdk-fetch/apis/AccountService");
     return throughBbsProxy(new AccountService(bbsConfiguration));

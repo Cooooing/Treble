@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { defaultTheme, isDarkTheme, type Theme } from "@/utils/theme";
+import { message } from "@/components/feedback/message";
+import { uploadMarkdownImage } from "@/services/markdownImageUpload";
 import type Vditor from "vditor";
 import "vditor/dist/index.css";
 
@@ -35,6 +37,7 @@ const theme = ref<Theme>(defaultTheme);
 const editorId = props.id || `editor-${++sequence}`;
 let disposed = false;
 let lastEditorValue: string | undefined;
+const dropActive = ref(false);
 
 function syncTheme(nextTheme: Theme) {
   theme.value = nextTheme;
@@ -110,6 +113,96 @@ onUnmounted(() => {
   vditor.value = undefined;
 });
 
+function handleDragEnter(event: DragEvent) {
+  if (!hasFiles(event)) return;
+  event.preventDefault();
+  dropActive.value = true;
+}
+
+function handleDragOver(event: DragEvent) {
+  if (!hasFiles(event)) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+  dropActive.value = true;
+}
+
+function handleDragLeave(event: DragEvent) {
+  if (!hasFiles(event)) return;
+  const relatedTarget = event.relatedTarget;
+  if (
+    relatedTarget instanceof Node &&
+    event.currentTarget instanceof Node &&
+    event.currentTarget.contains(relatedTarget)
+  ) {
+    return;
+  }
+  dropActive.value = false;
+}
+
+async function handleDrop(event: DragEvent) {
+  dropActive.value = false;
+  const files = Array.from(event.dataTransfer?.files || []);
+  if (files.length === 0) return;
+  event.preventDefault();
+  event.stopPropagation();
+
+  const selection = selectionRange();
+  const messageID = `${editorId}-image-upload`;
+  let loading = message.loading(`正在准备 ${files.length} 张图片…`, { id: messageID });
+  try {
+    let insertAt = selection;
+    for (const [index, file] of files.entries()) {
+      try {
+        const markdown = await uploadMarkdownImage(file, (progress) => {
+          loading = message.loading(`正在上传图片 ${index + 1}/${files.length}（${progress}%）…`, { id: messageID });
+        });
+        if (disposed || !editorReady.value) return;
+        insertMarkdown(markdown, insertAt);
+        insertAt = undefined;
+      } catch (error) {
+        message.error(error instanceof Error ? error.message : "图片上传失败，请重试。");
+      }
+    }
+  } finally {
+    loading.close();
+  }
+}
+
+function hasFiles(event: DragEvent) {
+  return (event.dataTransfer?.files.length || 0) > 0 || Array.from(event.dataTransfer?.types || []).includes("Files");
+}
+
+function selectionRange() {
+  const root = currentEditorRoot();
+  const range = window.getSelection()?.rangeCount ? window.getSelection()?.getRangeAt(0) : undefined;
+  if (!root || !range || !root.contains(range.commonAncestorContainer)) return undefined;
+  return range.cloneRange();
+}
+
+function currentEditorRoot() {
+  const editor = vditor.value as unknown as {
+    vditor?: {
+      currentMode: "ir" | "sv" | "wysiwyg";
+      ir: { element: HTMLElement };
+      sv: { element: HTMLElement };
+      wysiwyg: { element: HTMLElement };
+    };
+  };
+  return editor.vditor?.[editor.vditor.currentMode].element;
+}
+
+function insertMarkdown(value: string, range?: Range) {
+  const editor = vditor.value;
+  if (!editor) return;
+  editor.focus();
+  if (range) {
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
+  editor.insertValue(value);
+}
+
 defineExpose({
   vditor,
   getValue() {
@@ -125,7 +218,12 @@ defineExpose({
     editor.focus();
 
     const internal = editor as unknown as {
-      vditor: { currentMode: "ir" | "sv" | "wysiwyg"; ir: { element: HTMLElement }; sv: { element: HTMLElement }; wysiwyg: { element: HTMLElement } };
+      vditor: {
+        currentMode: "ir" | "sv" | "wysiwyg";
+        ir: { element: HTMLElement };
+        sv: { element: HTMLElement };
+        wysiwyg: { element: HTMLElement };
+      };
     };
     const root = internal.vditor[internal.vditor.currentMode].element;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -158,12 +256,22 @@ defineExpose({
 </script>
 
 <template>
-  <section :aria-busy="!editorReady" :inert="editorReady ? undefined : ''" class="editor-shell">
+  <section
+    :aria-busy="!editorReady"
+    :class="{ 'editor-shell--drop-active': dropActive }"
+    :inert="editorReady ? undefined : ''"
+    class="editor-shell"
+    @dragenter.capture="handleDragEnter"
+    @dragleave.capture="handleDragLeave"
+    @dragover.capture="handleDragOver"
+    @drop.capture="handleDrop"
+  >
     <div :id="editorId" ref="vditorRef" :style="{ height, width }" />
     <div v-if="!editorReady" aria-live="polite" class="editor-shell__loading" role="status">
       <span aria-hidden="true" class="editor-shell__spinner" />
       正在加载编辑器...
     </div>
+    <div v-if="dropActive" class="editor-shell__drop-hint">松开以上传图片</div>
   </section>
 </template>
 
@@ -172,6 +280,24 @@ defineExpose({
   position: relative;
   min-width: 0;
   background: var(--layer-background-color);
+}
+
+.editor-shell--drop-active {
+  outline: 2px dashed var(--toc-hover-color);
+  outline-offset: -2px;
+}
+
+.editor-shell__drop-hint {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--layer-background-color) 84%, transparent);
+  color: var(--toc-hover-color);
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
 }
 
 .editor-shell :deep(.vditor) {
