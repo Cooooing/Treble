@@ -380,6 +380,7 @@ onBeforeUnmount(() => {
           <RichTextEditor
             id="articleContent"
             v-model="form.content"
+            mention
             :name="articleId ? `article-${articleId}` : `post-${type}`"
             :options="{
               placeholder: currentType?.editorHint,

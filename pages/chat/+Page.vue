@@ -284,10 +284,16 @@ function startResize(event: PointerEvent, direction: "horizontal" | "vertical") 
 }
 
 function handleComposerKeydown(event: KeyboardEvent) {
+  if (hasActiveMentionHint()) return;
   if (event.isComposing || sendShortcut.value !== "enter" || event.key !== "Enter" || event.shiftKey) return;
   event.preventDefault();
   event.stopPropagation();
   void send();
+}
+
+function hasActiveMentionHint() {
+  const hint = document.querySelector("#global-chat-content .vditor-hint") as HTMLElement | null;
+  return hint?.style.display !== "none" && hint?.querySelector("button") !== null;
 }
 
 function setSendShortcut(shortcut: "ctrl-enter" | "enter") {
@@ -430,6 +436,7 @@ onBeforeUnmount(() => {
                 id="global-chat-content"
                 ref="editor"
                 v-model="content"
+                mention
                 height="100%"
                 :options="{
                   cache: { enable: false },
@@ -438,7 +445,7 @@ onBeforeUnmount(() => {
                   resize: { enable: false },
                   toolbar: [],
                   ctrlEnter: () => {
-                    if (sendShortcut === 'ctrl-enter') void send();
+                    if (sendShortcut === 'ctrl-enter' && !hasActiveMentionHint()) void send();
                   },
                 }"
                 @keydown.capture="handleComposerKeydown"

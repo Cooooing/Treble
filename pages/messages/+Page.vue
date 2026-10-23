@@ -211,10 +211,16 @@ function unavailable(feature: string) {
 }
 
 function handleComposerKeydown(event: KeyboardEvent) {
+  if (hasActiveMentionHint()) return;
   if (event.isComposing || sendShortcut.value !== "enter" || event.key !== "Enter" || event.shiftKey) return;
   event.preventDefault();
   event.stopPropagation();
   void send();
+}
+
+function hasActiveMentionHint() {
+  const hint = document.querySelector("#private-chat-content .vditor-hint") as HTMLElement | null;
+  return hint?.style.display !== "none" && hint?.querySelector("button") !== null;
 }
 
 function setSendShortcut(shortcut: "ctrl-enter" | "enter") {
@@ -401,7 +407,7 @@ onBeforeUnmount(() => unsubscribe?.());
                     resize: { enable: false },
                     toolbar: [],
                     ctrlEnter: () => {
-                      if (sendShortcut === 'ctrl-enter') void send();
+                      if (sendShortcut === 'ctrl-enter' && !hasActiveMentionHint()) void send();
                     },
                   }"
                   @keydown.capture="handleComposerKeydown"

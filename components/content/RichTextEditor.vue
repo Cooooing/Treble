@@ -3,6 +3,8 @@ import { onMounted, onUnmounted, ref, watch } from "vue";
 import { defaultTheme, isDarkTheme, type Theme } from "@/utils/theme";
 import { message } from "@/components/feedback/message";
 import { uploadMarkdownImage } from "@/services/markdownImageUpload";
+import { bbsClient } from "@/utils/sdk/bbs";
+import type { AccountProfile } from "@bass/bbs-sdk-fetch/models/AccountProfile";
 import type Vditor from "vditor";
 import "vditor/dist/index.css";
 
@@ -18,6 +20,7 @@ const props = withDefaults(
     width?: IOptions["width"];
     options?: IOptions;
     modelValue?: string;
+    mention?: boolean;
   }>(),
   {
     height: "500px",
@@ -38,6 +41,7 @@ const editorId = props.id || `editor-${++sequence}`;
 let disposed = false;
 let lastEditorValue: string | undefined;
 const dropActive = ref(false);
+const mentionCandidates = ref<AccountProfile[]>([]);
 
 function syncTheme(nextTheme: Theme) {
   theme.value = nextTheme;
@@ -60,7 +64,25 @@ onMounted(async () => {
   const VditorConstructor = (await import("vditor")).default;
   if (disposed || !vditorRef.value) return;
 
-  const { after, cache, input, preview, resize, ...options } = props.options || {};
+  const { after, cache, input, preview, resize, hint, ...options } = props.options || {};
+  const mentionHint = props.mention
+    ? [
+        ...(hint?.extend || []),
+        {
+          key: "@",
+          hint: async (query: string) => {
+            const response = await bbsClient.account.searchMention({
+              searchMentionAccountsReq: { query, page: { page: 1, size: 5 } },
+            });
+            mentionCandidates.value = response.rows || [];
+            return mentionCandidates.value.map((account) => ({
+              value: `[@${account.name}](${account.profileUrl}) `,
+              html: `<img src="${account.avatarUrl || ""}" alt="" />${account.nickname || account.name} (${account.name})`,
+            }));
+          },
+        },
+      ]
+    : hint?.extend;
   vditor.value = new VditorConstructor(vditorRef.value, {
     outline: { enable: false, position: "left" },
     typewriterMode: false,
@@ -71,6 +93,7 @@ onMounted(async () => {
     },
     preview: { delay: 500, mode: "both", ...preview },
     resize: { enable: false, ...resize },
+    hint: { delay: 0, parse: false, ...hint, extend: mentionHint },
     lang: "zh_CN",
     height: props.height,
     width: props.width,
