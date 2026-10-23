@@ -19,9 +19,14 @@ function isAbsoluteUrl(url: string) {
   return /^https?:\/\//i.test(url);
 }
 
-function browserRequestId() {
+export function createClientIdentifier() {
   if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID();
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  const bytes = new Uint8Array(16);
+  if (typeof globalThis.crypto?.getRandomValues === "function") {
+    globalThis.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
 }
 
 export function toBbsProxyUrl(url: string, basePath: string) {
@@ -60,7 +65,7 @@ export function createSdkFetch(options: { proxyPath: string }): FetchAPI {
         .map((part) => part.trim())
         .find((part) => part.startsWith("treble.sid="))
         ?.slice("treble.sid=".length);
-      const requestId = pageContext?.headers?.["x-request-id"] || crypto.randomUUID();
+      const requestId = pageContext?.headers?.["x-request-id"] || createClientIdentifier();
       const headers = new Headers(init?.headers);
       headers.set("x-request-id", requestId);
 
@@ -109,7 +114,7 @@ export function createSdkFetch(options: { proxyPath: string }): FetchAPI {
 
     const proxyUrl = toBbsProxyUrl(url, options.proxyPath);
     const headers = new Headers(init?.headers);
-    headers.set("x-request-id", browserRequestId());
+    headers.set("x-request-id", createClientIdentifier());
     if (init?.method && !["GET", "HEAD", "OPTIONS"].includes(init.method.toUpperCase())) {
       const csrf = document.cookie
         .split(";")

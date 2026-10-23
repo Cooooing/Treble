@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "node:http";
 import { getSessionRepository, SessionStoreError, type TrebleSession } from "./session";
 
@@ -81,7 +81,9 @@ function validateCsrf(req: GatewayRequest) {
 
 function requestId(req: GatewayRequest) {
   const current = req.headers["x-request-id"];
-  return typeof current === "string" && /^[a-zA-Z0-9-]{8,128}$/.test(current) ? current : randomUUID();
+  return typeof current === "string" && /^[a-zA-Z0-9-]{8,128}$/.test(current)
+    ? current
+    : randomBytes(24).toString("base64url");
 }
 
 function sendJson(res: ServerResponse, status: number, msg: string, data: object = {}) {

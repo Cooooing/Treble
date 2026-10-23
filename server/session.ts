@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { createClient } from "redis";
 
 export interface TrebleSession {
@@ -130,7 +130,7 @@ export class SessionRepository {
 
   async acquireRefreshLock(sid: string) {
     await this.connect();
-    const token = randomUUID();
+    const token = randomBytes(24).toString("base64url");
     try {
       const locked = await this.client.set(this.lockKey(sid), token, { NX: true, PX: 5_000 });
       return locked === "OK" ? token : undefined;

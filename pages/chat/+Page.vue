@@ -12,6 +12,7 @@ import { getRealtimeConnection, getRealtimeNodeUrl, type RealtimeTicket } from "
 import { currentAccount } from "@/services/sessionState";
 import { useChatTimeline } from "@/services/chatTimeline";
 import { bbsClient } from "@/utils/sdk";
+import { createClientIdentifier } from "@/utils/sdk/shared";
 
 type GlobalMessage = {
   id?: string;
@@ -215,7 +216,7 @@ async function send() {
   content.value = "";
   try {
     const response = await bbsClient.im.sendGlobalChatMessage({
-      sendGlobalChatMessageReq: { clientMessageId: crypto.randomUUID(), content: value },
+      sendGlobalChatMessageReq: { clientMessageId: createClientIdentifier(), content: value },
     });
     if (response.message) await appendMessage(response.message, true);
   } catch (error) {

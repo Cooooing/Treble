@@ -11,6 +11,7 @@ import { notifyPrivateChatRead } from "@/services/privateChatState";
 import { getRealtimeConnection, getRealtimeNodeUrl, type RealtimeTicket } from "@/services/realtime";
 import { useChatTimeline } from "@/services/chatTimeline";
 import { bbsClient } from "@/utils/sdk";
+import { createClientIdentifier } from "@/utils/sdk/shared";
 import { memberDisplayName } from "@/utils/member";
 
 type Session = {
@@ -153,7 +154,7 @@ async function send() {
   sending.value = true;
   try {
     const response = await bbsClient.im.sendPrivateChatMessage({
-      sendPrivateChatMessageReq: { receiverId: peerUserId, clientMessageId: crypto.randomUUID(), content: value },
+      sendPrivateChatMessageReq: { receiverId: peerUserId, clientMessageId: createClientIdentifier(), content: value },
     });
     editor.value?.setValue("");
     content.value = "";
