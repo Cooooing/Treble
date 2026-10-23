@@ -510,6 +510,7 @@ onBeforeUnmount(() => {
                 :size="28"
                 square
               >
+                <Avatar :name="member.name" :size="28" square :url="member.avatarUrl" />
                 <span>{{ displayName(member) }}</span>
               </MemberLink>
             </div>
