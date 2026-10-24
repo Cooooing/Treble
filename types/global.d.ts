@@ -7,6 +7,7 @@ declare global {
       title?: string;
       theme?: Theme;
       user?: RespCurrentAccount;
+      sessionRestoreRequired?: boolean;
     }
   }
 

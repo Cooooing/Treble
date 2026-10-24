@@ -30,7 +30,7 @@ import {
   removeSearchHistory,
   saveSearchHistory,
 } from "@/services/searchHistory";
-import { currentAccount, setCurrentAccount } from "@/services/sessionState";
+import { currentAccount, restoreCurrentUser, setCurrentAccount } from "@/services/sessionState";
 import { openWorkCountdownSettings } from "@/services/workCountdown";
 import { bbsClient } from "@/utils/sdk";
 import { applyTheme, defaultTheme, getStoredTheme, type Theme } from "@/utils/theme";
@@ -73,10 +73,17 @@ function normalizeCity(value?: string): string | undefined {
   return city;
 }
 
-function syncClientAccount() {
+async function syncClientAccount() {
   // SSR seeds the first client render. Once a client-side settings action has
   // updated the account, it is newer than every subsequently navigated SSR snapshot.
   if (!currentAccount.value && pageContext.user) setCurrentAccount(pageContext.user);
+  if (!currentAccount.value && pageContext.sessionRestoreRequired) {
+    try {
+      await restoreCurrentUser();
+    } catch {
+      // A transient account restore error is not proof that this browser logged out.
+    }
+  }
 }
 
 function closeWhenClickingOutside(event: PointerEvent) {
@@ -196,7 +203,7 @@ onMounted(async () => {
   document.addEventListener("keydown", closeOnEscape);
   theme.value = getStoredTheme();
   searchHistory.value = loadSearchHistory();
-  syncClientAccount();
+  await syncClientAccount();
   if (!account.value) {
     try {
       guestCity.value = normalizeCity((await bbsClient.location.getCurrent({ body: {} })).location?.city);

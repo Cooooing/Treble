@@ -14,6 +14,5 @@ export default {
 
   ssr: true,
   clientRouting: true,
-
-  passToClient: ["user"],
+  passToClient: ["user", "sessionRestoreRequired"],
 } as Config;

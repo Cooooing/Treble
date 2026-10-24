@@ -1,6 +1,6 @@
 import { shallowRef } from "vue";
 import type { RespCurrentAccount } from "@bass/bbs-sdk-fetch/models/RespCurrentAccount";
-import { bbsClient } from "@/utils/sdk";
+import { ApiError, bbsClient } from "@/utils/sdk";
 
 export const currentAccount = shallowRef<RespCurrentAccount>();
 
@@ -14,9 +14,12 @@ export async function restoreCurrentUser() {
     const response = await bbsClient.account.getCurrent({ body: {} });
     setCurrentAccount(response.account);
     return response.account;
-  } catch {
-    clearAuthState();
-    return undefined;
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      clearAuthState();
+      return undefined;
+    }
+    throw error;
   }
 }
 

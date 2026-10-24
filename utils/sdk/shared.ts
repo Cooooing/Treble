@@ -2,6 +2,7 @@ import { getPageContext } from "vike/getPageContext";
 import { Configuration, type FetchAPI, type Middleware } from "@bass/bbs-sdk-fetch/runtime";
 
 const bffRequestTimeoutMs = 3_000;
+const retryableBffStatuses = new Set([502, 503, 504]);
 
 export class ApiError extends Error {
   constructor(
@@ -52,6 +53,19 @@ export function toBffUrl(url: string, proxyPath: string, bffUrl: string) {
   return new URL(bffPath.replace(/^\//, ""), `${bffUrl.replace(/\/$/, "")}/`).toString();
 }
 
+async function fetchSsrBff(url: string, createInit: () => RequestInit) {
+  try {
+    const response = await fetch(url, createInit());
+    if (!retryableBffStatuses.has(response.status)) return response;
+    await response.body?.cancel();
+  } catch {
+    // A cold connection or a just-recovered BFF should not make a public page
+    // appear missing. SSR only uses this fetcher for page reads.
+  }
+
+  return fetch(url, createInit());
+}
+
 export function createSdkFetch(options: { proxyPath: string }): FetchAPI {
   return async (input, init) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
@@ -68,48 +82,53 @@ export function createSdkFetch(options: { proxyPath: string }): FetchAPI {
       const requestId = pageContext?.headers?.["x-request-id"] || createClientIdentifier();
       const headers = new Headers(init?.headers);
       headers.set("x-request-id", requestId);
-
       if (sid) {
         const { getUsableSession, refreshSession } = await import("../../server/bbsGateway");
-        const decodedSid = decodeURIComponent(sid);
-        const session = await getUsableSession(
-          { bffUrl, isProduction: process.env.NODE_ENV === "production" },
-          decodedSid,
-          requestId,
-        );
+        const decodedSID = decodeURIComponent(sid);
+        let session: Awaited<ReturnType<typeof getUsableSession>>;
+        try {
+          session = await getUsableSession(
+            { bffUrl, isProduction: process.env.NODE_ENV === "production" },
+            decodedSID,
+            requestId,
+          );
+        } catch {
+          // Public SSR reads remain anonymous while the Treble session store is unavailable.
+          session = undefined;
+        }
         if (session) {
-          const responseHeaders = pageContext?.headersResponse;
-          responseHeaders?.set("cache-control", "private, no-store");
-          responseHeaders?.set("vary", "Cookie");
+          pageContext?.headersResponse?.set("cache-control", "private, no-store");
+          pageContext?.headersResponse?.set("vary", "Cookie");
           headers.set("authorization", `Bearer ${session.accessToken}`);
-          let response = await fetch(toBffUrl(url, options.proxyPath, bffUrl), {
+          const bffRequestURL = toBffUrl(url, options.proxyPath, bffUrl);
+          let response = await fetchSsrBff(bffRequestURL, () => ({
             ...init,
             headers,
             signal: AbortSignal.timeout(bffRequestTimeoutMs),
-          });
+          }));
           if (response.status !== 401) return response;
           const refreshed = await refreshSession(
             { bffUrl, isProduction: process.env.NODE_ENV === "production" },
-            decodedSid,
+            decodedSID,
             session,
             requestId,
           );
           if (refreshed) {
             headers.set("authorization", `Bearer ${refreshed.accessToken}`);
-            response = await fetch(toBffUrl(url, options.proxyPath, bffUrl), {
+            response = await fetchSsrBff(bffRequestURL, () => ({
               ...init,
               headers,
               signal: AbortSignal.timeout(bffRequestTimeoutMs),
-            });
+            }));
           }
           return response;
         }
       }
-      return fetch(toBffUrl(url, options.proxyPath, bffUrl), {
+      return fetchSsrBff(toBffUrl(url, options.proxyPath, bffUrl), () => ({
         ...init,
         headers,
         signal: AbortSignal.timeout(bffRequestTimeoutMs),
-      });
+      }));
     }
 
     const proxyUrl = toBbsProxyUrl(url, options.proxyPath);
