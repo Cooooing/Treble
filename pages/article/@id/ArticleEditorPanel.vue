@@ -74,10 +74,10 @@ defineExpose({ clearCache, getValue });
           <RichTextEditor
             ref="editorRef"
             v-model="content"
-            mention
             :name="props.editorName"
             :options="{ ...editorOptions, placeholder: props.placeholder }"
             height="200px"
+            mention
           />
         </ClientOnly>
         <footer class="comment-submit">

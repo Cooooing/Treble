@@ -380,7 +380,6 @@ onBeforeUnmount(() => {
           <RichTextEditor
             id="articleContent"
             v-model="form.content"
-            mention
             :name="articleId ? `article-${articleId}` : `post-${type}`"
             :options="{
               placeholder: currentType?.editorHint,
@@ -390,6 +389,7 @@ onBeforeUnmount(() => {
               resize: { enable: true, position: 'bottom' },
             }"
             height="500px"
+            mention
           />
         </ClientOnly>
       </section>
@@ -555,8 +555,8 @@ onBeforeUnmount(() => {
                 <input
                   v-model="prize.description"
                   :disabled="loading"
-                  placeholder="奖品说明（可选）"
                   maxlength="500"
+                  placeholder="奖品说明（可选）"
                   type="text"
                 />
               </label>

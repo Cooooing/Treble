@@ -549,9 +549,9 @@ onBeforeUnmount(() => {
       <a
         v-for="barrage in barrages"
         :key="barrage.id"
-        class="global-chat__barrage"
         :href="`/member/${barrage.sender?.name || ''}`"
         :style="{ '--global-chat-barrage-lane': barrage.lane }"
+        class="global-chat__barrage"
       >
         <Avatar :name="barrage.sender?.name" :size="32" :url="barrage.sender?.avatarUrl" />
         <span
@@ -564,7 +564,7 @@ onBeforeUnmount(() => {
     <div class="wrapper">
       <section :style="chatStyle" class="content module global-chat">
         <section class="global-chat__main">
-          <main ref="timeline" class="global-chat__timeline" aria-live="polite" @scroll.passive="handleTimelineScroll">
+          <main ref="timeline" aria-live="polite" class="global-chat__timeline" @scroll.passive="handleTimelineScroll">
             <div ref="timelineContent" class="global-chat__timeline-content">
               <p v-if="loadingOlder" class="global-chat__history-status">正在加载更早消息…</p>
               <p v-else-if="isLoggedIn && !hasOlder && rows.length" class="global-chat__history-status">
@@ -581,10 +581,10 @@ onBeforeUnmount(() => {
                 <MemberLink
                   :avatar="messageSender(row).avatarUrl"
                   :size="38"
-                  square
                   :username="messageSender(row).name || ''"
+                  square
                 >
-                  <Avatar :name="messageSender(row).name" :size="38" square :url="messageSender(row).avatarUrl" />
+                  <Avatar :name="messageSender(row).name" :size="38" :url="messageSender(row).avatarUrl" square />
                 </MemberLink>
                 <section class="global-chat__bubble">
                   <header>
@@ -624,7 +624,7 @@ onBeforeUnmount(() => {
           />
           <form v-if="isLoggedIn" class="global-chat__composer" @click="focusComposer" @submit.prevent="send">
             <label class="fn-none" for="global-chat-content">输入聊天室消息</label>
-            <div class="global-chat__composer-tools" aria-label="聊天室工具">
+            <div aria-label="聊天室工具" class="global-chat__composer-tools">
               <button aria-label="发送红包" type="button" @click.stop="unavailable('红包')">
                 <Icon name="red-packet" />
               </button>
@@ -632,17 +632,17 @@ onBeforeUnmount(() => {
                 ref="emojiTrigger"
                 aria-label="插入表情"
                 type="button"
-                @click.stop
                 @focus="openEmojiPicker"
                 @pointerenter="openEmojiPicker"
                 @pointerleave="closeEmojiPickerLater"
+                @click.stop
               >
                 <Icon name="emoji" />
               </button>
               <div ref="barrageControl" class="global-chat__barrage-control" @focusout="closeBarrageEditorOnBlur">
                 <button
-                  aria-controls="global-chat-barrage-input"
                   :aria-expanded="barrageEditorOpen"
+                  aria-controls="global-chat-barrage-input"
                   aria-label="发送弹幕"
                   type="button"
                   @click.stop="toggleBarrageEditor"
@@ -667,7 +667,7 @@ onBeforeUnmount(() => {
                       maxlength="32"
                       placeholder="友善弹幕，最多 32 字"
                     />
-                    <button :disabled="barrageSending" type="button" @pointerdown.prevent @click="sendBarrage">
+                    <button :disabled="barrageSending" type="button" @click="sendBarrage" @pointerdown.prevent>
                       {{ barrageSending ? "发射中…" : "发射" }}
                     </button>
                   </div>
@@ -679,8 +679,6 @@ onBeforeUnmount(() => {
                 id="global-chat-content"
                 ref="editor"
                 v-model="content"
-                mention
-                height="100%"
                 :options="{
                   cache: { enable: false },
                   placeholder: '说点什么吧，友善第一。',
@@ -691,6 +689,8 @@ onBeforeUnmount(() => {
                     if (sendShortcut === 'ctrl-enter' && !hasActiveMentionHint()) void send();
                   },
                 }"
+                height="100%"
+                mention
                 @keydown.capture="handleComposerKeydown"
               />
             </ClientOnly>
@@ -729,14 +729,14 @@ onBeforeUnmount(() => {
               v-if="emojiPickerOpen && emojiTrigger"
               :anchor="emojiTrigger"
               @close="emojiPickerOpen = false"
-              @pointerenter="openEmojiPicker"
-              @pointerleave="closeEmojiPickerLater"
               @dragend="endEmojiDrag"
               @dragstart="beginEmojiDrag"
+              @pointerenter="openEmojiPicker"
+              @pointerleave="closeEmojiPickerLater"
               @select="insertEmoji"
             />
           </form>
-          <section v-else class="global-chat__login" aria-label="登录后参与聊天室">
+          <section v-else aria-label="登录后参与聊天室" class="global-chat__login">
             <p>登录后查看更多消息并参与讨论</p>
             <a href="/login?next=%2Fchat">登录后参与讨论</a>
           </section>
@@ -747,7 +747,7 @@ onBeforeUnmount(() => {
           type="button"
           @pointerdown.prevent="startResize($event, 'horizontal')"
         />
-        <aside class="global-chat__side" aria-label="聊天室信息">
+        <aside aria-label="聊天室信息" class="global-chat__side">
           <section class="global-chat__side-section">
             <h2>当前话题</h2>
             <p><Icon name="topic" /># {{ topicLabel }} #</p>
@@ -765,12 +765,12 @@ onBeforeUnmount(() => {
                 v-for="member in onlineMembers"
                 :key="member.userId"
                 :avatar="member.avatarUrl"
+                :size="28"
                 :username="member.name || ''"
                 class="global-chat__member"
-                :size="28"
                 square
               >
-                <Avatar :name="member.name" :size="28" square :url="member.avatarUrl" />
+                <Avatar :name="member.name" :size="28" :url="member.avatarUrl" square />
                 <span>{{ displayName(member) }}</span>
               </MemberLink>
             </div>

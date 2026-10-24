@@ -40,8 +40,8 @@ const canAddPostscript = computed(() =>
       account.value.profile.id === articleState.value.createdBy,
   ),
 );
-const isArticleAuthor = computed(
-  () => Boolean(account.value?.profile?.id && articleState.value?.createdBy === account.value.profile.id),
+const isArticleAuthor = computed(() =>
+  Boolean(account.value?.profile?.id && articleState.value?.createdBy === account.value.profile.id),
 );
 
 watch(
@@ -269,10 +269,10 @@ onMounted(() => {
             <div v-if="articleState.statement" class="article-statement">{{ articleState.statement }}</div>
             <MarkdownRenderer
               :key="data.article?.id"
-              data-image-preview
               :html="articleState.contentRender"
               :md="articleState.content || ''"
               class="vditor-reset article-content"
+              data-image-preview
               @rendered="articleHeadings = $event"
             />
             <Postscripts
@@ -311,7 +311,7 @@ onMounted(() => {
                 }"
                 class="article-poll__option"
               >
-                <div v-if="articleState.poll.resultVisible" class="article-poll__bar" aria-hidden="true">
+                <div v-if="articleState.poll.resultVisible" aria-hidden="true" class="article-poll__bar">
                   <span :style="{ width: `${pollOptionPercent(option.voteCount)}%` }" />
                 </div>
                 <label class="article-poll__choice">
@@ -370,8 +370,8 @@ onMounted(() => {
                   中奖者：<MemberLink
                     v-for="user in prize.winnerUsers"
                     :key="user.id"
-                    :username="user.name || ''"
                     :avatar="user.avatarUrl"
+                    :username="user.name || ''"
                   />
                 </p>
                 <p v-else-if="lotteryDrawn" class="article-lottery__winners">本奖项暂无中奖者。</p>
@@ -407,9 +407,9 @@ onMounted(() => {
               <Comments
                 :key="articleState.id"
                 :article="articleState"
+                :can-accept-answer="Boolean(canAddPostscript && articleState.type === 'ARTICLE_TYPE_QA')"
                 :comments="data.comments"
                 :is-author="canAddPostscript"
-                :can-accept-answer="Boolean(canAddPostscript && articleState.type === 'ARTICLE_TYPE_QA')"
                 @updated="updateReplyCount"
               />
             </section>
@@ -483,8 +483,8 @@ onMounted(() => {
         <button
           :class="{ 'share__button--active': articleState.viewerActionState?.watched }"
           :disabled="actionPending === 'watch'"
-          class="share__item share__item--count"
           :title="articleState.viewerActionState?.watched ? '取消关注文章' : '关注文章'"
+          class="share__item share__item--count"
           type="button"
           @click="changeArticleAction('watch')"
         >

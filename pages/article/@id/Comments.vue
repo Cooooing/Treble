@@ -239,23 +239,20 @@ async function loadReplies(parentId: string, page: number) {
       <ul>
         <CommentThread
           v-if="acceptedAnswer?.thread"
-          :thread="acceptedAnswer.thread"
-          pin-label="已采纳回答"
           :is-article-author="acceptedAnswer.thread.root?.createdBy === article.createdBy"
-          :reply-page="replyPages[acceptedAnswer.thread.root?.id || '']"
           :replies-collapsed="Boolean(collapsedReplyParentIds[acceptedAnswer.thread.root?.id || ''])"
           :replies-loading="loadingReplyParentId === acceptedAnswer.thread.root?.id"
+          :reply-page="replyPages[acceptedAnswer.thread.root?.id || '']"
+          :thread="acceptedAnswer.thread"
+          pin-label="已采纳回答"
           @collapse="collapseReplies(acceptedAnswer.thread.root?.id || '')"
-          @page-replies="loadReplies(acceptedAnswer.thread.root?.id || '', $event)"
           @react="reactToComment"
           @reply="openCommentEditor"
           @reveal="revealReplies(acceptedAnswer.thread)"
+          @page-replies="loadReplies(acceptedAnswer.thread.root?.id || '', $event)"
         />
         <CommentThread
           v-if="pinnedComment?.thread"
-          :thread="pinnedComment.thread"
-          pin-label="置顶"
-          :is-article-author="pinnedComment.thread.root?.createdBy === article.createdBy"
           :can-accept-answer="
             Boolean(
               canAcceptAnswer &&
@@ -265,22 +262,23 @@ async function loadReplies(parentId: string, page: number) {
             )
           "
           :can-pin="canPinComment"
-          :reply-page="replyPages[pinnedComment.thread.root?.id || '']"
+          :is-article-author="pinnedComment.thread.root?.createdBy === article.createdBy"
           :replies-collapsed="Boolean(collapsedReplyParentIds[pinnedComment.thread.root?.id || ''])"
           :replies-loading="loadingReplyParentId === pinnedComment.thread.root?.id"
-          @collapse="collapseReplies(pinnedComment.thread.root?.id || '')"
+          :reply-page="replyPages[pinnedComment.thread.root?.id || '']"
+          :thread="pinnedComment.thread"
+          pin-label="置顶"
           @accept="acceptAnswer"
-          @page-replies="loadReplies(pinnedComment.thread.root?.id || '', $event)"
+          @collapse="collapseReplies(pinnedComment.thread.root?.id || '')"
           @pin="setPinnedComment"
           @react="reactToComment"
           @reply="openCommentEditor"
           @reveal="revealReplies(pinnedComment.thread)"
+          @page-replies="loadReplies(pinnedComment.thread.root?.id || '', $event)"
         />
         <CommentThread
           v-for="thread in threads"
           :key="thread.root?.id"
-          :thread="thread"
-          :is-article-author="thread.root?.createdBy === article.createdBy"
           :can-accept-answer="
             Boolean(
               canAcceptAnswer &&
@@ -290,16 +288,18 @@ async function loadReplies(parentId: string, page: number) {
             )
           "
           :can-pin="canPinComment"
-          :reply-page="replyPages[thread.root?.id || '']"
+          :is-article-author="thread.root?.createdBy === article.createdBy"
           :replies-collapsed="Boolean(collapsedReplyParentIds[thread.root?.id || ''])"
           :replies-loading="loadingReplyParentId === thread.root?.id"
+          :reply-page="replyPages[thread.root?.id || '']"
+          :thread="thread"
           @accept="acceptAnswer"
           @collapse="collapseReplies(thread.root?.id || '')"
-          @page-replies="loadReplies(thread.root?.id || '', $event)"
           @pin="setPinnedComment"
           @react="reactToComment"
           @reply="openCommentEditor"
           @reveal="revealReplies(thread)"
+          @page-replies="loadReplies(thread.root?.id || '', $event)"
         />
       </ul>
       <nav v-if="total > pageNumber(threadPage?.size, 20)" aria-label="顶层评论分页" class="comment-root-pager">
@@ -327,11 +327,7 @@ async function loadReplies(parentId: string, page: number) {
       v-model="comment.content"
       :open="editorOpen"
       :submitting="submitting"
-      :title="
-        replyComment
-          ? `回复 ${memberDisplayName(replyComment.user, '用户')}`
-          : article.title || '发表评论'
-      "
+      :title="replyComment ? `回复 ${memberDisplayName(replyComment.user, '用户')}` : article.title || '发表评论'"
       aria-label="发布回复"
       editor-name="comment"
       placeholder="友善地留下一个评论吧 :)"

@@ -373,7 +373,7 @@ onBeforeUnmount(() => unsubscribe?.());
   <div class="main private-chat-page">
     <div class="wrapper">
       <section :style="privateChatStyle" class="content module private-chat">
-        <aside class="private-chat__sessions" aria-label="私聊会话">
+        <aside aria-label="私聊会话" class="private-chat__sessions">
           <EmptyState v-if="!sessions.length" />
           <button
             v-for="session in sessions"
@@ -383,7 +383,7 @@ onBeforeUnmount(() => unsubscribe?.());
             type="button"
             @click="selectSession(session.peerUserId)"
           >
-            <Avatar :name="session.peer?.name" :size="36" square :url="session.peer?.avatarUrl" />
+            <Avatar :name="session.peer?.name" :size="36" :url="session.peer?.avatarUrl" square />
             <span class="private-chat__session-content">
               <span class="private-chat__session-title">
                 <span>{{ memberDisplayName(session.peer, `用户 ${session.peerUserId}`) }}</span>
@@ -408,7 +408,7 @@ onBeforeUnmount(() => unsubscribe?.());
           type="button"
           @pointerdown.prevent="startResize($event, 'horizontal')"
         />
-        <section class="private-chat__conversation" aria-live="polite">
+        <section aria-live="polite" class="private-chat__conversation">
           <template v-if="selectedConversation"
             ><header>
               <strong>{{ memberDisplayName(selectedConversation, `用户 ${selectedPeerID}`) }}</strong>
@@ -457,7 +457,7 @@ onBeforeUnmount(() => unsubscribe?.());
             />
             <form class="private-chat__composer" @click="focusComposer" @submit.prevent="send">
               <label class="fn-none" for="private-chat-content">输入私聊消息</label>
-              <div class="private-chat__composer-tools" aria-label="私聊工具">
+              <div aria-label="私聊工具" class="private-chat__composer-tools">
                 <button aria-label="发送红包" type="button" @click.stop="unavailable('红包')">
                   <Icon name="red-packet" />
                 </button>
@@ -465,10 +465,10 @@ onBeforeUnmount(() => unsubscribe?.());
                   ref="emojiTrigger"
                   aria-label="插入表情"
                   type="button"
-                  @click.stop
                   @focus="openEmojiPicker"
                   @pointerenter="openEmojiPicker"
                   @pointerleave="closeEmojiPickerLater"
+                  @click.stop
                 >
                   <Icon name="emoji" />
                 </button>
@@ -478,7 +478,6 @@ onBeforeUnmount(() => unsubscribe?.());
                   id="private-chat-content"
                   ref="editor"
                   v-model="content"
-                  height="100%"
                   :options="{
                     cache: { enable: false },
                     placeholder: '说点什么吧，友善第一。',
@@ -489,12 +488,13 @@ onBeforeUnmount(() => unsubscribe?.());
                       if (sendShortcut === 'ctrl-enter' && !hasActiveMentionHint()) void send();
                     },
                   }"
+                  height="100%"
                   @keydown.capture="handleComposerKeydown"
                 />
               </ClientOnly>
               <footer>
                 <div class="private-chat__send-control">
-                  <button class="private-chat__send" :disabled="sending" type="submit">
+                  <button :disabled="sending" class="private-chat__send" type="submit">
                     {{ sending ? "发送中…" : "发送" }}
                   </button>
                   <button
@@ -525,15 +525,15 @@ onBeforeUnmount(() => unsubscribe?.());
                 v-if="emojiPickerOpen && emojiTrigger"
                 :anchor="emojiTrigger"
                 @close="emojiPickerOpen = false"
-                @pointerenter="openEmojiPicker"
-                @pointerleave="closeEmojiPickerLater"
                 @dragend="endEmojiDrag"
                 @dragstart="beginEmojiDrag"
+                @pointerenter="openEmojiPicker"
+                @pointerleave="closeEmojiPickerLater"
                 @select="insertEmoji"
               />
             </form>
           </template>
-          <section v-else class="private-chat__start" aria-labelledby="private-chat-start-title">
+          <section v-else aria-labelledby="private-chat-start-title" class="private-chat__start">
             <p id="private-chat-start-title">请在列表点选联系人，或直接发起聊天。</p>
             <form @submit.prevent="startConversation">
               <label class="fn-none" for="private-chat-with">输入用户名</label>
