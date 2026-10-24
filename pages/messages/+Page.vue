@@ -91,7 +91,7 @@ const {
 } = useChatTimeline(timeline, timelineContent);
 
 async function loadSessions() {
-  const response = await bbsClient.im.listPrivateChatSessions({ pagePage: "1", pageSize: "50" });
+  const response = await bbsClient.privateChat.listPrivateChatSessions({ pagePage: "1", pageSize: "50" });
   sessions.value = response.rows || [];
 }
 
@@ -101,14 +101,14 @@ async function selectSession(peerUserId?: string) {
   selectedPeer.value = sessions.value.find((session) => session.peerUserId === peerUserId)?.peer;
   loading.value = true;
   try {
-    const response = await bbsClient.im.listPrivateChatMessages({
+    const response = await bbsClient.privateChat.listPrivateChatMessages({
       listPrivateChatMessagesReq: { peerUserId, page: { page: "1", size: "50" } },
     });
     rows.value = await renderMessages([...(response.rows || [])].reverse());
     await settleInitialRender();
     const latest = rows.value.at(-1);
     if (latest?.id) {
-      await bbsClient.im.markPrivateChatSessionRead({
+      await bbsClient.privateChat.markPrivateChatSessionRead({
         markPrivateChatSessionReadReq: { peerUserId, messageId: latest.id },
       });
       await loadSessions();
@@ -158,7 +158,7 @@ async function send() {
   if (!peerUserId || !value || sending.value) return;
   sending.value = true;
   try {
-    const response = await bbsClient.im.sendPrivateChatMessage({
+    const response = await bbsClient.privateChat.sendPrivateChatMessage({
       sendPrivateChatMessageReq: { receiverId: peerUserId, clientMessageId: createClientIdentifier(), content: value },
     });
     editor.value?.setValue("");
@@ -351,7 +351,7 @@ onMounted(async () => {
         createdAt: Number.isNaN(createdAt.getTime()) ? new Date() : createdAt,
       });
       if (receiverID === currentUserID.value) {
-        await bbsClient.im.markPrivateChatSessionRead({
+        await bbsClient.privateChat.markPrivateChatSessionRead({
           markPrivateChatSessionReadReq: { peerUserId, messageId: messageID },
         });
       }

@@ -39,6 +39,19 @@ type GlobalChatMessageEvent = {
   content?: string;
   created_at?: string;
 };
+type GlobalChatBarrageEvent = {
+  barrage_id?: string;
+  user_id?: string;
+  content?: string;
+  created_at?: string;
+};
+type GlobalChatBarrage = {
+  id: string;
+  userId: string;
+  content: string;
+  sender?: OnlineMember;
+  lane: number;
+};
 
 const rows = ref<GlobalMessage[]>([]);
 const content = ref("");
@@ -46,6 +59,7 @@ const loading = ref(false);
 const loadingOlder = ref(false);
 const onlineMembers = ref<OnlineMember[]>([]);
 const onlineTotal = ref("0");
+const barrages = ref<GlobalChatBarrage[]>([]);
 const hasOlder = ref(true);
 const topic = ref("");
 const pageContext = usePageContext();
@@ -58,7 +72,10 @@ let emojiCloseTimer: ReturnType<typeof setTimeout> | undefined;
 let emojiDragging = false;
 const isLoggedIn = computed(() => Boolean(pageContext.user || currentAccount.value));
 let unsubscribe: (() => void) | undefined;
+let unsubscribeBarrage: (() => void) | undefined;
 let realtimeStarted = false;
+let barrageLane = 0;
+const barrageTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const pageSize = 50;
 const guestPageSize = 20;
 const maximumLoadedMessages = 300;
@@ -70,6 +87,11 @@ const shortcutMenuOpen = ref(false);
 const topicEditorOpen = ref(false);
 const topicDraft = ref("");
 const topicSaving = ref(false);
+const barrageEditorOpen = ref(false);
+const barrageDraft = ref("");
+const barrageSending = ref(false);
+const barrageInput = ref<HTMLInputElement>();
+const barrageControl = ref<HTMLElement>();
 const now = ref(new Date());
 let clockTimer: ReturnType<typeof setInterval> | undefined;
 let markdownConverter: Promise<typeof import("vditor").default> | undefined;
@@ -103,7 +125,7 @@ async function loadMessages(beforeId?: string) {
   const scrollHeight = timeline.value?.scrollHeight || 0;
   const scrollTop = timeline.value?.scrollTop || 0;
   try {
-    const response = await bbsClient.im.listGlobalChatMessages({
+    const response = await bbsClient.globalChat.listGlobalChatMessages({
       listGlobalChatMessagesReq: {
         beforeId,
         page: { page: "1", size: isLoggedIn.value ? String(pageSize) : String(guestPageSize) },
@@ -130,7 +152,7 @@ async function loadMessages(beforeId?: string) {
 
 async function loadOnlineMembers() {
   try {
-    const response = await bbsClient.im.listGlobalChatOnlineMembers({
+    const response = await bbsClient.globalChat.listGlobalChatOnlineMembers({
       body: {},
     });
     onlineMembers.value = response.rows || [];
@@ -142,7 +164,7 @@ async function loadOnlineMembers() {
 
 async function loadTopic() {
   try {
-    const response = await bbsClient.im.getGlobalChatTopic({ body: {} });
+    const response = await bbsClient.globalChat.getGlobalChatTopic({ body: {} });
     topic.value = response.topic?.content?.trim() || "";
   } catch (error) {
     message.error(error instanceof Error ? error.message : "聊天室话题加载失败");
@@ -152,6 +174,17 @@ async function loadTopic() {
 async function resolveRealtimeSender(userID: string) {
   await loadOnlineMembers();
   return onlineMembers.value.find((member) => member.userId === userID);
+}
+
+function showBarrage(barrage: Omit<GlobalChatBarrage, "lane">) {
+  if (barrages.value.some((item) => item.id === barrage.id)) return;
+  const item = { ...barrage, lane: barrageLane++ % 6 };
+  barrages.value.push(item);
+  const timer = setTimeout(() => {
+    barrages.value = barrages.value.filter((current) => current.id !== item.id);
+    barrageTimers.delete(item.id);
+  }, 16_000);
+  barrageTimers.set(item.id, timer);
 }
 
 function displayName(member: OnlineMember) {
@@ -231,7 +264,7 @@ async function send() {
   editor.value?.setValue("");
   content.value = "";
   try {
-    const response = await bbsClient.im.sendGlobalChatMessage({
+    const response = await bbsClient.globalChat.sendGlobalChatMessage({
       sendGlobalChatMessageReq: { clientMessageId: createClientIdentifier(), content: value },
     });
     if (response.message) await appendMessage(response.message, true);
@@ -246,6 +279,52 @@ async function send() {
 
 function unavailable(feature: string) {
   message.info(`${feature}功能正在接入。`);
+}
+
+async function toggleBarrageEditor() {
+  barrageEditorOpen.value = !barrageEditorOpen.value;
+  if (!barrageEditorOpen.value) return;
+  barrageDraft.value = "";
+  await nextTick();
+  barrageInput.value?.focus();
+}
+
+function closeBarrageEditor() {
+  barrageEditorOpen.value = false;
+}
+
+function closeBarrageEditorOnBlur(event: FocusEvent) {
+  if (event.relatedTarget instanceof Node && barrageControl.value?.contains(event.relatedTarget)) return;
+  closeBarrageEditor();
+}
+
+async function sendBarrage() {
+  const content = barrageDraft.value.trim();
+  if (!content) {
+    message.warning("请输入弹幕内容。");
+    return;
+  }
+  if (Array.from(content).length > 32) {
+    message.warning("弹幕不能超过 32 个字符。");
+    return;
+  }
+  if (barrageSending.value) return;
+  barrageSending.value = true;
+  try {
+    await bbsClient.globalChat.sendGlobalChatBarrage({
+      sendGlobalChatBarrageReq: {
+        clientRequestId: createClientIdentifier(),
+        content,
+      },
+    });
+    barrageDraft.value = "";
+    barrageInput.value?.focus();
+    message.success("弹幕已发射。");
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : "弹幕发送失败");
+  } finally {
+    barrageSending.value = false;
+  }
 }
 
 function insertEmoji(markdown: string) {
@@ -329,7 +408,7 @@ async function submitTopicEditor() {
   if (topicSaving.value) return;
   topicSaving.value = true;
   try {
-    const response = await bbsClient.im.setGlobalChatTopic({
+    const response = await bbsClient.globalChat.setGlobalChatTopic({
       setGlobalChatTopicReq: { clientRequestId: createClientIdentifier(), content: value },
     });
     topic.value = response.topic?.content?.trim() || value;
@@ -421,6 +500,20 @@ async function startRealtime() {
       void loadMessages();
     }
   });
+  unsubscribeBarrage = realtime.subscribe("global_chat_barrage", (event) => {
+    try {
+      const payload = JSON.parse(event.data) as GlobalChatBarrageEvent;
+      const barrageID = String(payload.barrage_id || "");
+      const userID = String(payload.user_id || "");
+      const content = payload.content?.trim() || "";
+      if (!barrageID || !userID || !content) return;
+      void resolveRealtimeSender(userID).then((sender) => {
+        showBarrage({ id: barrageID, userId: userID, content, sender });
+      });
+    } catch {
+      // A malformed transient SSE frame must not affect the chat timeline.
+    }
+  });
   realtime.start();
 }
 
@@ -442,12 +535,30 @@ watch(isLoggedIn, async (loggedIn, wasLoggedIn) => {
 
 onBeforeUnmount(() => {
   unsubscribe?.();
+  unsubscribeBarrage?.();
+  for (const timer of barrageTimers.values()) clearTimeout(timer);
   if (clockTimer) clearInterval(clockTimer);
 });
 </script>
 
 <template>
   <div class="main global-chat-page">
+    <div aria-live="off" class="global-chat__barrage-layer">
+      <a
+        v-for="barrage in barrages"
+        :key="barrage.id"
+        class="global-chat__barrage"
+        :href="`/member/${barrage.sender?.name || ''}`"
+        :style="{ '--global-chat-barrage-lane': barrage.lane }"
+      >
+        <Avatar :name="barrage.sender?.name" :size="32" :url="barrage.sender?.avatarUrl" />
+        <span
+          >{{ displayName(barrage.sender || { userId: barrage.userId, name: `用户 ${barrage.userId}` }) }}：{{
+            barrage.content
+          }}</span
+        >
+      </a>
+    </div>
     <div class="wrapper">
       <section :style="chatStyle" class="content module global-chat">
         <section class="global-chat__main">
@@ -526,9 +637,40 @@ onBeforeUnmount(() => {
               >
                 <Icon name="emoji" />
               </button>
-              <button aria-label="发送弹幕" type="button" @click.stop="unavailable('弹幕')">
-                <Icon name="barrage" />
-              </button>
+              <div ref="barrageControl" class="global-chat__barrage-control" @focusout="closeBarrageEditorOnBlur">
+                <button
+                  aria-controls="global-chat-barrage-input"
+                  :aria-expanded="barrageEditorOpen"
+                  aria-label="发送弹幕"
+                  type="button"
+                  @click.stop="toggleBarrageEditor"
+                >
+                  <Icon name="barrage" />
+                </button>
+                <Transition name="global-chat-barrage-editor">
+                  <div
+                    v-if="barrageEditorOpen"
+                    class="global-chat__barrage-editor"
+                    role="group"
+                    @click.stop
+                    @pointerdown.stop
+                    @keydown.enter.prevent="sendBarrage"
+                    @keydown.esc.prevent.stop="closeBarrageEditor"
+                  >
+                    <label class="fn-none" for="global-chat-barrage-input">弹幕内容</label>
+                    <input
+                      id="global-chat-barrage-input"
+                      ref="barrageInput"
+                      v-model="barrageDraft"
+                      maxlength="32"
+                      placeholder="友善弹幕，最多 32 字"
+                    />
+                    <button :disabled="barrageSending" type="button" @pointerdown.prevent @click="sendBarrage">
+                      {{ barrageSending ? "发射中…" : "发射" }}
+                    </button>
+                  </div>
+                </Transition>
+              </div>
             </div>
             <ClientOnly>
               <RichTextEditor
@@ -672,6 +814,61 @@ onBeforeUnmount(() => {
   flex: 1 1 0;
   min-height: 0;
   padding-block: clamp(0.75rem, 2.5vh, 1.25rem);
+}
+.global-chat__barrage-layer {
+  position: fixed;
+  z-index: 30;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.global-chat__barrage {
+  position: absolute;
+  top: calc(14% + (var(--global-chat-barrage-lane) * 11%));
+  right: -24rem;
+  display: inline-flex;
+  align-items: center;
+  max-width: min(50rem, calc(100vw - 2rem));
+  height: 2.5rem;
+  padding: 0 0.5rem 0 0.25rem;
+  border-radius: 1.5625rem;
+  background: rgb(0 0 0 / 20%);
+  color: #fff;
+  font-size: 0.875rem;
+  text-decoration: none;
+  white-space: nowrap;
+  pointer-events: auto;
+  animation: global-chat-barrage-move 16s linear forwards;
+}
+.global-chat__barrage :deep(.avatar) {
+  flex: 0 0 2rem;
+  border-radius: 50%;
+}
+.global-chat__barrage span {
+  overflow: hidden;
+  margin: 0 0.5rem;
+  text-overflow: ellipsis;
+}
+.global-chat__barrage:hover {
+  animation-play-state: paused;
+  text-decoration: underline;
+}
+@keyframes global-chat-barrage-move {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100vw - 28rem));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .global-chat__barrage {
+    right: 1rem;
+    animation: none;
+  }
 }
 .global-chat-page > .wrapper {
   display: flex;
@@ -1123,7 +1320,8 @@ onBeforeUnmount(() => {
   gap: 0.375rem;
   min-height: 2.5rem;
 }
-.global-chat__composer-tools button {
+.global-chat__composer-tools > button,
+.global-chat__barrage-control > button {
   display: grid;
   width: 2rem;
   height: 2rem;
@@ -1134,11 +1332,84 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: none;
 }
-.global-chat__composer-tools button:hover,
-.global-chat__composer-tools button:focus-visible {
+.global-chat__composer-tools > button:hover,
+.global-chat__composer-tools > button:focus-visible,
+.global-chat__barrage-control > button:hover,
+.global-chat__barrage-control > button:focus-visible {
   background: transparent;
   box-shadow: none;
   outline: 0;
+}
+.global-chat__barrage-control {
+  position: relative;
+  display: flex;
+}
+.global-chat__barrage-editor {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: calc(100% + 0.375rem);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: min(20rem, calc(100vw - 6rem));
+  padding: 0.375rem;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 0.25rem;
+  background: var(--layer-background-color);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-50%);
+}
+.global-chat__barrage-editor input {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 1.875rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--layer-border-color);
+  border-radius: 0.1875rem;
+  background: var(--background-secondary-color);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 0.75rem;
+}
+.global-chat__barrage-editor input:focus {
+  border-color: var(--color-accent);
+  outline: 0;
+}
+.global-chat__barrage-editor button {
+  min-width: 3.25rem;
+  min-height: 1.875rem;
+  padding: 0 0.625rem;
+  border: 0;
+  border-radius: 0.1875rem;
+  background: var(--color-accent);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+}
+.global-chat__barrage-editor button:hover,
+.global-chat__barrage-editor button:focus-visible {
+  background: color-mix(in srgb, var(--color-accent) 88%, #000);
+  box-shadow: none;
+  outline: 0;
+  transform: none;
+}
+.global-chat__barrage-editor button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.global-chat-barrage-editor-enter-active,
+.global-chat-barrage-editor-leave-active {
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+.global-chat-barrage-editor-enter-from,
+.global-chat-barrage-editor-leave-to {
+  opacity: 0;
+  transform: translate(-0.375rem, -50%);
 }
 .global-chat__composer-tools :deep(.icon) {
   width: 1.375rem;
@@ -1362,6 +1633,19 @@ onBeforeUnmount(() => {
   }
   .global-chat__send {
     min-height: 2.25rem;
+  }
+  .global-chat__barrage-editor {
+    position: fixed;
+    top: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    min-width: 0;
+    transform: none;
+  }
+  .global-chat-barrage-editor-enter-from,
+  .global-chat-barrage-editor-leave-to {
+    transform: translateY(0.375rem);
   }
   .global-chat__login {
     flex-direction: column;

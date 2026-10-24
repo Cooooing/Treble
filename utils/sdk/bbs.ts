@@ -77,9 +77,13 @@ export const bbsClient = {
     const { HolidayService } = await import("@bass/bbs-sdk-fetch/apis/HolidayService");
     return throughBbsProxy(new HolidayService(bbsConfiguration));
   }),
-  im: deferBbsService(async () => {
-    const { IMService } = await import("@bass/bbs-sdk-fetch/apis/IMService");
-    return throughBbsProxy(new IMService(bbsConfiguration));
+  privateChat: deferBbsService(async () => {
+    const { PrivateChatService } = await import("@bass/bbs-sdk-fetch/apis/PrivateChatService");
+    return throughBbsProxy(new PrivateChatService(bbsConfiguration));
+  }),
+  globalChat: deferBbsService(async () => {
+    const { GlobalChatService } = await import("@bass/bbs-sdk-fetch/apis/GlobalChatService");
+    return throughBbsProxy(new GlobalChatService(bbsConfiguration));
   }),
   emoji: deferBbsService(async () => {
     const { EmojiService } = await import("@bass/bbs-sdk-fetch/apis/EmojiService");
