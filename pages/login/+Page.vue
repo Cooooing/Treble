@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { navigate } from "vike/client/router";
+import { usePageContext } from "vike-vue/usePageContext";
 import { message } from "@/components/feedback/message";
 import { loginByPassword } from "@/services/auth";
 import Icon from "@/components/ui/Icon.vue";
@@ -10,6 +11,17 @@ import "vditor/dist/index.css";
 const account = ref("");
 const password = ref("");
 const loading = ref(false);
+const pageContext = usePageContext();
+
+function loginDestination() {
+  const next = new URLSearchParams(pageContext.urlParsed.searchOriginal).get("next")?.trim();
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/";
+
+  const destination = new URL(next, "http://treble.local");
+  return destination.origin === "http://treble.local"
+    ? `${destination.pathname}${destination.search}${destination.hash}`
+    : "/";
+}
 
 async function submit() {
   if (!account.value.trim()) return void message.warning("请输入用户名或邮箱。");
@@ -17,7 +29,7 @@ async function submit() {
   loading.value = true;
   try {
     await loginByPassword(account.value.trim(), password.value);
-    await navigate("/");
+    await navigate(loginDestination());
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "登录失败，请稍后重试。");
   } finally {
