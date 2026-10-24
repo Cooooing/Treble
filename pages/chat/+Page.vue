@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { usePageContext } from "vike-vue/usePageContext";
 import RichTextEditor from "@/components/content/RichTextEditor.vue";
+import EmojiPicker from "@/components/content/EmojiPicker.vue";
 import Avatar from "@/components/identity/Avatar.vue";
 import MemberLink from "@/components/identity/MemberLink.vue";
 import ClientOnly from "@/components/ui/ClientOnly.vue";
@@ -51,6 +52,10 @@ const pageContext = usePageContext();
 const timeline = ref<HTMLElement>();
 const timelineContent = ref<HTMLElement>();
 const editor = ref<InstanceType<typeof RichTextEditor>>();
+const emojiTrigger = ref<HTMLButtonElement>();
+const emojiPickerOpen = ref(false);
+let emojiCloseTimer: ReturnType<typeof setTimeout> | undefined;
+let emojiDragging = false;
 const isLoggedIn = computed(() => Boolean(pageContext.user || currentAccount.value));
 let unsubscribe: (() => void) | undefined;
 let realtimeStarted = false;
@@ -232,6 +237,59 @@ function unavailable(feature: string) {
   message.info(`${feature}功能正在接入。`);
 }
 
+function insertEmoji(markdown: string) {
+  if (!markdown) return;
+  const current = editor.value?.getValue() || content.value;
+  const value = `${current}${current ? "\n" : ""}${markdown}`;
+  content.value = value;
+  editor.value?.setValue(value);
+  editor.value?.focus();
+}
+
+function openEmojiPicker() {
+  if (emojiCloseTimer) clearTimeout(emojiCloseTimer);
+  emojiPickerOpen.value = true;
+}
+
+function closeEmojiPickerLater() {
+  if (emojiDragging) return;
+  if (emojiCloseTimer) clearTimeout(emojiCloseTimer);
+  emojiCloseTimer = setTimeout(() => (emojiPickerOpen.value = false), 600);
+}
+
+function beginEmojiDrag() {
+  emojiDragging = true;
+  if (emojiCloseTimer) clearTimeout(emojiCloseTimer);
+}
+
+function endEmojiDrag() {
+  emojiDragging = false;
+  closeEmojiPickerLater();
+}
+
+function imageHashFromMessage(content?: string) {
+  const match = content?.trim().match(/^!\[[^\]]*]\(([^\s)]+)(?:\s+"[^"]*")?\)$/);
+  if (!match) return;
+  try {
+    return new URL(match[1]).pathname.match(/([a-f0-9]{64})$/i)?.[1]?.toLowerCase();
+  } catch {
+    return;
+  }
+}
+
+async function addMessageEmoji(row: GlobalMessage) {
+  const hash = imageHashFromMessage(row.content);
+  if (!hash) return;
+  try {
+    const asset = await bbsClient.asset.completeMarkdownImageUpload({ completeMarkdownImageUploadReq: { hash } });
+    if (!asset.assetId) throw new Error("图片资产不可用。");
+    await bbsClient.emoji.addItem({ addEmojiItemReq: { assetId: asset.assetId, name: "" } });
+    message.success("已添加到默认分组。");
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : "添加表情失败");
+  }
+}
+
 function openTopicEditor() {
   topicDraft.value = topic.value === "暂未设置话题" ? "" : topic.value;
   topicEditorOpen.value = true;
@@ -403,8 +461,15 @@ onBeforeUnmount(() => {
                   <div v-else-if="row.html" class="global-chat__content vditor-reset" v-html="row.html"></div>
                   <p v-else class="global-chat__content">{{ row.content }}</p>
                   <footer>
-                    <time v-if="row.createdAt">{{ row.createdAt.toLocaleString() }}</time
-                    ><button aria-label="消息操作" type="button"><Icon name="more" /></button>
+                    <time v-if="row.createdAt">{{ row.createdAt.toLocaleString() }}</time>
+                    <details class="global-chat__message-actions">
+                      <summary aria-label="消息操作"><Icon name="more" /></summary>
+                      <menu>
+                        <li v-if="imageHashFromMessage(row.content)">
+                          <button type="button" @click="addMessageEmoji(row)">添加到表情</button>
+                        </li>
+                      </menu>
+                    </details>
                   </footer>
                 </section>
               </article>
@@ -425,7 +490,15 @@ onBeforeUnmount(() => {
               <button aria-label="发送红包" type="button" @click.stop="unavailable('红包')">
                 <Icon name="red-packet" />
               </button>
-              <button aria-label="插入表情" type="button" @click.stop="unavailable('表情包')">
+              <button
+                ref="emojiTrigger"
+                aria-label="插入表情"
+                type="button"
+                @click.stop
+                @focus="openEmojiPicker"
+                @pointerenter="openEmojiPicker"
+                @pointerleave="closeEmojiPickerLater"
+              >
                 <Icon name="emoji" />
               </button>
               <button aria-label="发送弹幕" type="button" @click.stop="unavailable('弹幕')">
@@ -483,6 +556,16 @@ onBeforeUnmount(() => {
                 </div>
               </div>
             </footer>
+            <EmojiPicker
+              v-if="emojiPickerOpen && emojiTrigger"
+              :anchor="emojiTrigger"
+              @close="emojiPickerOpen = false"
+              @pointerenter="openEmojiPicker"
+              @pointerleave="closeEmojiPickerLater"
+              @dragend="endEmojiDrag"
+              @dragstart="beginEmojiDrag"
+              @select="insertEmoji"
+            />
           </form>
           <section v-else class="global-chat__login" aria-label="登录后参与聊天室">
             <p>登录后查看更多消息并参与讨论</p>
@@ -694,6 +777,62 @@ onBeforeUnmount(() => {
 .global-chat__bubble footer :deep(.icon) {
   width: 0.875rem;
   height: 0.875rem;
+}
+.global-chat__message-actions {
+  position: relative;
+  margin-left: 0.5rem;
+}
+.global-chat__message-actions summary {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  list-style: none;
+  place-items: center;
+  color: var(--text-fade-color);
+  cursor: pointer;
+}
+.global-chat__message-actions summary::-webkit-details-marker {
+  display: none;
+}
+.global-chat__message-actions summary:hover,
+.global-chat__message-actions summary:focus-visible {
+  color: var(--color-accent);
+  outline: 0;
+}
+.global-chat__message-actions menu {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: calc(100% + 0.25rem);
+  min-width: 7rem;
+  margin: 0;
+  padding: 0.25rem;
+  border: 1px solid var(--layer-border-color);
+  background: var(--layer-background-color);
+  list-style: none;
+}
+.global-chat__message-actions menu button {
+  width: 100%;
+  min-height: 1.875rem;
+  padding: 0 0.5rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none !important;
+  color: var(--text-color);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transform: none !important;
+  transition: none !important;
+}
+.global-chat__message-actions menu button:hover,
+.global-chat__message-actions menu button:focus-visible {
+  background: transparent;
+  box-shadow: none !important;
+  color: var(--color-accent);
+  outline: 0;
+  transform: none !important;
 }
 .global-chat__content {
   margin-top: 0.375rem;

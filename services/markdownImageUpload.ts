@@ -6,6 +6,11 @@ const maxImageSize = 5 * 1024 * 1024;
 const acceptedMimeTypes = new Set(["image/gif", "image/jpeg", "image/png", "image/webp"]);
 
 export async function uploadMarkdownImage(file: File, onProgress?: (progress: number) => void) {
+  const image = await uploadMarkdownImageAsset(file, onProgress);
+  return `![${image.name}](${image.imageUrl})`;
+}
+
+export async function uploadMarkdownImageAsset(file: File, onProgress?: (progress: number) => void) {
   validateImage(file);
   const content = new Uint8Array(await file.arrayBuffer());
   const hash = await sha256(content);
@@ -20,8 +25,8 @@ export async function uploadMarkdownImage(file: File, onProgress?: (progress: nu
     await postToObjectStorage(prepared.uploadUrl, prepared.formFields, file, onProgress);
   }
   const completed = await completeMarkdownImageUpload(hash);
-  if (!completed.imageUrl) throw new Error("图片地址无效，请重试。");
-  return `![${markdownAlt(file.name)}](${completed.imageUrl})`;
+  if (!completed.imageUrl || !completed.assetId) throw new Error("图片地址无效，请重试。");
+  return { assetId: completed.assetId, imageUrl: completed.imageUrl, name: markdownAlt(file.name) };
 }
 
 function validateImage(file: File) {

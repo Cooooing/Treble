@@ -81,6 +81,10 @@ export const bbsClient = {
     const { IMService } = await import("@bass/bbs-sdk-fetch/apis/IMService");
     return throughBbsProxy(new IMService(bbsConfiguration));
   }),
+  emoji: deferBbsService(async () => {
+    const { EmojiService } = await import("@bass/bbs-sdk-fetch/apis/EmojiService");
+    return throughBbsProxy(new EmojiService(bbsConfiguration));
+  }),
   location: deferBbsService(async () => {
     const { LocationService } = await import("@bass/bbs-sdk-fetch/apis/LocationService");
     return throughBbsProxy(new LocationService(bbsConfiguration));
