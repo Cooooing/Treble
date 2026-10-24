@@ -25,12 +25,17 @@ export async function data(pageContext: PageContextServer) {
       throw error;
     }
   } catch (error) {
-    setPageStatus(pageContext, 404);
+    const isNotFound = error instanceof ApiError && (error.status === 404 || error.code === 404);
+    setPageStatus(pageContext, isNotFound ? 404 : 500);
     return {
       profile: undefined,
       articles: [],
-      error: error instanceof Error ? error.message : "个人主页暂时无法打开。",
-      pageStatus: 404 as const,
+      error: isNotFound
+        ? "该用户不存在或已被删除。"
+        : error instanceof Error
+          ? error.message
+          : "个人主页暂时无法打开。",
+      pageStatus: isNotFound ? (404 as const) : (500 as const),
     };
   }
 }

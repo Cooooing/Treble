@@ -22,12 +22,17 @@ export async function data(pageContext: PageContextServer) {
       throw error;
     }
   } catch (cause) {
-    setPageStatus(pageContext, 404);
+    const isNotFound = cause instanceof ApiError && (cause.status === 404 || cause.code === 404);
+    setPageStatus(pageContext, isNotFound ? 404 : 500);
     return {
       profile: undefined,
       rows: [],
-      error: cause instanceof Error ? cause.message : "个人动态暂时无法打开。",
-      pageStatus: 404 as const,
+      error: isNotFound
+        ? "该用户不存在或已被删除。"
+        : cause instanceof Error
+          ? cause.message
+          : "个人动态暂时无法打开。",
+      pageStatus: isNotFound ? (404 as const) : (500 as const),
     };
   }
 }

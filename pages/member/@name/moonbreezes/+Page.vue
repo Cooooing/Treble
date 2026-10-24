@@ -18,7 +18,11 @@ function append(nextRows: Moonbreeze[], cursor?: string) {
 </script>
 
 <template>
-  <ErrorState v-if="!data.profile" :message="data.error || '该用户不存在或不可用。'" title="用户未找到" />
+  <ErrorState
+    v-if="!data.profile"
+    :message="data.error || (data.pageStatus === 404 ? '该用户不存在或不可用。' : '个人动态暂时无法打开。')"
+    :title="data.pageStatus === 404 ? '用户未找到' : '暂时无法打开'"
+  />
   <MemberProfileLayout v-else :profile="data.profile" active="moonbreezes">
     <p v-if="data.private" class="member-empty">该用户未公开清风明月列表。</p>
     <MoonbreezeList

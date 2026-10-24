@@ -14,11 +14,15 @@ type Data = {
   pageStatus?: 404 | 500;
   private?: boolean;
 };
-const { profile, articles, error, private: isPrivate } = toRefs(useData<Data>());
+const { profile, articles, error, pageStatus, private: isPrivate } = toRefs(useData<Data>());
 </script>
 
 <template>
-  <ErrorState v-if="!profile" :message="error || '该用户不存在或不可用。'" title="用户未找到" />
+  <ErrorState
+    v-if="!profile"
+    :message="error || (pageStatus === 404 ? '该用户不存在或不可用。' : '个人主页暂时无法打开。')"
+    :title="pageStatus === 404 ? '用户未找到' : '暂时无法打开'"
+  />
   <MemberProfileLayout v-else :profile="profile" active="articles">
     <p v-if="isPrivate" class="member-empty">该用户未公开帖子列表。</p>
     <MemberArticleList v-else-if="articles.length" :articles="articles" />

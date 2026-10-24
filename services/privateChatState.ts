@@ -17,7 +17,7 @@ function privateChatChannel() {
 }
 
 export function refreshUnreadPrivateChatCount() {
-  refreshPromise ??= bbsClient.im
+  refreshPromise ??= bbsClient.privateChat
     .countPrivateChatUnread({ body: {} })
     .then((response) => {
       unreadPrivateChatCount.value = Number(response.count || 0);
