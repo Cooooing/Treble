@@ -47,7 +47,7 @@ const loadingOlder = ref(false);
 const onlineMembers = ref<OnlineMember[]>([]);
 const onlineTotal = ref("0");
 const hasOlder = ref(true);
-const topic = ref("暂未设置话题");
+const topic = ref("");
 const pageContext = usePageContext();
 const timeline = ref<HTMLElement>();
 const timelineContent = ref<HTMLElement>();
@@ -69,6 +69,7 @@ const sendShortcut = ref<"ctrl-enter" | "enter">("ctrl-enter");
 const shortcutMenuOpen = ref(false);
 const topicEditorOpen = ref(false);
 const topicDraft = ref("");
+const topicSaving = ref(false);
 const now = ref(new Date());
 let clockTimer: ReturnType<typeof setInterval> | undefined;
 let markdownConverter: Promise<typeof import("vditor").default> | undefined;
@@ -92,6 +93,7 @@ const isCurfew = computed(() => {
   const minutes = now.value.getMinutes();
   return hours < 8 || hours > 19 || (hours === 19 && minutes >= 30);
 });
+const topicLabel = computed(() => topic.value || "暂未设置话题");
 
 async function loadMessages(beforeId?: string) {
   const isOlderPage = Boolean(beforeId);
@@ -135,6 +137,15 @@ async function loadOnlineMembers() {
     onlineTotal.value = String(onlineMembers.value.length);
   } catch (error) {
     message.error(error instanceof Error ? error.message : "在线成员加载失败");
+  }
+}
+
+async function loadTopic() {
+  try {
+    const response = await bbsClient.im.getGlobalChatTopic({ body: {} });
+    topic.value = response.topic?.content?.trim() || "";
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : "聊天室话题加载失败");
   }
 }
 
@@ -291,12 +302,12 @@ async function addMessageEmoji(row: GlobalMessage) {
 }
 
 function openTopicEditor() {
-  topicDraft.value = topic.value === "暂未设置话题" ? "" : topic.value;
+  topicDraft.value = topic.value;
   topicEditorOpen.value = true;
 }
 
 async function quoteTopic() {
-  const quote = `\n\n*\`# ${topic.value} #\`*  `;
+  const quote = `\n\n*\`# ${topicLabel.value} #\`*  `;
   const history = content.value;
   const input = history || topicInputMarker;
   const value = `${input}${quote}`;
@@ -305,7 +316,7 @@ async function quoteTopic() {
   editor.value?.setValueAndFocus(value, input.length);
 }
 
-function submitTopicEditor() {
+async function submitTopicEditor() {
   const value = topicDraft.value.trim();
   if (!value) {
     message.warning("请输入话题内容。");
@@ -315,7 +326,20 @@ function submitTopicEditor() {
     message.warning("话题不能超过 64 个字符。");
     return;
   }
-  message.info("聊天室话题修改正在接入。");
+  if (topicSaving.value) return;
+  topicSaving.value = true;
+  try {
+    const response = await bbsClient.im.setGlobalChatTopic({
+      setGlobalChatTopicReq: { clientRequestId: createClientIdentifier(), content: value },
+    });
+    topic.value = response.topic?.content?.trim() || value;
+    topicEditorOpen.value = false;
+    message.success("话题设置成功。");
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : "聊天室话题设置失败");
+  } finally {
+    topicSaving.value = false;
+  }
 }
 
 function focusComposer() {
@@ -405,6 +429,7 @@ onMounted(async () => {
   if (savedShortcut === "enter" || savedShortcut === "ctrl-enter") sendShortcut.value = savedShortcut;
   clockTimer = setInterval(() => (now.value = new Date()), 30_000);
   await loadMessages();
+  await loadTopic();
   await loadOnlineMembers();
   await startRealtime();
 });
@@ -581,7 +606,7 @@ onBeforeUnmount(() => {
         <aside class="global-chat__side" aria-label="聊天室信息">
           <section class="global-chat__side-section">
             <h2>当前话题</h2>
-            <p><Icon name="topic" /># {{ topic }} #</p>
+            <p><Icon name="topic" /># {{ topicLabel }} #</p>
             <div class="global-chat__topic-actions">
               <button aria-label="编辑话题" type="button" @click="openTopicEditor"><Icon name="topic-edit" /></button>
               <button aria-label="引用话题" type="button" @click="quoteTopic"><Icon name="topic-quote" /></button>
@@ -626,13 +651,13 @@ onBeforeUnmount(() => {
           <h2 id="global-chat-topic-dialog-title">设置话题</h2>
           <button aria-label="关闭" type="button" @click="topicEditorOpen = false">×</button>
         </header>
-        <p>最大长度 64 个字符，不合法字符将被自动过滤。</p>
+        <p>修改话题需要 16 积分，将自动从账户中扣除；<br />最大长度 64 字符，不合法字符将被自动过滤。</p>
         <form @submit.prevent="submitTopicEditor">
           <label class="fn-none" for="global-chat-topic-input">话题内容</label>
           <input id="global-chat-topic-input" v-model="topicDraft" autofocus maxlength="64" />
           <footer>
             <button type="button" @click="topicEditorOpen = false">取消</button>
-            <button type="submit">设置</button>
+            <button :disabled="topicSaving" type="submit">{{ topicSaving ? "设置中…" : "设置" }}</button>
           </footer>
         </form>
       </section>
