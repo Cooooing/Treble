@@ -14,6 +14,7 @@ import { currentAccount } from "@/services/sessionState";
 import { useChatTimeline } from "@/services/chatTimeline";
 import { bbsClient } from "@/utils/sdk";
 import { createClientIdentifier } from "@/utils/sdk/shared";
+import { loadVditorAssets } from "@/utils/vditorAssets";
 
 type GlobalMessage = {
   id?: string;
@@ -221,6 +222,7 @@ function handleTimelineScroll() {
 
 async function renderMessages(messages: GlobalMessage[]) {
   try {
+    await loadVditorAssets();
     if (!markdownConverter) markdownConverter = import("vditor").then((module) => module.default);
     const vditor = await markdownConverter;
     return Promise.all(

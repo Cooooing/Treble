@@ -13,6 +13,7 @@ import { getRealtimeConnection, getRealtimeNodeUrl, type RealtimeTicket } from "
 import { useChatTimeline } from "@/services/chatTimeline";
 import { bbsClient } from "@/utils/sdk";
 import { createClientIdentifier } from "@/utils/sdk/shared";
+import { loadVditorAssets } from "@/utils/vditorAssets";
 import { memberDisplayName } from "@/utils/member";
 
 type Session = {
@@ -174,6 +175,7 @@ async function send() {
 
 async function renderMessages(messages: PrivateMessage[]) {
   try {
+    await loadVditorAssets();
     markdownConverter ??= import("vditor").then((module) => module.default);
     const vditor = await markdownConverter;
     return Promise.all(

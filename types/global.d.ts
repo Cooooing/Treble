@@ -14,4 +14,8 @@ declare global {
     showModal?: () => void;
     close?: () => void;
   }
+
+  interface Window {
+    VditorI18n?: Record<string, string>;
+  }
 }

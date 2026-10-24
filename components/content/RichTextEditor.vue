@@ -4,6 +4,7 @@ import { defaultTheme, isDarkTheme, type Theme } from "@/utils/theme";
 import { message } from "@/components/feedback/message";
 import { uploadMarkdownImage } from "@/services/markdownImageUpload";
 import { bbsClient } from "@/utils/sdk/bbs";
+import { loadVditorAssets, lutePath } from "@/utils/vditorAssets";
 import type { AccountProfile } from "@bass/bbs-sdk-fetch/models/AccountProfile";
 import type Vditor from "vditor";
 import "vditor/dist/index.css";
@@ -36,6 +37,7 @@ const emit = defineEmits<{
 const vditor = ref<Vditor>();
 const vditorRef = ref<HTMLDivElement>();
 const editorReady = ref(false);
+const editorError = ref<string>();
 const theme = ref<Theme>(defaultTheme);
 const editorId = props.id || `editor-${++sequence}`;
 let disposed = false;
@@ -58,63 +60,77 @@ onMounted(async () => {
   theme.value = document.documentElement.dataset.theme === "dark" ? "dark" : defaultTheme;
   window.addEventListener("treble-theme-change", handleThemeChange);
 
-  // Vditor accesses browser globals as soon as its module is evaluated. The
-  // editor is client-only, but its parent participates in article SSR, so load
-  // Vditor only after Vue has mounted in a browser.
-  const VditorConstructor = (await import("vditor")).default;
-  if (disposed || !vditorRef.value) return;
+  try {
+    // Vditor loads both its Chinese copy and Lute from jsDelivr by default. A
+    // missing or slow CDN response leaves its `after` callback pending forever.
+    // Share the local initialization with Markdown renderers to avoid races.
+    const i18n = await loadVditorAssets();
 
-  const { after, cache, input, preview, resize, hint, ...options } = props.options || {};
-  const mentionHint = props.mention
-    ? [
-        ...(hint?.extend || []),
-        {
-          key: "@",
-          hint: async (query: string) => {
-            const response = await bbsClient.account.searchMention({
-              searchMentionAccountsReq: { query, page: { page: 1, size: 5 } },
-            });
-            mentionCandidates.value = response.rows || [];
-            return mentionCandidates.value.map((account) => ({
-              value: `[@${account.name}](${account.profileUrl}) `,
-              html: `<img src="${account.avatarUrl || ""}" alt="" />${account.nickname || account.name} (${account.name})`,
-            }));
+    // Vditor accesses browser globals as soon as its module is evaluated. The
+    // editor is client-only, but its parent participates in article SSR, so load
+    // Vditor only after Vue has mounted in a browser.
+    const VditorConstructor = (await import("vditor")).default;
+    if (disposed || !vditorRef.value) return;
+
+    const { after, cache, input, preview, resize, hint, ...options } = props.options || {};
+    const mentionHint = props.mention
+      ? [
+          ...(hint?.extend || []),
+          {
+            key: "@",
+            hint: async (query: string) => {
+              const response = await bbsClient.account.searchMention({
+                searchMentionAccountsReq: { query, page: { page: 1, size: 5 } },
+              });
+              mentionCandidates.value = response.rows || [];
+              return mentionCandidates.value.map((account) => ({
+                value: `[@${account.name}](${account.profileUrl}) `,
+                html: `<img src="${account.avatarUrl || ""}" alt="" />${account.nickname || account.name} (${account.name})`,
+              }));
+            },
           },
-        },
-      ]
-    : hint?.extend;
-  vditor.value = new VditorConstructor(vditorRef.value, {
-    outline: { enable: false, position: "left" },
-    typewriterMode: false,
-    cache: {
-      enable: Boolean(props.name),
-      id: props.name || editorId,
-      ...cache,
-    },
-    preview: { delay: 500, mode: "both", ...preview },
-    resize: { enable: false, ...resize },
-    hint: { delay: 0, parse: false, ...hint, extend: mentionHint },
-    lang: "zh_CN",
-    height: props.height,
-    width: props.width,
-    ...options,
-    theme: isDarkTheme(theme.value) ? "dark" : "classic",
-    after: () => {
-      const value = props.modelValue;
-      if (value !== undefined && vditor.value?.getValue() !== value) {
-        vditor.value?.setValue(value);
-      }
-      editorReady.value = true;
-      syncTheme(theme.value);
-      after?.();
-    },
-    input: (value) => {
-      lastEditorValue = value;
-      emit("update:modelValue", value);
-      input?.(value);
-    },
-  });
-  emit("update:vditorInstance", vditor.value);
+        ]
+      : hint?.extend;
+    vditor.value = new VditorConstructor(vditorRef.value, {
+      outline: { enable: false, position: "left" },
+      typewriterMode: false,
+      cache: {
+        enable: Boolean(props.name),
+        id: props.name || editorId,
+        ...cache,
+      },
+      preview: { delay: 500, mode: "both", ...preview },
+      resize: { enable: false, ...resize },
+      hint: { delay: 0, parse: false, ...hint, extend: mentionHint || [] },
+      // Supplying i18n bypasses Vditor's CDN i18n loader. The local Lute URL is
+      // emitted by Vite with the application assets rather than fetched remotely.
+      _lutePath: lutePath,
+      i18n,
+      icon: undefined,
+      lang: "zh_CN",
+      height: props.height,
+      width: props.width,
+      ...options,
+      theme: isDarkTheme(theme.value) ? "dark" : "classic",
+      after: () => {
+        const value = props.modelValue;
+        if (value !== undefined && vditor.value?.getValue() !== value) {
+          vditor.value?.setValue(value);
+        }
+        editorReady.value = true;
+        syncTheme(theme.value);
+        after?.();
+      },
+      input: (value) => {
+        lastEditorValue = value;
+        emit("update:modelValue", value);
+        input?.(value);
+      },
+    });
+    emit("update:vditorInstance", vditor.value);
+  } catch (error) {
+    editorError.value = error instanceof Error ? error.message : "编辑器加载失败。";
+  }
 });
 
 watch(
@@ -292,7 +308,7 @@ defineExpose({
     <div :id="editorId" ref="vditorRef" :style="{ height, width }" />
     <div v-if="!editorReady" aria-live="polite" class="editor-shell__loading" role="status">
       <span aria-hidden="true" class="editor-shell__spinner" />
-      正在加载编辑器...
+      {{ editorError || "正在加载编辑器..." }}
     </div>
     <div v-if="dropActive" class="editor-shell__drop-hint">松开以上传图片</div>
   </section>
