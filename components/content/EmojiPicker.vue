@@ -297,8 +297,11 @@ async function createShare() {
   try {
     const response = await bbsClient.emoji.createShare({ createEmojiShareReq: { groupId: selectedGroup.value.id } });
     if (!response.code) throw new Error("分享码生成失败。");
-    await navigator.clipboard.writeText(response.code);
-    message.success("分享码已复制，七天内有效。");
+    if (await writeClipboardText(response.code)) {
+      message.success("分享码已复制，七天内有效。");
+      return;
+    }
+    window.prompt("浏览器不支持自动复制，请手动复制分享码：", response.code);
   } catch (error) {
     message.error(error instanceof Error ? error.message : "生成分享码失败");
   }
@@ -306,7 +309,7 @@ async function createShare() {
 
 async function importShare() {
   try {
-    const code = (await navigator.clipboard.readText()).trim();
+    const code = (await readClipboardText()).trim();
     if (!code) throw new Error("剪贴板没有分享码。");
     await bbsClient.emoji.importShare({ importEmojiShareReq: { code } });
     await load();
@@ -314,6 +317,36 @@ async function importShare() {
   } catch (error) {
     message.error("分享码过期或无效");
   }
+}
+
+async function writeClipboardText(value: string) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    // Fall through for HTTP, permission-denied and compatibility environments.
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.cssText = "position:fixed;opacity:0;pointer-events:none;";
+  document.body.append(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  return copied;
+}
+
+async function readClipboardText() {
+  try {
+    if (navigator.clipboard?.readText) return await navigator.clipboard.readText();
+  } catch {
+    // A manual input prompt remains available when clipboard permissions are denied.
+  }
+  return window.prompt("请粘贴表情分组分享码：") || "";
 }
 
 function toggleManage() {
