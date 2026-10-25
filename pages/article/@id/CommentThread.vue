@@ -5,6 +5,8 @@ import type { RespCommentThread } from "@bass/bbs-sdk-fetch/models/RespCommentTh
 import Avatar from "@/components/identity/Avatar.vue";
 import MemberLink from "@/components/identity/MemberLink.vue";
 import Icon from "@/components/ui/Icon.vue";
+import { fromNow } from "@/utils/date";
+import { memberDisplayName } from "@/utils/member";
 import { pageNumber } from "@/utils/page";
 
 const props = defineProps<{
