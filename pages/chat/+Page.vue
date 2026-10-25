@@ -46,6 +46,12 @@ type GlobalChatBarrageEvent = {
   content?: string;
   created_at?: string;
 };
+type GlobalChatTopicEvent = {
+  topic_id?: string;
+  user_id?: string;
+  content?: string;
+  created_at?: string;
+};
 type GlobalChatBarrage = {
   id: string;
   userId: string;
@@ -74,6 +80,7 @@ let emojiDragging = false;
 const isLoggedIn = computed(() => Boolean(pageContext.user || currentAccount.value));
 let unsubscribe: (() => void) | undefined;
 let unsubscribeBarrage: (() => void) | undefined;
+let unsubscribeTopic: (() => void) | undefined;
 let realtimeStarted = false;
 let barrageLane = 0;
 const barrageTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -516,6 +523,15 @@ async function startRealtime() {
       // A malformed transient SSE frame must not affect the chat timeline.
     }
   });
+  unsubscribeTopic = realtime.subscribe("global_chat_topic", (event) => {
+    try {
+      const payload = JSON.parse(event.data) as GlobalChatTopicEvent;
+      if (!payload.topic_id || !payload.user_id || !payload.content?.trim()) return;
+      topic.value = payload.content.trim();
+    } catch {
+      // Topic events are best-effort. Reconnect and page entry reload the source of truth.
+    }
+  });
   realtime.start();
 }
 
@@ -538,6 +554,7 @@ watch(isLoggedIn, async (loggedIn, wasLoggedIn) => {
 onBeforeUnmount(() => {
   unsubscribe?.();
   unsubscribeBarrage?.();
+  unsubscribeTopic?.();
   for (const timer of barrageTimers.values()) clearTimeout(timer);
   if (clockTimer) clearInterval(clockTimer);
 });
