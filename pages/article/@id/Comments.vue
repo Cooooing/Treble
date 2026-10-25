@@ -87,11 +87,23 @@ async function submit() {
 
 async function reactToComment(action: "like" | "thank", id?: string) {
   if (!id) return;
+  if (action === "thank") {
+    const thanked = threadPage.value?.rows
+      ?.flatMap((thread) => [thread.root, ...(thread.previewReplies || [])])
+      .find((comment) => comment?.id === id)?.viewerActionState?.thanked;
+    if (thanked) {
+      message.info("感谢已完成，不能取消。");
+      return;
+    }
+  }
   try {
     if (action === "like") {
       await bbsClient.comment.like({ likeCommentReq: { id, active: true } });
     } else {
-      await bbsClient.comment.thank({ thankCommentReq: { id, active: true } });
+      if (!window.confirm("感谢将转赠 20 积分给评论作者，操作不可撤销。确定感谢吗？")) return;
+      await bbsClient.comment.thank({ thankCommentReq: { id, clientRequestId: crypto.randomUUID() } });
+      message.success("已感谢，已转赠 20 积分给评论作者。");
+      await loadThreads(pageNumber(threadPage.value?.page), commentOrder.value);
     }
   } catch (cause) {
     message.error(cause instanceof Error ? cause.message : "操作失败，请稍后重试。");

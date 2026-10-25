@@ -211,10 +211,17 @@ async function changeArticleAction(action: "like" | "thank" | "collect" | "watch
       currentArticle.likeCount = Math.max(0, (currentArticle.likeCount || 0) + (response.liked ? 1 : -1));
       message.success(response.liked ? "已点赞。" : "已取消点赞。");
     } else if (action === "thank") {
-      const response = await bbsClient.article.thank({ thankArticleReq: { articleId: currentArticle.id, active } });
+      if (actionState.thanked) {
+        message.info("感谢已完成，不能取消。");
+        return;
+      }
+      if (!window.confirm("感谢将转赠 20 积分给作者，操作不可撤销。确定感谢吗？")) return;
+      const response = await bbsClient.article.thank({
+        thankArticleReq: { articleId: currentArticle.id, clientRequestId: crypto.randomUUID() },
+      });
       currentArticle.viewerActionState = { ...actionState, thanked: response.thanked };
-      currentArticle.thankCount = Math.max(0, (currentArticle.thankCount || 0) + (response.thanked ? 1 : -1));
-      message.success(response.thanked ? "已感谢。" : "已取消感谢。");
+      if (response.thanked && !actionState.thanked) currentArticle.thankCount = (currentArticle.thankCount || 0) + 1;
+      message.success("已感谢，已转赠 20 积分给作者。");
     } else if (action === "collect") {
       const response = await bbsClient.article.collect({ collectArticleReq: { articleId: currentArticle.id, active } });
       currentArticle.viewerActionState = { ...actionState, collected: response.collected };
