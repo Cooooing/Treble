@@ -27,6 +27,7 @@ import {
 import { articleTypes } from "./index";
 import { bbsClient } from "@/utils/sdk";
 import { pageRequest } from "@/utils/page";
+import { ApiError } from "@/utils/sdk/shared";
 
 const props = defineProps<{ article?: ArticleDetail; type?: ReqArticleTypeEnum }>();
 const type = (props.article?.type || props.type || "ARTICLE_TYPE_NORMAL") as ReqArticleTypeEnum;
@@ -73,6 +74,18 @@ const articleId = ref(props.article?.id);
 let localSaveTimer: ReturnType<typeof window.setTimeout> | undefined;
 let formInitialized = false;
 let retainLocalRecovery = true;
+
+function discardStaleLocalDraft() {
+  removeLocalArticleDraft(type);
+  articleId.value = undefined;
+  savedTagIds.value = [];
+  recoveryDraftSavedToServer.value = false;
+  retainLocalRecovery = false;
+}
+
+function isDraftUpdateConflict(cause: unknown) {
+  return cause instanceof ApiError && (cause.status === 409 || cause.code === 12012 || cause.code === "12012");
+}
 
 const matchingTags = computed(() => {
   const keyword = tagQuery.value.trim().toLocaleLowerCase();
@@ -279,6 +292,11 @@ async function save(publish: boolean): Promise<string | undefined> {
     await navigate(`/article/${id}`);
     return id;
   } catch (cause) {
+    if (articleId.value && isDraftUpdateConflict(cause)) {
+      discardStaleLocalDraft();
+      message.warning("服务端草稿已发布或不可编辑，已清理本地暂存；请再次保存以创建新草稿。");
+      return undefined;
+    }
     message.error(cause instanceof Error ? cause.message : "保存失败，请稍后重试。");
     return undefined;
   } finally {
@@ -326,9 +344,13 @@ onMounted(async () => {
   tagMenuOpen.value = false;
   const restoringServerDraft = consumeServerArticleDraftRestore(props.article?.id, type);
   const draft = getLocalArticleDraft(type);
-  const shouldRestoreLocalDraft =
+  const shouldRestoreLocalDraft = Boolean(
     !restoringServerDraft &&
-    Boolean(draft && !draft.savedToServer && (!props.article || draft.articleId === props.article.id));
+      draft &&
+      !draft.savedToServer &&
+      ((props.article && draft.articleId === props.article.id) || (!props.article && !draft.articleId)),
+  );
+  if (!props.article && draft?.articleId) removeLocalArticleDraft(type);
   if (shouldRestoreLocalDraft && draft) {
     articleId.value = draft.articleId || articleId.value;
     Object.assign(form, draft.article);
