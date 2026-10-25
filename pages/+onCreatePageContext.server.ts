@@ -3,6 +3,7 @@ import type { RespCurrentAccount } from "@bass/bbs-sdk-fetch/models/RespCurrentA
 import { getUsableSession } from "@/server/bbsGateway";
 import type { TrebleSession } from "@/server/session";
 import { bffUrl } from "@/utils/sdk/server";
+import { createClientIdentifier } from "@/utils/sdk/shared";
 
 function sessionID(cookie: string | undefined) {
   return cookie
@@ -38,7 +39,7 @@ export async function onCreatePageContext(pageContext: PageContextServer) {
     const session = await getUsableSession(
       { bffUrl, isProduction: process.env.NODE_ENV === "production" },
       decodeURIComponent(sid),
-      pageContext.headers?.["x-request-id"] || crypto.randomUUID(),
+      pageContext.headers?.["x-request-id"] || createClientIdentifier(),
     );
     if (!session) return;
     const account = await currentAccount(session);
