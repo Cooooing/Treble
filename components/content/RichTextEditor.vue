@@ -185,6 +185,29 @@ async function handleDrop(event: DragEvent) {
   event.preventDefault();
   event.stopPropagation();
 
+  await uploadImages(files);
+}
+
+async function handlePaste(event: ClipboardEvent) {
+  const files = clipboardImageFiles(event.clipboardData);
+  if (files.length === 0) return;
+  event.preventDefault();
+
+  await uploadImages(files.map((file, index) => clipboardImageFile(file, index)));
+}
+
+function clipboardImageFiles(clipboard: DataTransfer | null) {
+  const files = Array.from(clipboard?.files || []).filter((file) => file.type.startsWith("image/"));
+  if (files.length > 0) return files;
+
+  return Array.from(clipboard?.items || []).flatMap((item) => {
+    if (item.kind !== "file" || !item.type.startsWith("image/")) return [];
+    const file = item.getAsFile();
+    return file ? [file] : [];
+  });
+}
+
+async function uploadImages(files: File[]) {
   const selection = selectionRange();
   const messageID = `${editorId}-image-upload`;
   let loading = message.loading(`正在准备 ${files.length} 张图片…`, { id: messageID });
@@ -205,6 +228,12 @@ async function handleDrop(event: DragEvent) {
   } finally {
     loading.close();
   }
+}
+
+function clipboardImageFile(file: File, index: number) {
+  if (file.name) return file;
+  const extension = file.type.split("/")[1] || "png";
+  return new File([file], `clipboard-image-${index + 1}.${extension}`, { type: file.type });
 }
 
 function hasFiles(event: DragEvent) {
@@ -304,6 +333,7 @@ defineExpose({
     @dragleave.capture="handleDragLeave"
     @dragover.capture="handleDragOver"
     @drop.capture="handleDrop"
+    @paste.capture="handlePaste"
   >
     <div :id="editorId" ref="vditorRef" :style="{ height, width }" />
     <div v-if="!editorReady" aria-live="polite" class="editor-shell__loading" role="status">
