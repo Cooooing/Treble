@@ -161,6 +161,7 @@ async function connectRealtime() {
     }
     message.info("收到一条新通知", { id: `notification:${notificationID}` });
     void refreshUnreadNotificationCount();
+    window.dispatchEvent(new CustomEvent("treble:notification-received", { detail: { notificationID } }));
   });
   unsubscribePrivateChat = realtime.subscribe("private_chat_message", (event) => {
     const receiverID = privateChatReceiverIDFromEvent(event);

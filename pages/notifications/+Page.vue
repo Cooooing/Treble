@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { onMounted, ref, toRefs, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, toRefs, watch } from "vue";
+import { pageRequest } from "@/utils/page";
 import { useData } from "vike-vue/useData";
 import type { RespNotification } from "@bass/bbs-sdk-fetch/models/RespNotification";
 import { message } from "@/components/feedback/message";
@@ -13,6 +14,25 @@ import type { Data } from "./+data";
 const { rows, error } = toRefs(useData<Data>());
 const notifications = ref<RespNotification[]>(rows.value || []);
 const marking = ref(false);
+const refreshing = ref(false);
+
+async function refreshNotifications() {
+  if (refreshing.value) return;
+  refreshing.value = true;
+  try {
+    const response = await bbsClient.notification.list({ listNotificationsReq: { page: pageRequest(1, 30) } });
+    notifications.value = response.rows || [];
+    await markUnreadNotifications();
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "通知刷新失败，请稍后重试。");
+  } finally {
+    refreshing.value = false;
+  }
+}
+
+function handleNotificationReceived() {
+  void refreshNotifications();
+}
 
 async function markUnreadNotifications() {
   const unreadIds = notifications.value.flatMap((notification) =>
@@ -41,7 +61,12 @@ watch(rows, (nextRows) => {
 });
 
 onMounted(() => {
+  window.addEventListener("treble:notification-received", handleNotificationReceived);
   void markUnreadNotifications();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("treble:notification-received", handleNotificationReceived);
 });
 </script>
 
