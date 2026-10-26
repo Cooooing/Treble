@@ -18,7 +18,6 @@ import AppLink from "@/components/ui/AppLink.vue";
 import ErrorState from "@/components/feedback/ErrorState.vue";
 import { currentAccount } from "@/services/sessionState";
 import { bbsClient } from "@/utils/sdk";
-import { createClientIdentifier } from "@/utils/sdk/shared";
 
 const data = useData<Data>();
 const pageContext = usePageContext();
@@ -218,7 +217,7 @@ async function changeArticleAction(action: "like" | "thank" | "collect" | "watch
       }
       if (!window.confirm("感谢将转赠 20 积分给作者，操作不可撤销。确定感谢吗？")) return;
       const response = await bbsClient.article.thank({
-        thankArticleReq: { articleId: currentArticle.id, clientRequestId: createClientIdentifier() },
+        thankArticleReq: { articleId: currentArticle.id },
       });
       currentArticle.viewerActionState = { ...actionState, thanked: response.thanked };
       if (response.thanked && !actionState.thanked) currentArticle.thankCount = (currentArticle.thankCount || 0) + 1;
@@ -255,7 +254,7 @@ async function unlockRewardContent() {
   actionPending.value = "reward";
   try {
     const response = await bbsClient.article.reward({
-      rewardArticleReq: { articleId: article.id, clientRequestId: createClientIdentifier() },
+      rewardArticleReq: { articleId: article.id },
     });
     if (!response.rewarded) return;
     article.viewerActionState = { ...article.viewerActionState, rewarded: true };

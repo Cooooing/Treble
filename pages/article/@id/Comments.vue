@@ -16,7 +16,6 @@ import Icon from "@/components/ui/Icon.vue";
 import { currentAccount } from "@/services/sessionState";
 import { pageNumber, pageRequest } from "@/utils/page";
 import { bbsClient } from "@/utils/sdk";
-import { createClientIdentifier } from "@/utils/sdk/shared";
 import ArticleEditorPanel from "./ArticleEditorPanel.vue";
 import CommentThread from "./CommentThread.vue";
 
@@ -102,7 +101,7 @@ async function reactToComment(action: "like" | "thank", id?: string) {
       await bbsClient.comment.like({ likeCommentReq: { id, active: true } });
     } else {
       if (!window.confirm("感谢将转赠 20 积分给评论作者，操作不可撤销。确定感谢吗？")) return;
-      await bbsClient.comment.thank({ thankCommentReq: { id, clientRequestId: createClientIdentifier() } });
+      await bbsClient.comment.thank({ thankCommentReq: { id } });
       message.success("已感谢，已转赠 20 积分给评论作者。");
       await loadThreads(pageNumber(threadPage.value?.page), commentOrder.value);
     }

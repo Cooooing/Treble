@@ -322,7 +322,6 @@ async function sendBarrage() {
   try {
     await bbsClient.globalChat.sendGlobalChatBarrage({
       sendGlobalChatBarrageReq: {
-        clientRequestId: createClientIdentifier(),
         content,
       },
     });
@@ -418,7 +417,7 @@ async function submitTopicEditor() {
   topicSaving.value = true;
   try {
     const response = await bbsClient.globalChat.setGlobalChatTopic({
-      setGlobalChatTopicReq: { clientRequestId: createClientIdentifier(), content: value },
+      setGlobalChatTopicReq: { content: value },
     });
     topic.value = response.topic?.content?.trim() || value;
     topicEditorOpen.value = false;
