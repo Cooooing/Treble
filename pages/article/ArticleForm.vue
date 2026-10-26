@@ -270,8 +270,8 @@ async function save(publish: boolean): Promise<string | undefined> {
   }
   confirmTypedTag();
   if (rewardOpen.value && !form.rewardContent?.trim()) return void message.warning("请输入打赏内容，或收起打赏设置。");
-  if (rewardOpen.value && (!form.rewardPoints || form.rewardPoints < 1))
-    return void message.warning("打赏积分必须大于 0。");
+  if (rewardOpen.value && (!form.rewardPoints || form.rewardPoints < 1 || !Number.isInteger(form.rewardPoints)))
+    return void message.warning("打赏积分必须是大于 0 的整数。");
   loading.value = true;
   try {
     saveLocalDraft(false);
@@ -459,24 +459,52 @@ onBeforeUnmount(() => {
         </section>
 
         <button
-          v-if="!rewardOpen"
           id="showReward"
           :disabled="loading"
+          :aria-expanded="rewardOpen"
+          aria-controls="articleRewardSettings"
           class="article-reward-toggle fn-ellipsis"
           type="button"
-          @click="rewardOpen = true"
+          @click="rewardOpen = !rewardOpen"
         >
-          打赏区 1. 当设置了打赏积分后，将启用打赏功能 2. 启用打赏需要 20 积分 3.
-          打赏区的内容只有在浏览者打赏后才对其可见 &dtrif;
+          打赏区：设置固定积分价格后，读者打赏即可查看其中内容。 &dtrif;
         </button>
-        <section v-if="rewardOpen" aria-label="打赏设置" class="article-reward-content">
+        <section v-if="rewardOpen" id="articleRewardSettings" aria-label="打赏设置" class="article-reward-content">
           <label class="sr-only" for="articleRewardContent">打赏内容</label>
           <ClientOnly>
             <RichTextEditor
               id="articleRewardContent"
               v-model="form.rewardContent"
               :name="articleId ? `article-reward-${articleId}` : undefined"
-              :options="{ placeholder: '写下打赏后可见的内容', preview: { mode: 'editor' }, resize: { enable: false } }"
+              :options="{
+                placeholder: '写下打赏后可见的内容',
+                preview: { mode: 'editor' },
+                resize: { enable: false },
+                toolbar: [
+                  'emoji',
+                  'headings',
+                  'bold',
+                  'italic',
+                  'strike',
+                  '|',
+                  'line',
+                  'quote',
+                  'list',
+                  'ordered-list',
+                  'check',
+                  '|',
+                  'code',
+                  'inline-code',
+                  'upload',
+                  'link',
+                  'table',
+                  '|',
+                  'undo',
+                  'redo',
+                  '|',
+                  'preview',
+                ],
+              }"
               height="200px"
             />
           </ClientOnly>
@@ -486,6 +514,7 @@ onBeforeUnmount(() => {
             v-model.number="form.rewardPoints"
             :disabled="loading"
             min="1"
+            step="1"
             placeholder="打赏积分"
             type="number"
           />
@@ -688,6 +717,21 @@ onBeforeUnmount(() => {
   width: 100%;
   margin-top: 16px;
   box-sizing: border-box;
+}
+.article-supplementary .article-reward-toggle,
+.article-supplementary #articleRewardPoint {
+  transition: none;
+}
+.article-supplementary .article-reward-toggle:hover,
+.article-supplementary .article-reward-toggle:focus-visible,
+.article-supplementary #articleRewardPoint:focus {
+  box-shadow: none;
+  outline: none;
+  transform: none;
+  animation: none;
+}
+.article-supplementary .article-reward-content :deep(.vditor-toolbar) {
+  display: flex;
 }
 .article-supplementary .post__footer {
   width: 100%;

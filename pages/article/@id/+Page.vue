@@ -29,7 +29,7 @@ const articleState = ref(data.article);
 const replyCount = ref<number>(Number(data.comments?.page?.total || data.comments?.rows?.length || 0));
 const postscripts = ref<ArticlePostscript[]>(data.postscripts || data.article?.postscripts || []);
 const postscriptEditorOpen = ref(false);
-const actionPending = ref<"like" | "thank" | "collect" | "watch">();
+const actionPending = ref<"like" | "thank" | "collect" | "watch" | "reward">();
 const selectedPollOptionIDs = ref<string[]>([...(data.article?.poll?.selectedOptionIds || [])]);
 const pollPending = ref(false);
 const lotteryPending = ref(false);
@@ -241,6 +241,34 @@ async function changeArticleAction(action: "like" | "thank" | "collect" | "watch
   }
 }
 
+async function unlockRewardContent() {
+  const article = articleState.value;
+  if (!article?.id || article.viewerActionState?.rewarded || actionPending.value) return;
+  if (!account.value) {
+    loginForArticleAction();
+    return;
+  }
+  if (isArticleAuthor.value) return;
+  const points = article.rewardPoints || 0;
+  if (!window.confirm(`打赏将支付 ${points} 积分给作者，打赏后可持续查看该区域内容。确定继续吗？`)) return;
+
+  actionPending.value = "reward";
+  try {
+    const response = await bbsClient.article.reward({
+      rewardArticleReq: { articleId: article.id, clientRequestId: createClientIdentifier() },
+    });
+    if (!response.rewarded) return;
+    article.viewerActionState = { ...article.viewerActionState, rewarded: true };
+    article.rewardCount = (article.rewardCount || 0) + 1;
+    await navigate(`/article/${article.id}`);
+    message.success("打赏成功。");
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : "打赏失败，请稍后重试。");
+  } finally {
+    actionPending.value = undefined;
+  }
+}
+
 async function copyArticleLink() {
   try {
     await navigator.clipboard.writeText(window.location.href);
@@ -292,9 +320,20 @@ onMounted(() => {
             <section v-if="canAddPostscript" aria-label="作者操作" class="article-author-actions">
               <button type="button" @click="postscriptEditorOpen = true">添加附言</button>
             </section>
-            <section v-if="articleState.hasReward && articleState.rewardContentRender" id="articleRewardContent">
-              <span>{{ articleState.rewardPoints || 0 }} 积分悬赏</span>
-              <div class="vditor-reset" data-image-preview v-html="articleState.rewardContentRender" />
+            <section v-if="articleState.hasReward" id="articleRewardContent" class="article-reward">
+              <header>
+                <span>{{ `${articleState.rewardPoints || 0} 积分打赏区` }}</span>
+                <span>{{ articleState.rewardCount || 0 }} 人打赏</span>
+              </header>
+              <template v-if="articleState.rewardContentRender">
+                <div class="vditor-reset" data-image-preview v-html="articleState.rewardContentRender" />
+              </template>
+              <template v-else>
+                <p>打赏后可持续查看本段内容。</p>
+                <button :disabled="actionPending === 'reward'" type="button" @click="unlockRewardContent">
+                  {{ actionPending === "reward" ? "正在打赏…" : `打赏 ${articleState.rewardPoints || 0} 积分` }}
+                </button>
+              </template>
             </section>
             <section v-if="articleState.poll" aria-label="文章投票" class="article-poll">
               <header class="article-poll__header">
@@ -686,6 +725,44 @@ onMounted(() => {
 }
 .article-lottery__winners :deep(a) {
   margin-left: 6px;
+}
+.article-reward {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 25%, var(--layer-border-color));
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--primary-color) 4%, var(--background-color));
+}
+.article-reward header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-fade-color);
+  font-size: 13px;
+}
+.article-reward header span:first-child {
+  color: var(--text-color);
+  font-weight: 600;
+}
+.article-reward p {
+  margin: 0;
+  color: var(--text-fade-color);
+}
+.article-reward button {
+  justify-self: start;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--primary-color);
+  color: #fff;
+  cursor: pointer;
+}
+.article-reward button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 @media (max-width: 640px) {
   .article-poll {

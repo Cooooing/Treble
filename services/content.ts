@@ -1,6 +1,7 @@
 import type { ReqArticle } from "@bass/bbs-sdk-fetch/models/ReqArticle";
 import type { RespTag } from "@bass/bbs-sdk-fetch/models/RespTag";
 import { bbsClient } from "@/utils/sdk";
+import { createClientIdentifier } from "@/utils/sdk/shared";
 
 export async function saveArticleDraft(article: ReqArticle, articleId?: string) {
   if (articleId) {
@@ -53,11 +54,13 @@ export async function synchronizeArticleTags(
 }
 
 export async function publishArticle(articleId: string) {
-  await bbsClient.article.publish({ publishArticleReq: { articleId } });
+  await bbsClient.article.publish({ publishArticleReq: { articleId, clientRequestId: createClientIdentifier() } });
 }
 
 export async function scheduleArticle(articleId: string, scheduledAt: Date) {
-  await bbsClient.article.publish({ publishArticleReq: { articleId, scheduledAt } });
+  await bbsClient.article.publish({
+    publishArticleReq: { articleId, scheduledAt, clientRequestId: createClientIdentifier() },
+  });
 }
 
 export async function cancelArticleSchedule(articleId: string) {

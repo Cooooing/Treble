@@ -1,5 +1,6 @@
 import lutePath from "vditor/dist/js/lute/lute.min.js?url";
 import chineseI18nPath from "vditor/dist/js/i18n/zh_CN.js?url";
+import antIconPath from "vditor/dist/js/icons/ant.js?url";
 
 let assetsReady: Promise<Window["VditorI18n"]> | undefined;
 
@@ -44,6 +45,9 @@ function waitForRuntime() {
 export function loadVditorAssets() {
   assetsReady ??= appendScript("vditorLuteScript", lutePath)
     .then(() => appendScript("trebleVditorI18nScript", chineseI18nPath))
+    // Editors use `icon: undefined` so Vditor does not request a CDN asset.
+    // Load the bundled sprite ourselves before any toolbar is constructed.
+    .then(() => appendScript("vditorIconScript", antIconPath))
     .then(waitForRuntime)
     .catch((error) => {
       assetsReady = undefined;
