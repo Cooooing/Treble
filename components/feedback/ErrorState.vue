@@ -2,6 +2,12 @@
 import { computed } from "vue";
 import { usePageContext } from "vike-vue/usePageContext";
 import AppLink from "@/components/ui/AppLink.vue";
+import errorImage0 from "@/assets/site/images/404/0.gif";
+import errorImage1 from "@/assets/site/images/404/1.gif";
+import errorImage2 from "@/assets/site/images/404/2.gif";
+import errorImage3 from "@/assets/site/images/404/3.gif";
+import errorImage4 from "@/assets/site/images/404/4.gif";
+import errorImage5 from "@/assets/site/images/404/5.gif";
 
 const props = defineProps<{
   title: string;
@@ -9,12 +15,12 @@ const props = defineProps<{
 }>();
 
 const pageContext = usePageContext();
-const errorImageCount = 6;
+const errorImages = [errorImage0, errorImage1, errorImage2, errorImage3, errorImage4, errorImage5];
 const errorImage = computed(() => {
   const imageIndex =
     Array.from(pageContext.urlPathname).reduce((total, character) => total + character.charCodeAt(0), 0) %
-    errorImageCount;
-  return `/assets/site/images/404/${imageIndex}.gif`;
+    errorImages.length;
+  return errorImages[imageIndex];
 });
 </script>
 

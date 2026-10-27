@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { defaultTheme, isDarkTheme, type Theme } from "@/utils/theme";
 import { message } from "@/components/feedback/message";
 import { uploadMarkdownImage } from "@/services/markdownImageUpload";
@@ -145,11 +145,19 @@ watch(
   },
 );
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   disposed = true;
   window.removeEventListener("treble-theme-change", handleThemeChange);
-  vditor.value?.destroy();
+  const editor = vditor.value;
   vditor.value = undefined;
+  try {
+    editor?.destroy();
+  } catch (error) {
+    // Vditor can race Vue's client-side route teardown and attempt to remove an
+    // internal node that it has already discarded. Cleanup must not abort the
+    // navigation or make Vike render its global error page.
+    console.warn("编辑器清理失败", error);
+  }
 });
 
 function handleDragEnter(event: DragEvent) {
