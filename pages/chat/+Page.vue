@@ -64,6 +64,7 @@ const rows = ref<GlobalMessage[]>([]);
 const content = ref("");
 const loading = ref(false);
 const loadingOlder = ref(false);
+const onlineLoading = ref(false);
 const onlineMembers = ref<OnlineMember[]>([]);
 const onlineTotal = ref("0");
 const barrages = ref<GlobalChatBarrage[]>([]);
@@ -159,6 +160,8 @@ async function loadMessages(beforeId?: string) {
 }
 
 async function loadOnlineMembers() {
+  if (onlineLoading.value) return;
+  onlineLoading.value = true;
   try {
     const response = await bbsClient.globalChat.listGlobalChatOnlineMembers({
       body: {},
@@ -167,6 +170,8 @@ async function loadOnlineMembers() {
     onlineTotal.value = String(onlineMembers.value.length);
   } catch (error) {
     message.error(error instanceof Error ? error.message : "在线成员加载失败");
+  } finally {
+    onlineLoading.value = false;
   }
 }
 
@@ -775,6 +780,16 @@ onBeforeUnmount(() => {
           <section class="global-chat__side-section global-chat__members">
             <h2>
               当前在线 <span>{{ onlineTotal }}</span>
+              <button
+                :aria-busy="onlineLoading"
+                :disabled="onlineLoading"
+                aria-label="刷新在线成员"
+                class="global-chat__members-refresh"
+                type="button"
+                @click="loadOnlineMembers"
+              >
+                <Icon name="refresh" />
+              </button>
             </h2>
             <div v-if="onlineMembers.length" class="global-chat__member-list">
               <MemberLink
@@ -1115,15 +1130,46 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--layer-border-color);
 }
 .global-chat__side-section h2 {
+  display: flex;
+  align-items: center;
   margin: 0 0 0.625rem;
   color: var(--text-color);
   font-size: 0.8125rem;
   font-weight: 600;
 }
 .global-chat__side-section h2 span {
-  float: right;
+  margin-left: 0.25rem;
   color: var(--text-color);
   font-variant-numeric: tabular-nums;
+}
+.global-chat__members-refresh {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  place-items: center;
+  background: transparent;
+  color: var(--text-fade-color);
+  cursor: pointer;
+  transition: none;
+}
+.global-chat__members-refresh:hover,
+.global-chat__members-refresh:focus-visible {
+  color: var(--color-accent);
+  box-shadow: none;
+  outline: 0;
+  transform: none;
+}
+.global-chat__members-refresh:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+.global-chat__members-refresh :deep(.icon) {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: currentColor;
 }
 .global-chat__side-section p {
   display: flex;
