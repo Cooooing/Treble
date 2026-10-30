@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { RespDomain } from "@bass/bbs-sdk-fetch/models/RespDomain";
 import type { RespTag } from "@bass/bbs-sdk-fetch/models/RespTag";
+import AccountActivitySidebar from "@/components/layout/AccountActivitySidebar.vue";
 import ContentPanel from "@/components/layout/ContentPanel.vue";
 import AppLink from "@/components/ui/AppLink.vue";
 
@@ -9,6 +10,7 @@ defineProps<{ tags?: RespTag[]; domains?: RespDomain[] }>();
 
 <template>
   <aside class="side">
+    <AccountActivitySidebar />
     <slot name="before" />
     <ContentPanel more-href="/domains" title="领域">
       <ul v-if="domains?.length" class="module-list community-sidebar__domains">

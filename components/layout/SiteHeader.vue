@@ -320,6 +320,8 @@ watch(
               <li>
                 <AppLink :href="account.profile?.name ? `/member/${account.profile.name}` : '/home'">个人主页</AppLink>
               </li>
+              <li><AppLink href="/collections">收藏帖子</AppLink></li>
+              <li><AppLink href="/watching">关注帖子</AppLink></li>
               <li><AppLink href="/settings">设置</AppLink></li>
               <li><button type="button" @click="openWorkCountdownSettings()">下班倒计时</button></li>
               <li><AppLink href="/help">帮助</AppLink></li>
