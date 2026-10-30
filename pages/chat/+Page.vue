@@ -103,6 +103,7 @@ const barrageInput = ref<HTMLInputElement>();
 const barrageControl = ref<HTMLElement>();
 const now = ref(new Date());
 let clockTimer: ReturnType<typeof setInterval> | undefined;
+let onlineRefreshTimer: ReturnType<typeof setInterval> | undefined;
 let markdownConverter: Promise<typeof import("vditor").default> | undefined;
 const {
   pendingMessages,
@@ -546,6 +547,7 @@ onMounted(async () => {
   await loadMessages();
   await loadTopic();
   await loadOnlineMembers();
+  onlineRefreshTimer = setInterval(() => void loadOnlineMembers(), 60_000);
   await startRealtime();
 });
 
@@ -561,6 +563,7 @@ onBeforeUnmount(() => {
   unsubscribeTopic?.();
   for (const timer of barrageTimers.values()) clearTimeout(timer);
   if (clockTimer) clearInterval(clockTimer);
+  if (onlineRefreshTimer) clearInterval(onlineRefreshTimer);
 });
 </script>
 
