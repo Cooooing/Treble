@@ -81,7 +81,7 @@ onMounted(() => {
         </li>
       </ul>
       <div class="account-activity__footer">
-        <AppLink aria-label="快捷转账" class="account-activity__points" href="/settings/account">
+        <AppLink aria-label="快捷转账" class="account-activity__points" href="/settings/points">
           <Icon name="coin" />
           {{ balance }}
         </AppLink>

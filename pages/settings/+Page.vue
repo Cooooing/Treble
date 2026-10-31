@@ -11,6 +11,7 @@ import { message } from "@/components/feedback/message";
 import { logout } from "@/services/auth";
 import { currentAccount, setCurrentAccount } from "@/services/sessionState";
 import { ApiError, bbsClient } from "@/utils/sdk";
+import { createClientIdentifier } from "@/utils/sdk/shared";
 
 const pageContext = usePageContext();
 const section = computed(() => pageContext.urlPathname.split("/")[2] || "profile");
@@ -36,9 +37,14 @@ const totpEnabled = ref(false);
 const totpCode = ref("");
 const qrCode = ref("");
 const deleting = ref(false);
+const pointsBalance = ref("0");
+const transferringPoints = ref(false);
+const transferIdempotencyKey = ref("");
+const transfer = reactive({ targetName: "", amount: "", remark: "" });
 const nav = [
   { key: "profile", href: "/settings", label: "资料" },
   { key: "account", href: "/settings/account", label: "账户与安全" },
+  { key: "points", href: "/settings/points", label: "积分" },
   { key: "privacy", href: "/settings/privacy", label: "隐私" },
   { key: "cancel", href: "/settings/cancel", label: "注销" },
 ];
@@ -78,10 +84,11 @@ const publicLocationLabel = computed(
 );
 
 async function load() {
-  const [account, settings, totp] = await Promise.all([
+  const [account, settings, totp, economy] = await Promise.all([
     bbsClient.account.getCurrent({ body: {} }),
     bbsClient.privacySetting.getCurrent({ body: {} }),
     bbsClient.otp.getCurrentTotp({ body: {} }),
+    bbsClient.account.getEconomyAccount({ body: {} }),
   ]);
   setCurrentAccount(account.account);
   Object.assign(profile, {
@@ -94,6 +101,7 @@ async function load() {
   Object.assign(privacy, settings.privacySetting || {});
   Object.assign(location, account.account?.location || {});
   totpEnabled.value = Boolean(totp.totp?.enable);
+  pointsBalance.value = economy.balance || "0";
   if (account.account?.profile?.name) {
     try {
       const member = await bbsClient.account.getProfile({ getProfileReq: { name: account.account.profile.name } });
@@ -101,6 +109,36 @@ async function load() {
     } catch {
       /* 背景预览不可用不影响其他设置。 */
     }
+  }
+}
+
+async function transferPoints() {
+  const targetName = transfer.targetName.trim();
+  const amount = Number(transfer.amount);
+  if (!targetName || !Number.isSafeInteger(amount) || amount <= 0) {
+    return message.warning("请输入收款账号名和正整数积分数量。");
+  }
+  if (transfer.remark.length > 200) return message.warning("备注不能超过 200 个字符。");
+  if (!confirm(`确定向 ${targetName} 转账 ${amount} 积分吗？`)) return;
+  transferringPoints.value = true;
+  if (!transferIdempotencyKey.value) transferIdempotencyKey.value = createClientIdentifier();
+  try {
+    const result = await bbsClient.account.transferPoints({
+      transferAccountPointsReq: {
+        targetName,
+        amount: String(amount),
+        remark: transfer.remark.trim() || undefined,
+        idempotencyKey: transferIdempotencyKey.value,
+      },
+    });
+    pointsBalance.value = result.balance || pointsBalance.value;
+    Object.assign(transfer, { targetName: "", amount: "", remark: "" });
+    transferIdempotencyKey.value = "";
+    message.success("转账成功。");
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : "转账失败，请稍后重试。");
+  } finally {
+    transferringPoints.value = false;
   }
 }
 async function saveProfile() {
@@ -429,6 +467,23 @@ onMounted(() => void load().catch(() => message.error("设置加载失败，请�
                   {{ totpEnabled ? "关闭两步验证" : "确认启用" }}
                 </button></template
               >
+            </div>
+          </section>
+        </template>
+        <template v-else-if="section === 'points'">
+          <section class="module">
+            <header class="module-header"><h2>积分</h2></header>
+            <div class="module-panel form settings__points">
+              <p class="settings__current">当前积分：{{ pointsBalance }}</p>
+              <label for="settings-points-target">收款账号名</label>
+              <input id="settings-points-target" v-model="transfer.targetName" autocomplete="off" type="text" />
+              <label for="settings-points-amount">积分数量</label>
+              <input id="settings-points-amount" v-model="transfer.amount" inputmode="numeric" min="1" step="1" type="number" />
+              <label for="settings-points-remark">备注（选填）</label>
+              <input id="settings-points-remark" v-model="transfer.remark" maxlength="200" type="text" />
+              <button :disabled="transferringPoints" class="green fn-right" type="button" @click="transferPoints">
+                {{ transferringPoints ? "转账中..." : "转账" }}
+              </button>
             </div>
           </section>
         </template>

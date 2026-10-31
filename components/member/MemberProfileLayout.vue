@@ -13,7 +13,7 @@ import type { Profile } from "@bass/bbs-sdk-fetch/models/Profile";
 
 const props = defineProps<{
   profile: Profile;
-  active: "articles" | "moonbreezes" | "comments" | "following" | "followers";
+  active: "articles" | "moonbreezes" | "comments" | "following" | "followers" | "points";
 }>();
 const pageContext = usePageContext();
 const actionMenu = ref<HTMLElement>();
@@ -48,6 +48,16 @@ const location = () =>
   [props.profile.location?.country, props.profile.location?.province, props.profile.location?.city]
     .filter(Boolean)
     .join(" · ");
+const pointsHref = computed(() => `/member/${props.profile.account?.name}/points`);
+
+function hexadecimalPoints(value?: number | string | bigint) {
+  if (value === undefined || value === null) return undefined;
+  try {
+    return `0x${BigInt(value).toString(16)}`;
+  } catch {
+    return undefined;
+  }
+}
 
 function CloseActionMenuWhenClickingOutside(event: PointerEvent) {
   if (!actionMenu.value?.contains(event.target as Node)) actionMenuOpen.value = false;
@@ -188,15 +198,17 @@ watch(viewerID, () => void RefreshRelationState());
               {{ memberDisplayName(profile.account) }}
             </h1>
             <p v-if="profile.account?.name" class="member-profile__name">{{ profile.account.name }}</p>
-            <p
-              v-if="profile.online !== undefined"
-              :class="profile.online ? 'member-profile__status--online' : 'member-profile__status--offline'"
-              class="member-profile__status"
-            >
-              <span aria-hidden="true" class="member-profile__status-dot" />
-              {{ profile.online ? "在线" : "离线" }}
-            </p>
-            <span v-if="profile.account?.mbti" class="member-profile__mbti">{{ profile.account.mbti }}</span>
+            <div v-if="profile.online !== undefined || profile.account?.mbti" class="member-profile__badges">
+              <span
+                v-if="profile.online !== undefined"
+                :class="profile.online ? 'member-profile__status--online' : 'member-profile__status--offline'"
+                class="member-profile__status"
+              >
+                <span aria-hidden="true" class="member-profile__status-dot" />
+                {{ profile.online ? "在线" : "离线" }}
+              </span>
+              <span v-if="profile.account?.mbti" class="member-profile__mbti">{{ profile.account.mbti }}</span>
+            </div>
           </div>
           <div v-if="canManageRelation" class="member-profile__actions">
             <button
@@ -230,6 +242,10 @@ watch(viewerID, () => void RefreshRelationState());
           </div>
           <div class="member-profile__details">
             <p v-if="profile.account?.introduction" class="member-profile__intro">{{ profile.account.introduction }}</p>
+            <p v-if="hexadecimalPoints(profile.points)" class="member-profile__line member-profile__points">
+              <span>积分</span>
+              <AppLink :href="pointsHref">{{ hexadecimalPoints(profile.points) }}</AppLink>
+            </p>
             <p v-if="profile.account?.url" class="member-profile__line">
               <a :href="profile.account.url" rel="noopener noreferrer" target="_blank">{{ profile.account.url }}</a>
             </p>
@@ -375,7 +391,6 @@ watch(viewerID, () => void RefreshRelationState());
   align-items: center;
   gap: 5px;
   height: 20px;
-  margin: 6px 0 0;
   padding: 0 7px;
   border-radius: 3px;
   color: var(--color-text-inverse);
@@ -395,15 +410,23 @@ watch(viewerID, () => void RefreshRelationState());
   background: currentColor;
 }
 .member-profile__mbti {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   height: 20px;
-  margin-top: 7px;
   padding: 0 6px;
   border-radius: 3px;
   background: #b2b1ff;
   color: #fff;
   font-size: 12px;
   line-height: 20px;
+}
+.member-profile__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 7px;
 }
 .member-profile__actions {
   display: flex;
@@ -601,6 +624,17 @@ watch(viewerID, () => void RefreshRelationState());
   min-width: 0;
   color: var(--link-color);
   overflow-wrap: anywhere;
+}
+.member-profile__points a {
+  color: var(--color-accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+.member-profile__points a:hover,
+.member-profile__points a:focus-visible {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
 }
 .member-profile__stats {
   display: flex;
